@@ -1,0 +1,16 @@
+game,cardName,set,rarity,conditions,minPrice,maxPrice,keywords,active
+pokemon,リザードン ex,SV4a 深緋の仮面,SAR,"NM,LP",15000,45000,リザードン ex SAR 深緋の仮面,true
+pokemon,リザードン ex,SV4a 深緋の仮面,SR,"NM,LP",3000,12000,リザードン ex SR 深緋の仮面,true
+pokemon,ピカチュウ ex,SV1S スカーレット,SR,"NM,LP",3000,9000,ピカチュウ ex SR スカーレット,true
+pokemon,ミュウ ex,SV2P 黒炎の支配者,SAR,"NM,LP",5000,15000,ミュウ ex SAR 黒炎の支配者,true
+pokemon,カイリュー ex,SV4K 古代の回廊,SAR,"NM,LP",4000,12000,カイリュー ex SAR 古代の回廊,true
+pokemon,ゲンガー ex,SV4K 古代の回廊,SR,"NM,LP",2000,8000,ゲンガー ex SR 古代の回廊,true
+pokemon,ルギア V,S12a VSTAR UNIVERSE,SAR,"NM,LP",6000,18000,ルギア V SAR VSTAR UNIVERSE,true
+pokemon,アルセウス V,S9 スターバース,SAR,"NM,LP",4000,12000,アルセウス V SAR スターバース,true
+onepiece,モンキー・D・ルフィ,OP01 ROMANCE DAWN,SEC,"NM,LP",30000,70000,ルフィ SEC ROMANCE DAWN OP01,true
+onepiece,ロロノア・ゾロ,OP01 ROMANCE DAWN,SR,"NM,LP",1500,5000,ゾロ SR ROMANCE DAWN OP01,true
+onepiece,ポートガス・D・エース,OP02 PARAMOUNT WAR,SR,"NM,LP",3000,10000,エース SR PARAMOUNT WAR OP02,true
+onepiece,ナミ,OP01 ROMANCE DAWN,R,"NM,LP",400,2000,ナミ R ROMANCE DAWN OP01,true
+onepiece,トラファルガー・ロー,OP03 PILLARS OF STRENGTH,SR,"NM,LP",2000,8000,ロー SR PILLARS OF STRENGTH OP03,true
+pokemon,イーブイ,プロモ,プロモ,"NM",500,3000,イーブイ プロモ,true
+pokemon,マスカーニャ ex,SV1S スカーレット,SAR,"NM,LP",5000,15000,マスカーニャ ex SAR スカーレット,true

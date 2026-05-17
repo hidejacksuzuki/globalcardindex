@@ -1,0 +1,166 @@
+# .github/workflows/backup.yml
+#
+# GCI Daily PostgreSQL Backup — GitHub Actions
+#
+# Schedule: 03:30 UTC daily (30 min after the Vercel integrity-check cron)
+#
+# What it does:
+#   1. pg_dump the Supabase database in custom format
+#   2. Compress with gzip (custom format is already compressed, this step is a no-op
+#      but kept for future format changes)
+#   3. Upload the dump as a GitHub Actions artifact (retained for 30 days)
+#   4. Optionally upload to an S3-compatible bucket if S3_* secrets are set
+#
+# Required secrets (Settings → Secrets and variables → Actions):
+#   DATABASE_URL          — postgresql://... (same as Vercel env var)
+#
+# Optional secrets (for S3 off-site storage):
+#   S3_BUCKET             — e.g. "gci-backups"
+#   S3_REGION             — e.g. "ap-northeast-1"
+#   S3_ACCESS_KEY_ID      — AWS / Cloudflare R2 access key
+#   S3_SECRET_ACCESS_KEY  — AWS / Cloudflare R2 secret key
+#   S3_ENDPOINT           — Cloudflare R2 endpoint (omit for AWS S3)
+#
+# Manual trigger:
+#   gh workflow run backup.yml
+#   # or: Actions → backup → Run workflow
+
+name: Daily DB Backup
+
+on:
+  schedule:
+    - cron: "30 3 * * *"   # 03:30 UTC — after Vercel /api/v1/cron/backup (03:00)
+  workflow_dispatch:        # allow manual trigger
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: pg_dump → artifact (+ optional S3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      BACKUP_DIR: ${{ github.workspace }}/backups
+
+    steps:
+      # ── 1. Checkout (needed for scripts/backup.sh) ──────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Install postgresql-client ────────────────────────────────────────
+      - name: Install pg_dump
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends postgresql-client
+          pg_dump --version
+
+      # ── 3. Run pg_dump via shared script ────────────────────────────────────
+      - name: Run backup
+        run: |
+          chmod +x scripts/backup.sh
+          # Disable retention cleanup in CI (GitHub artifact expiry handles it)
+          RETAIN_DAYS=0 bash scripts/backup.sh
+
+      # ── 4. Verify dump is non-empty ─────────────────────────────────────────
+      - name: Verify dump
+        run: |
+          DUMP=$(ls "$BACKUP_DIR"/gci_*.dump 2>/dev/null | head -1)
+          if [[ -z "$DUMP" ]]; then
+            echo "ERROR: no dump file found in $BACKUP_DIR" >&2
+            exit 1
+          fi
+          SIZE=$(stat -c%s "$DUMP")
+          echo "Dump file: $DUMP"
+          echo "Size: $SIZE bytes"
+          if [[ "$SIZE" -lt 1024 ]]; then
+            echo "ERROR: dump file is suspiciously small ($SIZE bytes)" >&2
+            exit 1
+          fi
+          # Quick sanity check: pg_restore can list the table of contents
+          pg_restore --list "$DUMP" | head -20
+
+      # ── 5. Upload as GitHub Actions artifact (30-day retention) ─────────────
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gci-db-backup-${{ github.run_id }}
+          path: ${{ env.BACKUP_DIR }}/gci_*.dump
+          retention-days: 30
+          if-no-files-found: error
+
+      # ── 6. (Optional) Upload to S3-compatible bucket ─────────────────────────
+      - name: Upload to S3
+        if: ${{ secrets.S3_BUCKET != '' }}
+        env:
+          AWS_ACCESS_KEY_ID:     ${{ secrets.S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION:    ${{ secrets.S3_REGION }}
+        run: |
+          pip install awscli --quiet
+
+          DUMP=$(ls "$BACKUP_DIR"/gci_*.dump | head -1)
+          FILENAME=$(basename "$DUMP")
+
+          # Build aws s3 cp flags
+          ENDPOINT_FLAG=""
+          if [[ -n "${{ secrets.S3_ENDPOINT }}" ]]; then
+            ENDPOINT_FLAG="--endpoint-url ${{ secrets.S3_ENDPOINT }}"
+          fi
+
+          aws s3 cp "$DUMP" \
+            "s3://${{ secrets.S3_BUCKET }}/postgres/$FILENAME" \
+            $ENDPOINT_FLAG \
+            --storage-class STANDARD_IA
+
+          echo "Uploaded: s3://${{ secrets.S3_BUCKET }}/postgres/$FILENAME"
+
+      # ── 7. Summary ───────────────────────────────────────────────────────────
+      - name: Write job summary
+        if: always()
+        run: |
+          DUMP=$(ls "$BACKUP_DIR"/gci_*.dump 2>/dev/null | head -1)
+          if [[ -n "$DUMP" ]]; then
+            SIZE=$(du -sh "$DUMP" | cut -f1)
+            TABLES=$(pg_restore --list "$DUMP" 2>/dev/null | grep -c "TABLE DATA" || echo "?")
+            cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## GCI DB Backup
+
+          | | |
+          |---|---|
+          | **File** | \`$(basename "$DUMP")\` |
+          | **Size** | $SIZE |
+          | **Tables** | $TABLES |
+          | **Retention** | 30 days (GitHub artifact) |
+          | **S3** | ${{ secrets.S3_BUCKET != '' && 'uploaded' || 'not configured' }} |
+          EOF
+          else
+            echo "## GCI DB Backup — FAILED" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # ── 8. Discord notification on failure ───────────────────────────────────
+      - name: Notify Discord on failure
+        if: failure() && secrets.DISCORD_WEBHOOK_URL != ''
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          curl -s -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"embeds\": [{
+                \"title\": \"🔴 GCI DB Backup Failed\",
+                \"description\": \"Daily pg_dump backup job failed. Immediate attention required.\",
+                \"color\": 15548997,
+                \"fields\": [
+                  { \"name\": \"Repository\", \"value\": \"${{ github.repository }}\", \"inline\": true },
+                  { \"name\": \"Run\",        \"value\": \"[#${{ github.run_number }}]($RUN_URL)\", \"inline\": true },
+                  { \"name\": \"Triggered\",  \"value\": \"${{ github.event_name }}\", \"inline\": true }
+                ],
+                \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+                \"footer\": { \"text\": \"GitHub Actions · backup.yml\" }
+              }]
+            }"

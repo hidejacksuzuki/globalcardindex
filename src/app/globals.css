@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  background-color: #f7f8fb;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 数値・価格表示は等幅フォントで揃える */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 価格変動フラッシュ */
+@keyframes price-up {
+  0%   { background-color: #dcfce7; }
+  100% { background-color: transparent; }
+}
+
+@keyframes price-down {
+  0%   { background-color: #fee2e2; }
+  100% { background-color: transparent; }
+}
+
+.animate-price-up   { animation: price-up   1s ease-out; }
+.animate-price-down { animation: price-down 1s ease-out; }
+
+/* フォーカスリング統一 */
+*:focus-visible {
+  outline: 2px solid #C9A14A;
+  outline-offset: 2px;
+}

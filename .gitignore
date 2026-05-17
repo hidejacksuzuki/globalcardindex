@@ -1,0 +1,15 @@
+node_modules
+.next
+out
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+.vercel
+next-env.d.ts
+.turbo
+
+# Prisma native binary symlinks (local-only, generated at install time)
+apps/web/.prisma/
+apps/data/.prisma/

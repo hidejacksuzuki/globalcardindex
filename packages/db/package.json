@@ -1,0 +1,20 @@
+{
+  "name": "@gci/db",
+  "version": "0.0.1",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "db:generate": "prisma generate --schema=./prisma/schema.prisma",
+    "db:migrate":  "prisma migrate deploy --schema=./prisma/schema.prisma",
+    "db:studio":   "prisma studio --schema=./prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0"
+  },
+  "devDependencies": {
+    "prisma":     "^5.22.0",
+    "typescript": "^5.6.3"
+  }
+}

@@ -1,0 +1,12 @@
+Date,Card Name,Set,Rarity,Condition,Price,Currency,Source Type,Source Name,URL/Reference,Volume,Observed By,Trust Score,Notes
+2026-04-01,Charizard,Base Set,Holo Rare,NM,420000,JPY,marketplace,Mercari,https://example.com/1,1,system,70,
+2026-04-03,Charizard,Base Set,Holo Rare,NM,438000,JPY,auction,Yahoo Auctions,https://example.com/2,1,system,80,
+2026-04-05,Charizard,Base Set,Holo Rare,NM,455000,JPY,marketplace,Mercari,https://example.com/3,1,system,70,
+2026-04-08,Charizard,Base Set,Holo Rare,NM,460000,JPY,shop,CardShop Tokyo,https://example.com/4,1,system,90,
+2026-04-12,Charizard,Base Set,Holo Rare,NM,470000,JPY,auction,Yahoo Auctions,https://example.com/5,1,system,80,
+2026-04-01,Pikachu Illustrator,Promo,Promo,LP,8500000,JPY,auction,Heritage Auctions,https://example.com/6,1,system,95,
+2026-04-15,Pikachu Illustrator,Promo,Promo,LP,8800000,JPY,auction,Heritage Auctions,https://example.com/7,1,system,95,
+2026-04-02,Monkey D. Luffy,OP01,Super Rare,NM,12000,JPY,marketplace,Mercari,https://example.com/8,1,system,70,
+2026-04-09,Monkey D. Luffy,OP01,Super Rare,NM,11500,JPY,marketplace,Snkrdunk,https://example.com/9,1,system,75,
+2026-04-20,Monkey D. Luffy,OP01,Super Rare,NM,13000,JPY,shop,Card King,https://example.com/10,1,system,85,
+2026-05-01,Monkey D. Luffy,OP01,Super Rare,NM,13500,JPY,marketplace,Mercari,https://example.com/11,1,system,70,

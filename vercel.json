@@ -1,0 +1,29 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/v1/cron/fetch",
+      "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/v1/cron/recalc",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/v1/cron/daily-snapshot",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/v1/cron/daily-post",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/v1/cron/daily-discord",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/v1/cron/daily-newsletter",
+      "schedule": "0 1 * * *"
+    }
+  ]
+}

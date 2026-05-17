@@ -1,0 +1,517 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// Card
+// ============================================================
+model Card {
+  id        String   @id @default(cuid())
+  name      String
+  setName   String
+  rarity    String
+  condition String
+
+  // Week 5: SEO
+  game      String?            // ゲームキー e.g. "pokemon", "onepiece"
+  slug      String?  @unique   // SEO用スラッグ e.g. "charizard-ex-sv4a-psr-nm"
+
+  prices             Price[]
+  watchlistItems     WatchlistItem[]
+  userWatchlistItems UserWatchlistItem[]
+  indexValues        IndexValue[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, setName, rarity, condition])
+  @@index([name])
+  @@index([setName])
+  @@index([game])
+  @@index([slug])
+}
+
+// ============================================================
+// Price — Week 3: 時系列強化 + データ信頼性フィールドを追加
+// ============================================================
+model Price {
+  id         String   @id @default(cuid())
+  cardId     String
+  card       Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  // --- 価格本体 ---
+  price      Float
+  currency   String   @default("JPY")
+
+  // --- 時刻 ---
+  observedAt DateTime            // 価格が観測された時刻（出品日時など）
+  capturedAt DateTime @default(now()) // このレコードをDBに入れた時刻
+
+  // --- ソース ---
+  sourceType String
+  sourceName String
+  sourceId   String?             // Source.id への外部キー（オプション）
+  source     Source?  @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  // --- 出品情報 ---
+  listingType    String?         // 正規化後: fixed / auction / offer / unknown
+  rawListingType String?         // 元データの生値（例: "Buy It Now", "メルカリ即決"）
+  availability   String?         // in_stock / sold / unknown
+
+  // --- 出品者 ---
+  sellerScore Float?             // 0.0 – 1.0（ソース側の評価を正規化）
+
+  // --- 重複排除 ---
+  fingerprint String? @unique    // cardId + urlHash + price + observedAt のハッシュ
+  urlHash     String?            // 出品 URL の SHA-256（重複検知用）
+
+  // --- 信頼性 ---
+  trustScore Int     @default(50) // 0 – 100（trust score v2 で自動計算）
+  isOutlier  Boolean @default(false) // outlier rejection でフラグ付け
+  isStale    Boolean @default(false) // stale detection でフラグ付け
+
+  // --- メタ ---
+  notes     String?
+  createdAt DateTime @default(now())
+
+  @@index([cardId])
+  @@index([observedAt])
+  @@index([capturedAt])
+  @@index([cardId, observedAt])
+  @@index([sourceId])
+  @@index([urlHash])
+  @@index([isOutlier])
+  @@index([isStale])
+}
+
+// ============================================================
+// Source — Week 3: trustWeight / type を追加
+// ============================================================
+model Source {
+  id                String   @id @default(cuid())
+  name              String
+  type              String?              // "marketplace" / "retailer" / "auction" / "manual"
+  defaultTrustScore Int      @default(50)
+  trustWeight       Float    @default(1.0) // インデックス計算時の重み係数（0.0 – 2.0）
+  createdAt         DateTime @default(now())
+
+  prices Price[]
+
+  @@unique([name])
+}
+
+// ============================================================
+// IndexValue
+// Week 18: cardId=null → global GCI index; cardId=<id> → per-card index
+// ============================================================
+model IndexValue {
+  id           String   @id @default(cuid())
+  value        Float
+  changeRate   Float    @default(0)
+  calculatedAt DateTime @default(now())
+
+  // Week 18: per-card index support
+  // null = global GCI index (backward-compatible)
+  cardId       String?
+  card         Card?    @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  // Confidence tier based on sample count and outlier rate
+  // "HIGH" | "MED" | "LOW" | null (null = legacy/global)
+  confidence   String?
+
+  // Denormalised for fast reads
+  sampleCount  Int?
+  outlierCount Int?
+
+  @@index([calculatedAt])
+  @@index([cardId])
+  @@index([cardId, calculatedAt])
+}
+
+// ============================================================
+// RecalcLog — Week 3.5: recalc 実行ログ
+// ============================================================
+model RecalcLog {
+  id           String   @id @default(cuid())
+
+  // 実行結果
+  status       String   // "success" | "no_data" | "error"
+  triggeredBy  String   @default("cron") // "cron" | "manual"
+  durationMs   Int?     // 実行時間（ms）
+
+  // success 時
+  indexValueId   String?  // IndexValue.id
+  value          Float?
+  changeRate     Float?
+  sampleCount    Int?
+  outlierCount   Int?
+  staleFlagged   Int?
+  staleUnflagged Int?
+
+  // Week 18: per-card recalc summary (JSON array of per-card stats)
+  // [{ cardId, name, condition, status: "updated"|"skipped"|"no_data", sampleCount, outlierCount, value }]
+  cardBreakdown  Json?
+
+  // Week 18: aggregate per-card stats
+  cardsProcessed Int?
+  cardsUpdated   Int?
+  cardsSkipped   Int?
+
+  // error 時
+  errorMessage String?
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([status])
+}
+
+// ============================================================
+// DailyRecapSnapshot — Week 6: 日次市場まとめ永続化
+// ============================================================
+model DailyRecapSnapshot {
+  id          String    @id @default(cuid())
+  date        String    @unique   // "2026-05-09"（JST 日付）
+  payload     Json                // DailyRecap 全体を JSON 保存
+  generatedAt DateTime  @default(now())
+
+  // Week 6: X 投稿管理（idempotency guard）
+  tweetId     String?             // 投稿済み tweet ID
+  tweetedAt   DateTime?           // 投稿時刻
+  tweetUrl    String?             // https://x.com/i/web/status/{id}
+
+  // Week 8: Discord 投稿管理（idempotency guard）
+  discordMessageId String?        // 投稿済み Discord message ID
+  discordPostedAt  DateTime?      // 投稿時刻
+
+  @@index([date])
+}
+
+// ============================================================
+// NewsletterSubscriber — Week 9: ニュースレター購読管理
+// ============================================================
+model NewsletterSubscriber {
+  id     String @id @default(cuid())
+  email  String @unique
+
+  // ステータス: pending → active → unsubscribed
+  // pending      = 確認メール送信済み・未クリック
+  // active       = ダブルオプトイン完了・配信対象
+  // unsubscribed = 退会済み（物理削除せず保持）
+  status String @default("pending")  // "pending" | "active" | "unsubscribed"
+
+  // ダブルオプトイン + 退会 に共用するトークン（URL に埋め込む）
+  // cuid() で生成 → 十分なエントロピー・推測不可能
+  token  String @unique @default(cuid())
+
+  confirmedAt    DateTime?   // ダブルオプトイン完了時刻（consent timestamp）
+  unsubscribedAt DateTime?   // 退会時刻
+
+  // Week 9.5: Bounce 管理（bounce webhook で設定）
+  bouncedAt      DateTime?   // バウンス検知時刻
+  bounceType     String?     // "hard" | "soft" | "complaint"
+
+  // UTM / ソース追跡（将来分析用、任意）
+  source         String?     // "homepage" | "daily-page" | "api" など
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([token])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============================================================
+// NewsletterRunLog — Week 9.5: 配信実行履歴
+// ============================================================
+model NewsletterRunLog {
+  id          String   @id @default(cuid())
+  mode        String   // "dry" | "preview" | "live"
+  date        String   // recap 対象日 "2026-05-09"
+  status      String   // "ok" | "error" | "skipped"
+  totalTarget Int      @default(0)  // 配信対象件数（active 購読者数）
+  totalSent   Int      @default(0)  // 実際に送信した件数（dry=0）
+  errorCount  Int      @default(0)  // 送信エラー件数
+  durationMs  Int?                  // 実行時間 ms
+  note        String?               // エラーメッセージ・補足
+  triggeredBy String   @default("cron")  // "cron" | "manual"
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([date])
+  @@index([mode])
+}
+
+// ============================================================
+// Watchlist — Week 4: ウォッチリスト
+// ============================================================
+model Watchlist {
+  id        String          @id @default(cuid())
+  sessionId String          @unique  // ブラウザ Cookie の UUID（auth なし β 版）
+  createdAt DateTime        @default(now())
+  items     WatchlistItem[]
+
+  @@index([sessionId])
+}
+
+model WatchlistItem {
+  id          String    @id @default(cuid())
+  watchlistId String
+  watchlist   Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  cardId      String
+  card        Card      @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  addedAt     DateTime  @default(now())
+
+  @@unique([watchlistId, cardId])
+  @@index([watchlistId])
+  @@index([cardId])
+}
+
+// ============================================================
+// CronLog — Week 13: 全 cron エンドポイントの実行履歴
+// ============================================================
+model CronLog {
+  id           String   @id @default(cuid())
+
+  // cron 識別子 ("fetch" | "recalc" | "daily-snapshot" | "daily-post" |
+  //              "daily-discord" | "daily-newsletter" | "backup")
+  name         String
+
+  // 実行結果
+  status       String   // "ok" | "error" | "skipped"
+
+  // dry=1 で実行した場合は true
+  isDry        Boolean  @default(false)
+
+  // 実行時間（ms）
+  durationMs   Int?
+
+  // 正常完了時のサマリー（任意の JSON）
+  result       Json?
+
+  // エラー時の詳細メッセージ
+  errorMessage String?
+
+  triggeredBy  String   @default("cron")  // "cron" | "manual"
+  createdAt    DateTime @default(now())
+
+  @@index([name])
+  @@index([createdAt])
+  @@index([name, createdAt])
+}
+
+// ============================================================
+// BackupLog — Week 12: DB バックアップ実行履歴 + 整合性チェック
+// ============================================================
+model BackupLog {
+  id        String   @id @default(cuid())
+
+  // 実行タイプ
+  // "integrity" = テーブル行数チェック（Vercel cron）
+  // "pgdump"    = pg_dump フルバックアップ（GitHub Actions）
+  type      String   // "integrity" | "pgdump"
+
+  // 実行結果
+  status    String   // "ok" | "warn" | "error"
+
+  // テーブル行数スナップショット（JSON: { tableName: count }）
+  // integrity チェックで保存する
+  counts    Json?
+
+  // 前回比較で検知した異常（JSON: { tableName: { prev, current, drop_pct } }[]）
+  anomalies Json?
+
+  // pg_dump の場合: 保存先（GitHub Artifacts の URL 等）
+  backupUrl String?
+
+  // バックアップサイズ（bytes）
+  sizeBytes Int?
+
+  // 実行時間（ms）
+  durationMs Int?
+
+  // エラー詳細
+  errorMessage String?
+
+  triggeredBy  String   @default("cron")  // "cron" | "manual"
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([type])
+  @@index([status])
+}
+
+// ============================================================
+// CollectorRun — Week 16: Mercari コレクター実行履歴
+// ============================================================
+model CollectorRun {
+  id   String @id @default(cuid())
+
+  // 収集セッション識別子（同一バッチは同じ sessionId）
+  sessionId   String
+
+  // ソース情報
+  source      String  @default("mercari")  // "mercari" | "yahuoku" | "manual"
+
+  // カード情報（収集時のメタ）
+  cardName    String?
+  setName     String?
+  rarity      String?
+  condition   String?
+
+  // ── 収集アイテムの状態 ──
+  // "pending"  = まだ処理されていない
+  // "imported" = /api/v1/prices/bulk に投入済み
+  // "filtered" = フィルターで除外
+  // "error"    = パースエラー等
+  status      String  @default("pending")
+
+  // 生データ（貼り付けられた JSON or テキスト）
+  rawTitle    String?
+  rawPrice    Float?
+  rawUrl      String?
+
+  // 正規化後
+  normalizedTitle String?
+  normalizedPrice Float?
+
+  // フィルター除外理由（filtered / error 時）
+  filterReason String?
+
+  // bulk API に投入した時刻
+  importedAt  DateTime?
+
+  createdAt   DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([status])
+  @@index([source])
+  @@index([createdAt])
+}
+
+// ============================================================
+// Week 23: User Accounts — NextAuth required models
+// ============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts       Account[]
+  sessions       Session[]
+  watchlistItems UserWatchlistItem[]
+  notifPrefs     NotificationPrefs?
+
+  @@index([email])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================================
+// Week 23: UserWatchlistItem — persistent, user-linked watchlist
+// ============================================================
+
+model UserWatchlistItem {
+  id      String   @id @default(cuid())
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardId  String
+  card    Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  addedAt DateTime @default(now())
+
+  @@unique([userId, cardId])
+  @@index([userId])
+  @@index([cardId])
+}
+
+// ============================================================
+// Week 23: NotificationPrefs — per-user alert settings
+// ============================================================
+
+model NotificationPrefs {
+  id           String  @id @default(cuid())
+  userId       String  @unique
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // アラートメール (watchlist-alerts cron)
+  marketAlerts Boolean @default(true)
+  // 週次まとめ (weekly-recap cron)
+  weeklyRecap  Boolean @default(true)
+  // 日次ニュースレター (daily-newsletter cron)
+  newsletter   Boolean @default(false)
+
+  updatedAt    DateTime @updatedAt
+}
+
+// ============================================================
+// CardRequest — Week 21: ユーザーからのカード追加リクエスト
+// ============================================================
+model CardRequest {
+  id          String   @id @default(cuid())
+
+  name        String
+  setName     String?
+  game        String?
+  rarity      String?
+
+  requestedBy String?
+  note        String?
+
+  status      String   @default("pending")
+  reviewNote  String?
+  reviewedAt  DateTime?
+
+  createdAt   DateTime @default(now())
+
+  @@index([status])
+  @@index([game])
+  @@index([createdAt])
+}
