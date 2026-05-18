@@ -46,7 +46,7 @@ export default async function AccountPage() {
     ? await prisma.watchlist.findUnique({
         where:  { sessionId: anonSessionId },
         select: { _count: { select: { items: true } } },
-      }).then((w) => (w?._count.items ?? 0) > 0)
+      }).then((w: { _count: { items: number } } | null) => (w?._count.items ?? 0) > 0)
     : false;
 
   return (
