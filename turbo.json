@@ -4,7 +4,21 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "DATABASE_URL",
+        "AUTH_SECRET",
+        "AUTH_RESEND_KEY",
+        "RESEND_API_KEY",
+        "RESEND_FROM_EMAIL",
+        "CRON_SECRET",
+        "ADMIN_PASSWORD",
+        "ADMIN_USER",
+        "NEXT_PUBLIC_BASE_URL",
+        "NEXT_PUBLIC_PLAUSIBLE_DOMAIN",
+        "NEXT_PUBLIC_DISCORD_INVITE",
+        "NEXT_PUBLIC_APP_VERSION"
+      ]
     },
     "dev": {
       "cache":      false,
