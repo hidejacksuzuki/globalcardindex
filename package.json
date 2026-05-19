@@ -21,6 +21,7 @@
     "db:seed-cards:dry": "tsx scripts/seed-cards.ts --dry"
   },
   "devDependencies": {
+    "tsx":        "^4.19.0",
     "turbo":      "^2.3.0",
     "typescript": "^5.6.3"
   },

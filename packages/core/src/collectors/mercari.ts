@@ -31,57 +31,57 @@ export type WatchlistEntry = {
 };
 
 export type MercariSearchLink = {
-  game:       string;
-  cardName:   string;
-  set:        string;
-  rarity:     string;
-  condition:  string;
-  keyword:    string;
-  url:        string;
-  priceRange: string;     // human-readable "¥15,000 – ¥45,000"
-  minPrice:   number;
-  maxPrice:   number;
+  game:         string;
+  cardName:     string;
+  set:          string;
+  rarity:       string;
+  condition:    string;
+  keyword:      string;
+  /** おすすめ順 (sort=score) — primary URL */
+  url:          string;
+  /** 価格安い順 (sort=price&order=asc) */
+  lowPriceUrl:  string;
+  /** 価格高い順 (sort=price&order=dsc) */
+  highPriceUrl: string;
+  priceRange:   string;   // human-readable "¥15,000 – ¥45,000"
+  minPrice:     number;
+  maxPrice:     number;
 };
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const MERCARI_BASE      = "https://jp.mercari.com/search";
-const MERCARI_CATEGORY  = "752";    // TCGカード
+const MERCARI_BASE = "https://jp.mercari.com/search";
 
-/** Japanese condition label map for search keywords */
-const CONDITION_JP: Record<string, string> = {
-  NM:  "美品",
-  LP:  "良品",
-  MP:  "中程度",
-  HP:  "傷あり",
-  DMG: "傷・汚れあり",
-};
+/** Default exclusion keywords to filter noise listings */
+export const DEFAULT_EXCLUDE_KEYWORDS =
+  "オリパ 引退品 まとめ 海外 英語 proxy プレイ用 傷あり";
 
 // ── URL builder ───────────────────────────────────────────────────────────────
 
 /**
- * Build a single Mercari search URL for one card + condition combo.
+ * Build a single Mercari search URL.
+ *
+ * @param sort  "score" (default/relevance) | "price"
+ * @param order "asc" | "dsc" — only used when sort="price"
  */
 export function buildMercariSearchUrl(opts: {
-  keyword:   string;
-  condition: string;
-  minPrice?: number;
-  maxPrice?: number;
-  soldOut?:  boolean;   // true → search sold listings (for price research)
+  keyword:          string;
+  minPrice?:        number;
+  maxPrice?:        number;
+  sort?:            "score" | "price";
+  order?:           "asc" | "dsc";
+  excludeKeywords?: string;
 }): string {
   const params = new URLSearchParams();
 
-  // Append condition keyword if known
-  const condJp = CONDITION_JP[opts.condition.toUpperCase()];
-  const keyword = condJp
-    ? `${opts.keyword} ${condJp}`
-    : opts.keyword;
+  params.set("keyword",         opts.keyword);
+  params.set("exclude_keyword", opts.excludeKeywords ?? DEFAULT_EXCLUDE_KEYWORDS);
+  params.set("status",          "on_sale");
+  params.set("sort",            opts.sort ?? "score");
 
-  params.set("keyword",       keyword);
-  params.set("category_id",   MERCARI_CATEGORY);
-  params.set("status",        opts.soldOut ? "2" : "1");
-  params.set("sort",          "created_time");
-  params.set("order",         "desc");
+  if (opts.sort === "price" && opts.order) {
+    params.set("order", opts.order);
+  }
 
   if (opts.minPrice != null && opts.minPrice > 0) {
     params.set("price_min", String(opts.minPrice));
@@ -94,7 +94,7 @@ export function buildMercariSearchUrl(opts: {
 }
 
 /**
- * Build all search links for one watchlist entry (one per condition).
+ * Build all 3 search URLs (score / low-price / high-price) for one watchlist entry per condition.
  */
 export function buildMercariLinksForEntry(
   entry: WatchlistEntry,
@@ -102,31 +102,25 @@ export function buildMercariLinksForEntry(
   if (!entry.active) return [];
 
   return entry.conditions.map((condition) => {
-    // Keyword: use explicit override if set, otherwise auto-build
     const keyword = entry.keywords?.trim()
       ? entry.keywords.trim()
-      : `${entry.cardName} ${entry.rarity} ${entry.set}`;
+      : `${entry.cardName} ${entry.rarity} ${entry.set}`.trim();
 
-    const url = buildMercariSearchUrl({
-      keyword,
-      condition,
-      minPrice: entry.minPrice,
-      maxPrice: entry.maxPrice,
-    });
-
-    const priceRange = `¥${entry.minPrice.toLocaleString()} – ¥${entry.maxPrice.toLocaleString()}`;
+    const base = { keyword, minPrice: entry.minPrice, maxPrice: entry.maxPrice };
 
     return {
-      game:       entry.game,
-      cardName:   entry.cardName,
-      set:        entry.set,
-      rarity:     entry.rarity,
+      game:         entry.game,
+      cardName:     entry.cardName,
+      set:          entry.set,
+      rarity:       entry.rarity,
       condition,
       keyword,
-      url,
-      priceRange,
-      minPrice:   entry.minPrice,
-      maxPrice:   entry.maxPrice,
+      url:          buildMercariSearchUrl({ ...base, sort: "score" }),
+      lowPriceUrl:  buildMercariSearchUrl({ ...base, sort: "price", order: "asc" }),
+      highPriceUrl: buildMercariSearchUrl({ ...base, sort: "price", order: "dsc" }),
+      priceRange:   `¥${entry.minPrice.toLocaleString()} – ¥${entry.maxPrice.toLocaleString()}`,
+      minPrice:     entry.minPrice,
+      maxPrice:     entry.maxPrice,
     };
   });
 }

@@ -104,17 +104,11 @@ export default function AdminCollectorPage() {
                           {link.keyword}
                         </td>
                         <td className="px-4 py-3">
-                          <a
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 rounded-md bg-red-500 px-3 py-1 text-xs font-medium text-white hover:bg-red-600 transition"
-                          >
-                            Mercari
-                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                          </a>
+                          <div className="flex gap-1">
+                            <SearchBtn href={link.url}          label="おすすめ" color="bg-red-500 hover:bg-red-600" />
+                            <SearchBtn href={link.lowPriceUrl}  label="安い順"   color="bg-blue-500 hover:bg-blue-600" />
+                            <SearchBtn href={link.highPriceUrl} label="高い順"   color="bg-amber-500 hover:bg-amber-600" />
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -147,6 +141,19 @@ export default function AdminCollectorPage() {
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
+
+function SearchBtn({ href, label, color }: { href: string; label: string; color: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`inline-flex items-center rounded px-2 py-1 text-[10px] font-medium text-white transition ${color}`}
+    >
+      {label}
+    </a>
+  );
+}
 
 function CollectorSubNav({ active }: { active: "urls" | "import" | "review" | "runs" }) {
   const items = [

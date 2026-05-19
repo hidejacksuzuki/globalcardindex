@@ -241,7 +241,135 @@ const ONEPIECE: CardSeed[] = [
   { game: "onepiece", name: "Yamato",                   setName: "OP-04 Kingdoms of Intrigue", rarity: "SR Parallel", condition: "NM" },
 ];
 
-export const ALL_CARDS: CardSeed[] = [...POKEMON, ...ONEPIECE];
+// ─── Pokémon TCG (Japanese era / trainer cards) ───────────────────────────────
+// Japanese set codes: sv* = SV era, s* = SWSH era, sm* = Sun & Moon era, bw* = BW era
+
+const POKEMON_JP: CardSeed[] = [
+  // SV era trainers
+  { game: "pokemon", name: "ナンジャモ",        setName: "sv2D", rarity: "SAR", condition: "NM" },
+  { game: "pokemon", name: "ナンジャモ",        setName: "sv2D", rarity: "SAR", condition: "LP" },
+  { game: "pokemon", name: "ナンジャモ",        setName: "sv2D", rarity: "SR",  condition: "NM" },
+  { game: "pokemon", name: "ミモザ",            setName: "sv1V", rarity: "SAR", condition: "NM" },
+  { game: "pokemon", name: "ミモザ",            setName: "sv1V", rarity: "SR",  condition: "NM" },
+  { game: "pokemon", name: "キハダ",            setName: "sv1a", rarity: "SAR", condition: "NM" },
+  { game: "pokemon", name: "キハダ",            setName: "sv1a", rarity: "SR",  condition: "NM" },
+  { game: "pokemon", name: "ボタン",            setName: "sv1S", rarity: "SAR", condition: "NM" },
+  { game: "pokemon", name: "ボタン",            setName: "sv1S", rarity: "SR",  condition: "NM" },
+  { game: "pokemon", name: "サーナイト ex",     setName: "sv1S", rarity: "SAR", condition: "NM" },
+  { game: "pokemon", name: "ゲッコウガ ex",     setName: "sv2a", rarity: "SAR", condition: "NM" },
+  { game: "pokemon", name: "リザードン ex",     setName: "sv2a", rarity: "SAR", condition: "NM" },
+  { game: "pokemon", name: "リザードン ex",     setName: "sv2a", rarity: "SAR", condition: "LP" },
+  { game: "pokemon", name: "ピカチュウ",        setName: "sv1a", rarity: "AR",  condition: "NM" },
+
+  // SWSH era (s* series)
+  { game: "pokemon", name: "カイ",              setName: "s10P", rarity: "SAR", condition: "NM" },
+  { game: "pokemon", name: "カイ",              setName: "s10P", rarity: "SR",  condition: "NM" },
+  { game: "pokemon", name: "セレナ",            setName: "s11a", rarity: "SR",  condition: "NM" },
+  { game: "pokemon", name: "セレナ",            setName: "s11a", rarity: "HR",  condition: "NM" },
+  { game: "pokemon", name: "マリィ",            setName: "s4a",  rarity: "SR",  condition: "NM" },
+  { game: "pokemon", name: "マリィのプライド",  setName: "sI",   rarity: "SR",  condition: "NM" },
+  { game: "pokemon", name: "ユウリ",            setName: "s8b",  rarity: "SR",  condition: "NM" },
+  { game: "pokemon", name: "リザードン VSTAR",  setName: "s9",   rarity: "HR",  condition: "NM" },
+  { game: "pokemon", name: "リザードン VMAX",   setName: "s4a",  rarity: "SSR", condition: "NM" },
+  { game: "pokemon", name: "ブラッキー VMAX",   setName: "s6a",  rarity: "HR",  condition: "NM" },
+  { game: "pokemon", name: "ブラッキー VMAX",   setName: "s6a",  rarity: "HR",  condition: "LP" },
+  { game: "pokemon", name: "ニンフィア VMAX",   setName: "s6a",  rarity: "HR",  condition: "NM" },
+  { game: "pokemon", name: "グレイシア VMAX",   setName: "s6a",  rarity: "HR",  condition: "NM" },
+  { game: "pokemon", name: "リーフィア VMAX",   setName: "s6a",  rarity: "HR",  condition: "NM" },
+  { game: "pokemon", name: "ミュウ VMAX",       setName: "s8",   rarity: "HR",  condition: "NM" },
+  { game: "pokemon", name: "ピカチュウ",        setName: "s8b",  rarity: "CSR", condition: "NM" },
+  { game: "pokemon", name: "ボスの指令",        setName: "s2",   rarity: "SR",  condition: "NM" },
+
+  // Sun & Moon era (sm* series)
+  { game: "pokemon", name: "リーリエ",          setName: "sm4+", rarity: "SR",  condition: "NM" },
+  { game: "pokemon", name: "アセロラ",          setName: "sm2+", rarity: "SR",  condition: "NM" },
+  { game: "pokemon", name: "ルチア",            setName: "sm7",  rarity: "SR",  condition: "NM" },
+  { game: "pokemon", name: "シロナ",            setName: "sm5M", rarity: "SR",  condition: "NM" },
+  { game: "pokemon", name: "シロナ&カトレア",   setName: "sm12", rarity: "SR",  condition: "NM" },
+  { game: "pokemon", name: "かんこうきゃく",   setName: "sm12a", rarity: "SR", condition: "NM" },
+  { game: "pokemon", name: "メイ",              setName: "sm11b", rarity: "SR", condition: "NM" },
+  { game: "pokemon", name: "ヒガナ",            setName: "sm6a", rarity: "SR",  condition: "NM" },
+  { game: "pokemon", name: "リザードン GX",     setName: "sm3H", rarity: "HR",  condition: "NM" },
+  { game: "pokemon", name: "ブラッキー GX",     setName: "sm1M", rarity: "HR",  condition: "NM" },
+  { game: "pokemon", name: "ミュウツー GX",     setName: "sm3+", rarity: "HR",  condition: "NM" },
+
+  // BW era (bw* series)
+  { game: "pokemon", name: "フウロ",            setName: "bw7",  rarity: "SR",  condition: "NM" },
+  { game: "pokemon", name: "ベル",              setName: "bw6",  rarity: "SR",  condition: "NM" },
+
+  // Promo
+  { game: "pokemon", name: "ピカチュウ",        setName: "S-P",  rarity: "プロモ 001", condition: "NM" },
+  { game: "pokemon", name: "ピカチュウ",        setName: "S-P",  rarity: "プロモ 323", condition: "NM" },
+
+  // 旧裏 (Classic Japanese Base Set)
+  { game: "pokemon", name: "リザードン",        setName: "旧裏 第1弾", rarity: "キラ", condition: "NM" },
+  { game: "pokemon", name: "リザードン",        setName: "旧裏 第1弾", rarity: "キラ", condition: "LP" },
+];
+
+// ─── One Piece: Community Parallel (コミパラ) ─────────────────────────────────
+// コミパラ = event-exclusive parallel cards sold at community events.
+// Prices differ significantly from regular/SEC versions.
+
+const ONEPIECE_COMIPARA: CardSeed[] = [
+  { game: "onepiece", name: "モンキー・D・ルフィ",   setName: "OP-05", rarity: "コミパラ", condition: "NM" },
+  { game: "onepiece", name: "ポートガス・D・エース", setName: "OP-02", rarity: "コミパラ", condition: "NM" },
+  { game: "onepiece", name: "シャンクス",            setName: "OP-01", rarity: "コミパラ", condition: "NM" },
+  { game: "onepiece", name: "サボ",                  setName: "OP-04", rarity: "コミパラ", condition: "NM" },
+  { game: "onepiece", name: "トラファルガー・ロー",  setName: "OP-05", rarity: "コミパラ", condition: "NM" },
+  { game: "onepiece", name: "ナミ",                  setName: "OP-01", rarity: "パラレル", condition: "NM" },
+  { game: "onepiece", name: "ナミ",                  setName: "OP-02", rarity: "SR パラレル", condition: "NM" },
+  { game: "onepiece", name: "ロビン",                setName: "OP-03", rarity: "パラレル", condition: "NM" },
+  { game: "onepiece", name: "ハンコック",            setName: "OP-01", rarity: "パラレル", condition: "NM" },
+  { game: "onepiece", name: "ルフィ",                setName: "OP-01", rarity: "リーダーパラレル", condition: "NM" },
+  { game: "onepiece", name: "ゾロ",                  setName: "OP-01", rarity: "リーダーパラレル", condition: "NM" },
+  { game: "onepiece", name: "キッド",                setName: "OP-02", rarity: "リーダーパラレル", condition: "NM" },
+  { game: "onepiece", name: "ロー",                  setName: "OP-02", rarity: "リーダーパラレル", condition: "NM" },
+  { game: "onepiece", name: "カイドウ",              setName: "OP-01", rarity: "SR パラレル", condition: "NM" },
+  { game: "onepiece", name: "ビッグマム",            setName: "OP-03", rarity: "SR パラレル", condition: "NM" },
+  { game: "onepiece", name: "ヤマト",                setName: "OP-01", rarity: "SEC パラレル", condition: "NM" },
+  { game: "onepiece", name: "ウタ",                  setName: "OP-02", rarity: "SEC パラレル", condition: "NM" },
+];
+
+// ─── Yu-Gi-Oh ─────────────────────────────────────────────────────────────────
+
+const YUGIOH: CardSeed[] = [
+  { game: "yugioh", name: "青眼の白龍",          setName: "初期 第1弾",    rarity: "ウルトラレア", condition: "NM" },
+  { game: "yugioh", name: "青眼の白龍",          setName: "初期 第1弾",    rarity: "ウルトラレア", condition: "LP" },
+  { game: "yugioh", name: "青眼の白龍",          setName: "レリーフ",       rarity: "レリーフレア", condition: "NM" },
+  { game: "yugioh", name: "ブラック・マジシャン", setName: "初期 第1弾",    rarity: "ウルトラレア", condition: "NM" },
+  { game: "yugioh", name: "ブラック・マジシャン・ガール", setName: "20th", rarity: "20thシークレット", condition: "NM" },
+  { game: "yugioh", name: "真紅眼の黒竜",        setName: "レリーフ",       rarity: "レリーフレア", condition: "NM" },
+  { game: "yugioh", name: "万物創世龍",          setName: "QCCP",           rarity: "10000シークレット", condition: "NM" },
+  { game: "yugioh", name: "ブラック・ローズ・ドラゴン", setName: "レリーフ", rarity: "レリーフレア", condition: "NM" },
+  { game: "yugioh", name: "閃刀姫－レイ",        setName: "20th",           rarity: "20thシークレット", condition: "NM" },
+  { game: "yugioh", name: "灰流うらら",          setName: "プリズマ",       rarity: "プリズマティックシークレット", condition: "NM" },
+  { game: "yugioh", name: "増殖するG",           setName: "20th",           rarity: "20thシークレット", condition: "NM" },
+];
+
+// ─── Magic: The Gathering ─────────────────────────────────────────────────────
+
+const MTG: CardSeed[] = [
+  { game: "mtg", name: "Black Lotus",    setName: "Alpha",   rarity: "Rare",     condition: "NM" },
+  { game: "mtg", name: "Black Lotus",    setName: "Beta",    rarity: "Rare",     condition: "NM" },
+  { game: "mtg", name: "Black Lotus",    setName: "Unlimited", rarity: "Rare",   condition: "NM" },
+  { game: "mtg", name: "Mox Jet",        setName: "Alpha",   rarity: "Rare",     condition: "NM" },
+  { game: "mtg", name: "Mox Jet",        setName: "Beta",    rarity: "Rare",     condition: "NM" },
+  { game: "mtg", name: "Underground Sea", setName: "Revised", rarity: "Rare",    condition: "NM" },
+  { game: "mtg", name: "Underground Sea", setName: "Revised", rarity: "Rare",    condition: "LP" },
+  { game: "mtg", name: "Volcanic Island", setName: "Revised", rarity: "Rare",    condition: "NM" },
+  { game: "mtg", name: "Volcanic Island", setName: "Revised", rarity: "Rare",    condition: "LP" },
+  { game: "mtg", name: "Time Walk",      setName: "Alpha",   rarity: "Rare",     condition: "NM" },
+  { game: "mtg", name: "Time Walk",      setName: "Beta",    rarity: "Rare",     condition: "NM" },
+];
+
+export const ALL_CARDS: CardSeed[] = [
+  ...POKEMON,
+  ...POKEMON_JP,
+  ...ONEPIECE,
+  ...ONEPIECE_COMIPARA,
+  ...YUGIOH,
+  ...MTG,
+];
 
 export function getCardsByGame(game: string): CardSeed[] {
   return ALL_CARDS.filter((c) => c.game === game);
