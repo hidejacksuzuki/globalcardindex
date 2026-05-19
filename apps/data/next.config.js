@@ -24,6 +24,12 @@ const nextConfig = {
   experimental: {
     outputFileTracingRoot: path.join(__dirname, "../../"),
     serverComponentsExternalPackages: ["@prisma/client", "prisma"],
+    outputFileTracingIncludes: {
+      "/**": [
+        "../../node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client/**",
+        "../../node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client/**",
+      ],
+    },
   },
 
   // gci-data.com — private internal app
