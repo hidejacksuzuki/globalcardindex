@@ -293,6 +293,7 @@ export default async function AdminCardsPage() {
                   <th className="px-4 py-3 text-right">Latest ¥</th>
                   <th className="px-4 py-3">Last Observed</th>
                   <th className="px-4 py-3">Slug</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-navy/5">
@@ -330,6 +331,14 @@ export default async function AdminCardsPage() {
                     </td>
                     <td className="px-4 py-3 font-mono text-[11px] text-navy/40">
                       {c.slug ?? <span className="text-navy/25">—</span>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <a
+                        href={`/admin/cards/${c.id}/collect`}
+                        className="rounded bg-navy px-3 py-1 text-xs font-medium text-white hover:bg-navy/80"
+                      >
+                        Collect
+                      </a>
                     </td>
                   </tr>
                 ))}
