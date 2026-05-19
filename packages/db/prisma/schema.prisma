@@ -26,6 +26,8 @@ model Card {
   watchlistItems     WatchlistItem[]
   userWatchlistItems UserWatchlistItem[]
   indexValues        IndexValue[]
+  rawListings        RawListing[]
+  priceSnapshots     PriceSnapshot[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -487,6 +489,59 @@ model NotificationPrefs {
   newsletter   Boolean @default(false)
 
   updatedAt    DateTime @updatedAt
+}
+
+// ============================================================
+// RawListing — 半自動スクレイピングで取り込んだ生出品データ
+// ============================================================
+model RawListing {
+  id         String   @id @default(cuid())
+  cardId     String
+  card       Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  source     String   // "mercari" | "yahuoku"
+  title      String
+  price      Int
+  url        String?
+  imageUrl   String?
+  rawText    String?
+
+  matchScore Int      @default(0)  // 0–100
+  trustScore Int      @default(0)  // 0–100
+
+  // "pending" | "approved" | "rejected"
+  status     String   @default("pending")
+
+  capturedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([cardId])
+  @@index([status])
+  @@index([cardId, status])
+  @@index([capturedAt])
+}
+
+// ============================================================
+// PriceSnapshot — 承認済み出品から算出した価格サマリー
+// ============================================================
+model PriceSnapshot {
+  id            String   @id @default(cuid())
+  cardId        String
+  card          Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  source        String   // "mercari" | "yahuoku"
+  minPrice      Int?
+  medianPrice   Int?
+  avgPrice      Int?
+  maxPrice      Int?
+  sampleCount   Int
+  approvedCount Int
+
+  capturedAt    DateTime @default(now())
+
+  @@index([cardId])
+  @@index([cardId, capturedAt])
+  @@index([capturedAt])
 }
 
 // ============================================================
