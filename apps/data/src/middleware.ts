@@ -1,5 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { timingSafeEqual }           from "@gci/core";
+
+/** Edge Runtime 互換のタイミングセーフ文字列比較 */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    // 長さが違っても全文字比較してタイミング情報を漏らさない
+    let diff = 0;
+    for (let i = 0; i < Math.max(a.length, b.length); i++) {
+      diff |= (a.charCodeAt(i) ?? 0) ^ (b.charCodeAt(i) ?? 0);
+    }
+    return false;
+  }
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
 
 /**
  * Admin 簡易認証 — HTTP Basic Auth
