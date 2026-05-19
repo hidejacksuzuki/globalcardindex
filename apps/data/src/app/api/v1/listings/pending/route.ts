@@ -15,6 +15,18 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "cardId required" }, { status: 400 });
   }
 
+  const source = new URL(req.url).searchParams.get("source");
+
+  // Yahoo Auction sources → query RawAuctionResult
+  if (source === "yahoo_auction_active" || source === "yahoo_auction_closed") {
+    const listings = await prisma.rawAuctionResult.findMany({
+      where:   { cardId, source, status: "pending" },
+      orderBy: { matchScore: "desc" },
+      select:  { id: true, title: true, price: true, url: true, bidCount: true, endedAt: true, matchScore: true, trustScore: true, status: true, capturedAt: true },
+    });
+    return NextResponse.json({ ok: true, listings });
+  }
+
   const listings = await prisma.rawListing.findMany({
     where:   { cardId, status: "pending" },
     orderBy: { matchScore: "desc" },

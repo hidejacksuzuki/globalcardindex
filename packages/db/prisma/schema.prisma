@@ -27,7 +27,9 @@ model Card {
   userWatchlistItems UserWatchlistItem[]
   indexValues        IndexValue[]
   rawListings        RawListing[]
+  rawAuctionResults  RawAuctionResult[]
   priceSnapshots     PriceSnapshot[]
+  sourceSearchUrls   SourceSearchUrl[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -489,6 +491,61 @@ model NotificationPrefs {
   newsletter   Boolean @default(false)
 
   updatedAt    DateTime @updatedAt
+}
+
+// ============================================================
+// SourceSearchUrl — カードごとの検索URL管理
+// source: "mercari" | "yahoo_auction_active" | "yahoo_auction_closed"
+// ============================================================
+model SourceSearchUrl {
+  id        String   @id @default(cuid())
+  cardId    String
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  source    String   // "mercari" | "yahoo_auction_active" | "yahoo_auction_closed"
+  url       String
+  keyword   String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([cardId])
+  @@index([source])
+  @@unique([cardId, source])
+}
+
+// ============================================================
+// RawAuctionResult — ヤフオク取り込み生データ
+// ============================================================
+model RawAuctionResult {
+  id         String    @id @default(cuid())
+  cardId     String
+  card       Card      @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  // "yahoo_auction_active" | "yahoo_auction_closed"
+  source     String
+
+  title      String
+  price      Int
+  url        String?
+  imageUrl   String?
+  bidCount   Int?
+  endedAt    DateTime?
+  rawText    String?
+
+  matchScore Int       @default(0)
+  trustScore Int       @default(0)
+
+  // "pending" | "approved" | "rejected"
+  status     String    @default("pending")
+
+  capturedAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+
+  @@index([cardId])
+  @@index([status])
+  @@index([cardId, status])
+  @@index([source])
+  @@index([capturedAt])
 }
 
 // ============================================================
