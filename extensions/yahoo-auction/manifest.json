@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "GCI Yahoo Auction Importer",
+  "version": "1.0.0",
+  "description": "ヤフオクの落札データをGlobal Card Indexに取り込む",
+
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": [
+    "https://auctions.yahoo.co.jp/*",
+    "https://*.vercel.app/*",
+    "https://gci-data.com/*"
+  ],
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "GCI Importer"
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "https://auctions.yahoo.co.jp/search/search*",
+        "https://auctions.yahoo.co.jp/closedsearch/closedsearch*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "icons": {
+    "16":  "icons/icon16.png",
+    "48":  "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
