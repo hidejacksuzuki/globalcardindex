@@ -320,7 +320,7 @@ export default function CollectPage() {
             <button onClick={() => setSelected(new Set(pending.map((l) => l.id)))} className="text-xs text-navy/50 underline">すべて選択</button>
           </div>
         </div>
-        {pending.length > 0 && (
+        {pending.length > 0 && (<>
           <div className="overflow-x-auto border border-navy/10 bg-white">
             <table className="min-w-full text-sm divide-y divide-navy/5">
               <thead className="bg-navy/5 text-xs uppercase tracking-widest text-navy/50 text-left">
@@ -371,7 +371,7 @@ export default function CollectPage() {
               除外 ({selected.size})
             </button>
           </div>
-        )}
+        </>)}
       </section>
 
       {msg && <p className="text-sm text-navy/70 border-l-2 border-navy/20 pl-3">{msg}</p>}
