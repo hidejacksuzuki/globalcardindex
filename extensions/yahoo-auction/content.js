@@ -18,105 +18,40 @@
 
   function scrapeItems() {
     const items = [];
+    const seen  = new Set();
 
-    // ── セレクター候補を順番に試す ──────────────────────────────────────────
-    const ITEM_SELECTORS = [
-      "li.Product",
-      "li[class*='Product']",
-      "[class*='sc-'] li",
-      "ul[class*='list'] li",
-      "div[class*='item']",
-      "[data-auction-id]",
-      "article",
-    ];
+    // 落札アイテムリンク（auctions.yahoo.co.jp/jp/auction/）を起点にする
+    const auctionLinks = [...document.querySelectorAll(
+      "a[href*='auctions.yahoo.co.jp/jp/auction/']"
+    )];
+    console.log("[GCI] auction links found:", auctionLinks.length);
 
-    let rows = [];
-    for (const sel of ITEM_SELECTORS) {
-      rows = [...document.querySelectorAll(sel)];
-      if (rows.length > 0) {
-        console.log("[GCI] selector matched:", sel, "→", rows.length, "rows");
-        break;
-      }
-    }
+    auctionLinks.forEach((a) => {
+      const url = a.href;
+      if (seen.has(url)) return;
+      seen.add(url);
 
-    // セレクターで見つからない場合は落札ページへのリンクから推測
-    // ヤフオク落札ページのURLは page.auctions.yahoo.co.jp/jp/auction/ の形式
-    if (rows.length === 0) {
-      console.log("[GCI] fallback: scanning auction page links");
-      const links = [...document.querySelectorAll(
-        "a[href*='auctions.yahoo.co.jp/jp/auction/']"
-      )];
-      console.log("[GCI] auction links found:", links.length);
-      links.forEach((a) => {
-        // リンクテキストが短すぎる（タイトルでない）ものは除外
-        const title = a.textContent?.trim();
-        if (!title || title.length < 5) return;
+      // コンテナ: li → 近い div[class] の順で探す
+      const container = a.closest("li") ?? a.closest("div[class]") ?? a.parentElement;
+      if (!container) return;
 
-        // 数字のみ・カテゴリ的なテキストは除外
-        if (/^[\d,¥￥〜～]+$/.test(title)) return;
-        if (/^\d+件$/.test(title)) return;
+      // タイトル: h要素 → リンクテキスト
+      const titleEl = container.querySelector("h3, h2, h1") ?? a;
+      const title   = titleEl.textContent?.trim() ?? "";
+      if (title.length < 5 || /^[\d,¥￥〜～\s]+$/.test(title)) return;
 
-        // 親要素から価格を探す
-        const parent = a.closest("li, tr, [class*='Product'], [class*='item']") ?? a.parentElement;
-        if (!parent) return;
+      // 価格: コンテナ内の数値から最大値を採用（サムネイルの件数等を除くため大きい方）
+      const allNums = [...(container.textContent ?? "").matchAll(/[\d,]{3,}/g)]
+        .map((m) => parseInt(m[0].replace(/,/g, ""), 10))
+        .filter((n) => n >= 100 && n <= 10_000_000);
+      if (allNums.length === 0) return;
+      const price = Math.max(...allNums);
 
-        // 価格：3桁以上の数字。最後のもの（最終価格）を使う
-        const allNums = [...(parent.textContent ?? "").matchAll(/[\d,]{3,}/g)];
-        const price = allNums.length > 0
-          ? parseInt(allNums[allNums.length - 1][0].replace(/,/g, ""), 10)
-          : null;
-
-        if (!price || price < 100 || price > 10_000_000) return;
-
-        items.push({ title, price, url: a.href });
-      });
-      return items;
-    }
-
-    // ── リンクURLのパターンを調査（最初の10行のみ）────────────────────────
-    // デバッグ用：実際の落札URLパターンを確認
-    const sampleAuctionLink = document.querySelector("a[href*='auctions.yahoo.co.jp/jp/auction/']");
-    console.log("[GCI] sample auction link:", sampleAuctionLink?.href);
-
-    // ── 各行からデータを抽出（落札ページへのリンクを含む行のみ）──────────
-    rows.forEach((row) => {
-      // 落札ページへのリンクが含まれる行だけを対象にする
-      const linkEl = row.querySelector(
-        "a[href*='auctions.yahoo.co.jp/jp/auction/']"
-      );
-      if (!linkEl) return;
-
-      // タイトル：リンクテキストか直近のタイトル要素
-      const titleEl = row.querySelector("h3, h2, [class*='Title'], [class*='title']") ?? linkEl;
-      const title   = titleEl?.textContent?.trim();
-
-      // 価格
-      const priceEl = row.querySelector(
-        "[class*='Price'], [class*='price'], .u-txb, strong, b"
-      );
-      const priceText = (priceEl?.textContent ?? "").match(/[\d,]{3,}/g)
-                     ?? (row.textContent ?? "").match(/[\d,]{4,}/g);
-      const price = priceText
-        ? parseInt(priceText[priceText.length - 1].replace(/,/g, ""), 10)
-        : null;
-
-      if (!title || !price || title.length < 5 || price < 100) return;
-
-      // 入札数
-      const bidEl   = row.querySelector("[class*='bid'], [class*='Bid']");
-      const bidText = bidEl?.textContent?.replace(/[^0-9]/g, "");
-      const bidCount = bidText ? parseInt(bidText, 10) : undefined;
-
-      // 終了日
-      const dateEl  = row.querySelector("[class*='Time'], [class*='time'], [class*='date'], time");
-      const endedAt = dateEl?.textContent?.trim()
-        ? parseJpDate(dateEl.textContent.trim())
-        : undefined;
-
-      items.push({ title, price, url: linkEl.href, bidCount, endedAt });
+      items.push({ title, price, url });
     });
 
     console.log("[GCI] scraped items:", items.length);
+    if (items.length > 0) console.log("[GCI] sample:", JSON.stringify(items[0]));
     return items;
   }
 
@@ -208,7 +143,6 @@
 
     document.body.appendChild(panel);
 
-    // 閉じるボタン
     document.getElementById("gci-close").addEventListener("click", () => {
       panel.remove();
     });
@@ -220,7 +154,6 @@
 
   chrome.storage.sync.get(["apiUrl", "cronSecret"], async ({ apiUrl, cronSecret }) => {
     if (!apiUrl || !cronSecret) {
-      // 設定未完了 → 小さなヒントだけ表示
       const hint = document.createElement("div");
       hint.id = "gci-import-panel";
       hint.style.cssText = `
@@ -240,7 +173,6 @@
     const msgEl   = document.getElementById("gci-msg");
     const btn     = document.getElementById("gci-import-btn");
 
-    // カード一覧を取得
     cards = await fetchCards(apiUrl, cronSecret);
     if (cards.length > 0) {
       select.innerHTML = '<option value="">カードを選択...</option>' +
@@ -251,11 +183,9 @@
       select.innerHTML = '<option value="">カードを取得できませんでした</option>';
     }
 
-    // スクレイプ結果をプレビュー
     const items = scrapeItems();
     countEl.textContent = `検出: ${items.length} 件`;
 
-    // 取り込みボタン
     btn.addEventListener("click", async () => {
       const cardId = select.value;
       if (!cardId) { showMsg("カードを選択してください", true); return; }
