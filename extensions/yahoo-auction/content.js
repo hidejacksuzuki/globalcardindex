@@ -39,20 +39,36 @@
       }
     }
 
-    // セレクターで見つからない場合はリンクから推測
+    // セレクターで見つからない場合は落札ページへのリンクから推測
+    // ヤフオク落札ページのURLは page.auctions.yahoo.co.jp/jp/auction/ の形式
     if (rows.length === 0) {
-      console.log("[GCI] fallback: scanning all links");
-      const links = [...document.querySelectorAll("a[href*='page.auctions.yahoo'], a[href*='/auction/']")];
+      console.log("[GCI] fallback: scanning auction page links");
+      const links = [...document.querySelectorAll(
+        "a[href*='page.auctions.yahoo.co.jp/jp/auction/'], " +
+        "a[href*='auctions.yahoo.co.jp/jp/auction/']"
+      )];
+      console.log("[GCI] auction links found:", links.length);
       links.forEach((a) => {
+        // リンクテキストが短すぎる（タイトルでない）ものは除外
         const title = a.textContent?.trim();
-        // リンクの近くにある価格テキストを探す
-        const parent = a.closest("li, div, tr") ?? a.parentElement;
+        if (!title || title.length < 5) return;
+
+        // 数字のみ・カテゴリ的なテキストは除外
+        if (/^[\d,¥￥〜～]+$/.test(title)) return;
+        if (/^\d+件$/.test(title)) return;
+
+        // 親要素から価格を探す
+        const parent = a.closest("li, tr, [class*='Product'], [class*='item']") ?? a.parentElement;
         if (!parent) return;
-        const priceMatch = parent.textContent?.match(/[\d,]{3,}/g);
-        const price = priceMatch
-          ? parseInt(priceMatch[priceMatch.length - 1].replace(/,/g, ""), 10)
+
+        // 価格：3桁以上の数字。最後のもの（最終価格）を使う
+        const allNums = [...(parent.textContent ?? "").matchAll(/[\d,]{3,}/g)];
+        const price = allNums.length > 0
+          ? parseInt(allNums[allNums.length - 1][0].replace(/,/g, ""), 10)
           : null;
-        if (!title || !price || title.length < 3) return;
+
+        if (!price || price < 100 || price > 10_000_000) return;
+
         items.push({ title, price, url: a.href });
       });
       return items;
