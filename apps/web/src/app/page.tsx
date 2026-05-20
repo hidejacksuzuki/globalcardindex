@@ -37,7 +37,7 @@ export default async function HomePage() {
           <AboutCard
             icon="📊"
             title="トレカ相場の指数化"
-            body="メルカリ等の外部マーケットから収集した実売価格を集計し、カードゲーム市場全体の価格動向を一本の指数値（GCI）で可視化します。"
+            body="外部マーケットから収集した実売価格を集計し、カードゲーム市場全体の価格動向を一本の指数値（GCI）で可視化します。"
           />
           <AboutCard
             icon="🃏"

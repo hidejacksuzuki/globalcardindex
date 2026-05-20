@@ -39,7 +39,7 @@ export function Disclaimer({ variant = "banner" }: { variant?: DisclaimerVariant
     <aside className="rounded border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
       <p>
         <span className="font-semibold">参考値について：</span>
-        本サービスの価格・指数データはメルカリ等の外部マーケットから収集した参考情報です。
+        本サービスの価格・指数データは外部マーケットから収集した参考情報です。
         投資助言・売買推奨・価格保証を目的とするものではありません。
         掲載情報の正確性・完全性を保証するものでもありません。
         {" "}
