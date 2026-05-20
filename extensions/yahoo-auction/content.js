@@ -75,10 +75,16 @@
     }
 
     // ── リンクURLのパターンを調査（最初の10行のみ）────────────────────────
-    rows.slice(0, 5).forEach((row, i) => {
-      const links = [...row.querySelectorAll("a[href]")].map((a) => a.href);
-      if (links.length > 0) console.log(`[GCI] row[${i}] links:`, JSON.stringify(links.slice(0, 2)));
-    });
+    // 全リンクを走査して auction らしいURLを探す
+    const allLinks = [...document.querySelectorAll("a[href]")];
+    const auctionLinks = allLinks.filter((a) =>
+      a.href.includes("auctions.yahoo") && !a.href.includes("/my") &&
+      !a.href.includes("support") && !a.href.includes("www.yahoo") &&
+      !a.href.includes("closedsearch") && !a.href.includes("search/search")
+    );
+    console.log("[GCI] auction-like links sample:", JSON.stringify(
+      [...new Set(auctionLinks.map((a) => a.href))].slice(0, 5)
+    ));
 
     // ── 各行からデータを抽出（落札ページへのリンクを含む行のみ）──────────
     rows.forEach((row) => {
