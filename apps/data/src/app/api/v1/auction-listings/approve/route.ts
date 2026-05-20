@@ -57,7 +57,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       : Promise.resolve({ count: 0 }),
   ]);
 
-  // Create PriceSnapshot from approved closed results only
+  // Create PriceSnapshot (and Price records) from approved closed results only
   let snapshot = null;
   if (approveIds.length > 0) {
     const sample = await prisma.rawAuctionResult.findFirst({
@@ -66,6 +66,26 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
 
     if (sample && sample.source === "yahoo_auction_closed") {
+      // Fetch the newly approved items to create Price records
+      const newlyApproved = await prisma.rawAuctionResult.findMany({
+        where:  { id: { in: approveIds }, source: "yahoo_auction_closed" },
+        select: { id: true, cardId: true, price: true, endedAt: true, capturedAt: true },
+      });
+
+      if (newlyApproved.length > 0) {
+        await prisma.price.createMany({
+          data: newlyApproved.map((r) => ({
+            cardId:     r.cardId,
+            price:      r.price,
+            observedAt: r.endedAt ?? r.capturedAt,
+            sourceType: "yahoo_auction_closed",
+            sourceName: "yahoo_auction",
+            fingerprint: `rar:${r.id}`,   // unique per RawAuctionResult → prevents double-insert
+          })),
+          skipDuplicates: true,
+        });
+      }
+
       const approved = await prisma.rawAuctionResult.findMany({
         where:  { cardId: sample.cardId, source: "yahoo_auction_closed", status: "approved" },
         select: { price: true },
