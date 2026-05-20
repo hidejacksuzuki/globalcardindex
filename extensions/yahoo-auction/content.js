@@ -75,9 +75,9 @@
     }
 
     // ── リンクURLのパターンを調査（最初の10行のみ）────────────────────────
-    rows.slice(0, 10).forEach((row, i) => {
+    rows.slice(0, 5).forEach((row, i) => {
       const links = [...row.querySelectorAll("a[href]")].map((a) => a.href);
-      if (links.length > 0) console.log(`[GCI] row[${i}] links:`, links.slice(0, 3));
+      if (links.length > 0) console.log(`[GCI] row[${i}] links:`, JSON.stringify(links.slice(0, 2)));
     });
 
     // ── 各行からデータを抽出（落札ページへのリンクを含む行のみ）──────────
