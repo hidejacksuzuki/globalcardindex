@@ -26,34 +26,37 @@
     )];
     console.log("[GCI] auction links found:", auctionLinks.length);
 
-    auctionLinks.slice(0, 3).forEach((a, i) => {
-      const container = a.closest("li") ?? a.closest("div[class]") ?? a.parentElement;
-      const titleEl   = container?.querySelector("h3, h2, h1") ?? a;
-      const title     = titleEl?.textContent?.trim() ?? "(none)";
-      const text      = container?.textContent?.slice(0, 100) ?? "(no container)";
-      console.log(`[GCI] link[${i}] url=${a.href} title="${title}" container_text="${text}"`);
+    // URL ごとにリンクをグループ化し、タイトルが最も長いものを選ぶ
+    const urlMap = new Map();
+    auctionLinks.forEach((a) => {
+      const url   = a.href;
+      const title = a.textContent?.trim() ?? "";
+      if (!urlMap.has(url) || title.length > (urlMap.get(url).title?.length ?? 0)) {
+        urlMap.set(url, { a, title });
+      }
     });
 
-    auctionLinks.forEach((a) => {
-      const url = a.href;
-      if (seen.has(url)) return;
-      seen.add(url);
-
-      // コンテナ: li → 近い div[class] の順で探す
-      const container = a.closest("li") ?? a.closest("div[class]") ?? a.parentElement;
-      if (!container) return;
-
-      // タイトル: h要素 → リンクテキスト
-      const titleEl = container.querySelector("h3, h2, h1") ?? a;
-      const title   = titleEl.textContent?.trim() ?? "";
+    urlMap.forEach(({ a, title }, url) => {
+      // タイトルが短い・数字のみは除外
       if (title.length < 5 || /^[\d,¥￥〜～\s]+$/.test(title)) return;
 
-      // 価格: コンテナ内の数値から最大値を採用
-      const allNums = [...(container.textContent ?? "").matchAll(/[\d,]{3,}/g)]
-        .map((m) => parseInt(m[0].replace(/,/g, ""), 10))
-        .filter((n) => n >= 100 && n <= 10_000_000);
-      if (allNums.length === 0) return;
-      const price = Math.max(...allNums);
+      // コンテナから価格を抽出（「落札X円」の X を優先）
+      const container = a.closest("li") ?? a.closest("div[class]") ?? a.parentElement;
+      const text      = container?.textContent ?? "";
+
+      // 「落札」直後の数字を優先
+      const rakusatsuMatch = text.match(/落札[\s:：]*([\d,]+)円/);
+      let price;
+      if (rakusatsuMatch) {
+        price = parseInt(rakusatsuMatch[1].replace(/,/g, ""), 10);
+      } else {
+        // 3桁以上の数字から100〜10,000,000の範囲のものを取得
+        const nums = [...text.matchAll(/[\d,]{3,}/g)]
+          .map((m) => parseInt(m[0].replace(/,/g, ""), 10))
+          .filter((n) => n >= 100 && n <= 10_000_000);
+        if (nums.length === 0) return;
+        price = Math.max(...nums);
+      }
 
       items.push({ title, price, url });
     });
