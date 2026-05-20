@@ -74,12 +74,20 @@
       return items;
     }
 
+    // ── リンクURLのパターンを調査（最初の10行のみ）────────────────────────
+    rows.slice(0, 10).forEach((row, i) => {
+      const links = [...row.querySelectorAll("a[href]")].map((a) => a.href);
+      if (links.length > 0) console.log(`[GCI] row[${i}] links:`, links.slice(0, 3));
+    });
+
     // ── 各行からデータを抽出（落札ページへのリンクを含む行のみ）──────────
     rows.forEach((row) => {
       // 落札ページへのリンクが含まれる行だけを対象にする
       const linkEl = row.querySelector(
         "a[href*='page.auctions.yahoo.co.jp/jp/auction/'], " +
-        "a[href*='auctions.yahoo.co.jp/jp/auction/']"
+        "a[href*='auctions.yahoo.co.jp/jp/auction/'], " +
+        "a[href*='/auction/'], " +
+        "a[href*='closedsearch'][href*='aID=']"
       );
       if (!linkEl) return;
 
