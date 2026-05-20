@@ -85,6 +85,7 @@ export default function CollectPage() {
   const [selected, setSelected]   = useState<Set<string>>(new Set());
   const [loading, setLoading]     = useState(false);
   const [msg, setMsg]             = useState("");
+  const [showRejected, setShowRejected] = useState(false);
 
   useEffect(() => {
     fetch(`/api/v1/cards/${id}`)
@@ -92,14 +93,23 @@ export default function CollectPage() {
       .then((d) => setCard(d.card ?? d));
   }, [id]);
 
-  useEffect(() => {
+  const fetchPending = (tabId: TabId, inclRejected: boolean) => {
     if (!id) return;
-    const source = tab === "mercari" ? undefined : tab === "yahoo_active" ? "yahoo_auction_active" : "yahoo_auction_closed";
-    const qs = source ? `cardId=${id}&source=${source}` : `cardId=${id}`;
+    const source = tabId === "mercari" ? undefined : tabId === "yahoo_active" ? "yahoo_auction_active" : "yahoo_auction_closed";
+    const qs = [
+      source ? `source=${source}` : "",
+      `cardId=${id}`,
+      inclRejected ? "includeRejected=1" : "",
+    ].filter(Boolean).join("&");
     fetch(`/api/v1/listings/pending?${qs}`)
       .then((r) => r.json())
       .then((d) => { if (d.ok) setPending(d.listings); setSelected(new Set()); });
-  }, [id, tab]);
+  };
+
+  useEffect(() => {
+    fetchPending(tab, showRejected);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, tab, showRejected]);
 
   function parsePaste(text: string): object[] {
     try {
@@ -292,12 +302,25 @@ export default function CollectPage() {
       )}
 
       {/* Pending review */}
-      {pending.length > 0 && (
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-medium uppercase tracking-widest text-navy/40">承認待ち ({pending.length} 件)</p>
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-medium uppercase tracking-widest text-navy/40">
+            {showRejected ? "全データ" : "承認待ち"} ({pending.length} 件)
+          </p>
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-1.5 text-xs text-navy/50 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showRejected}
+                onChange={(e) => setShowRejected(e.target.checked)}
+                className="rounded"
+              />
+              除外済みも表示
+            </label>
             <button onClick={() => setSelected(new Set(pending.map((l) => l.id)))} className="text-xs text-navy/50 underline">すべて選択</button>
           </div>
+        </div>
+        {pending.length > 0 && (
           <div className="overflow-x-auto border border-navy/10 bg-white">
             <table className="min-w-full text-sm divide-y divide-navy/5">
               <thead className="bg-navy/5 text-xs uppercase tracking-widest text-navy/50 text-left">
@@ -348,8 +371,8 @@ export default function CollectPage() {
               除外 ({selected.size})
             </button>
           </div>
-        </section>
-      )}
+        )}
+      </section>
 
       {msg && <p className="text-sm text-navy/70 border-l-2 border-navy/20 pl-3">{msg}</p>}
     </div>

@@ -17,10 +17,16 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const source = new URL(req.url).searchParams.get("source");
 
+  const includeRejected = new URL(req.url).searchParams.get("includeRejected") === "1";
+
   // Yahoo Auction sources → query RawAuctionResult
   if (source === "yahoo_auction_active" || source === "yahoo_auction_closed") {
     const listings = await prisma.rawAuctionResult.findMany({
-      where:   { cardId, source, status: "pending" },
+      where:   {
+        cardId,
+        source,
+        status: includeRejected ? { in: ["pending", "rejected"] } : "pending",
+      },
       orderBy: { matchScore: "desc" },
       select:  { id: true, title: true, price: true, url: true, bidCount: true, endedAt: true, matchScore: true, trustScore: true, status: true, capturedAt: true },
     });
@@ -28,7 +34,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   const listings = await prisma.rawListing.findMany({
-    where:   { cardId, status: "pending" },
+    where:   {
+      cardId,
+      status: includeRejected ? { in: ["pending", "rejected"] } : "pending",
+    },
     orderBy: { matchScore: "desc" },
     select:  { id: true, title: true, price: true, url: true, matchScore: true, trustScore: true, status: true, capturedAt: true },
   });
