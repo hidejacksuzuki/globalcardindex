@@ -44,7 +44,6 @@
     if (rows.length === 0) {
       console.log("[GCI] fallback: scanning auction page links");
       const links = [...document.querySelectorAll(
-        "a[href*='page.auctions.yahoo.co.jp/jp/auction/'], " +
         "a[href*='auctions.yahoo.co.jp/jp/auction/']"
       )];
       console.log("[GCI] auction links found:", links.length);
@@ -75,25 +74,15 @@
     }
 
     // ── リンクURLのパターンを調査（最初の10行のみ）────────────────────────
-    // 全リンクを走査して auction らしいURLを探す
-    const allLinks = [...document.querySelectorAll("a[href]")];
-    const auctionLinks = allLinks.filter((a) =>
-      a.href.includes("auctions.yahoo") && !a.href.includes("/my") &&
-      !a.href.includes("support") && !a.href.includes("www.yahoo") &&
-      !a.href.includes("closedsearch") && !a.href.includes("search/search")
-    );
-    console.log("[GCI] auction-like links sample:", JSON.stringify(
-      [...new Set(auctionLinks.map((a) => a.href))].slice(0, 5)
-    ));
+    // デバッグ用：実際の落札URLパターンを確認
+    const sampleAuctionLink = document.querySelector("a[href*='auctions.yahoo.co.jp/jp/auction/']");
+    console.log("[GCI] sample auction link:", sampleAuctionLink?.href);
 
     // ── 各行からデータを抽出（落札ページへのリンクを含む行のみ）──────────
     rows.forEach((row) => {
       // 落札ページへのリンクが含まれる行だけを対象にする
       const linkEl = row.querySelector(
-        "a[href*='page.auctions.yahoo.co.jp/jp/auction/'], " +
-        "a[href*='auctions.yahoo.co.jp/jp/auction/'], " +
-        "a[href*='/auction/'], " +
-        "a[href*='closedsearch'][href*='aID=']"
+        "a[href*='auctions.yahoo.co.jp/jp/auction/']"
       );
       if (!linkEl) return;
 
