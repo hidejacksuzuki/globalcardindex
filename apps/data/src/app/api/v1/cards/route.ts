@@ -10,6 +10,16 @@ import { timingSafeEqual }           from "@gci/core";
 
 export const dynamic = "force-dynamic";
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin":  "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+}
+
 function isAuthorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET ?? "";
   const auth   = req.headers.get("authorization") ?? "";
@@ -35,5 +45,5 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     select:  { id: true, name: true, rarity: true, setName: true, game: true },
   });
 
-  return NextResponse.json({ ok: true, cards });
+  return NextResponse.json({ ok: true, cards }, { headers: CORS_HEADERS });
 }

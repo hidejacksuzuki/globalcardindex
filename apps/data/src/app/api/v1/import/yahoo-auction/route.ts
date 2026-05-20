@@ -27,6 +27,16 @@ import { calcAuctionScore, autoVerdict, timingSafeEqual } from "@gci/core";
 
 export const dynamic = "force-dynamic";
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin":  "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+}
+
 function isAuthorized(req: NextRequest): boolean {
   const secret  = process.env.CRON_SECRET ?? "";
   const auth    = req.headers.get("authorization") ?? "";
@@ -121,5 +131,5 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
   }
 
-  return NextResponse.json({ ok: true, saved, skipped, items: results });
+  return NextResponse.json({ ok: true, saved, skipped, items: results }, { headers: CORS_HEADERS });
 }
