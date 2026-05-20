@@ -196,8 +196,8 @@ export type CardSeoDetail = {
 };
 
 export async function getCardBySlug(slug: string): Promise<CardSeoDetail | null> {
-  const card = await prisma.card.findUnique({
-    where: { slug },
+  const card = await prisma.card.findFirst({
+    where: { OR: [{ slug }, { id: slug }] },
     include: {
       prices: {
         where: {

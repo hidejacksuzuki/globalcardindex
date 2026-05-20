@@ -218,7 +218,7 @@ export default async function CardsPage({ searchParams }: Props) {
                   <tr key={c.id} className="text-navy/80 transition hover:bg-navy/[0.02]">
                     <td className="px-4 py-3">
                       <Link
-                        href={`/cards/${c.id}`}
+                        href={`/cards/${c.slug ?? c.id}`}
                         className="font-medium text-navy hover:text-gold-700 transition"
                       >
                         {c.name}

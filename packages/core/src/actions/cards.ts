@@ -100,6 +100,7 @@ export async function listCards(
     const latest = c.prices[0] ?? null;
     return {
       id:             c.id,
+      slug:           c.slug ?? null,
       name:           c.name,
       setName:        c.setName,
       rarity:         c.rarity,

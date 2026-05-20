@@ -8,6 +8,7 @@ export type CardSummary = {
 
 // Week 2: 一覧表示で price 列を出すために最新価格を含む型
 export type CardSummaryWithPrice = CardSummary & {
+  slug: string | null;
   latestPrice: number | null;
   currency: string | null;
   lastObservedAt: string | null; // ISO8601
