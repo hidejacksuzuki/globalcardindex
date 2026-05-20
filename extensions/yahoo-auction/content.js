@@ -74,42 +74,43 @@
       return items;
     }
 
-    // ── 各行からデータを抽出 ──────────────────────────────────────────────
+    // ── 各行からデータを抽出（落札ページへのリンクを含む行のみ）──────────
     rows.forEach((row) => {
-      // タイトル
-      const titleEl = row.querySelector(
-        "h3, h2, .Product__title, [class*='Title'], [class*='title'], a[class*='title']"
-      ) ?? row.querySelector("a");
-      const title = titleEl?.textContent?.trim();
-
-      // リンク
-      const linkEl = row.querySelector("a[href*='auctions.yahoo'], a[href*='/auction/']")
-                  ?? row.querySelector("a");
-
-      // 価格（数字3桁以上を含むテキストを探す）
-      const priceEl = row.querySelector(
-        ".Product__price, [class*='Price'], [class*='price'], .u-txb, strong"
+      // 落札ページへのリンクが含まれる行だけを対象にする
+      const linkEl = row.querySelector(
+        "a[href*='page.auctions.yahoo.co.jp/jp/auction/'], " +
+        "a[href*='auctions.yahoo.co.jp/jp/auction/']"
       );
-      const priceText = (priceEl?.textContent ?? row.textContent ?? "")
-        .match(/[\d,]{3,}/g);
+      if (!linkEl) return;
+
+      // タイトル：リンクテキストか直近のタイトル要素
+      const titleEl = row.querySelector("h3, h2, [class*='Title'], [class*='title']") ?? linkEl;
+      const title   = titleEl?.textContent?.trim();
+
+      // 価格
+      const priceEl = row.querySelector(
+        "[class*='Price'], [class*='price'], .u-txb, strong, b"
+      );
+      const priceText = (priceEl?.textContent ?? "").match(/[\d,]{3,}/g)
+                     ?? (row.textContent ?? "").match(/[\d,]{4,}/g);
       const price = priceText
         ? parseInt(priceText[priceText.length - 1].replace(/,/g, ""), 10)
         : null;
 
-      if (!title || !price || title.length < 3 || price < 100) return;
+      if (!title || !price || title.length < 5 || price < 100) return;
 
       // 入札数
-      const bidEl = row.querySelector("[class*='bid'], [class*='Bid'], [class*='count']");
+      const bidEl   = row.querySelector("[class*='bid'], [class*='Bid']");
       const bidText = bidEl?.textContent?.replace(/[^0-9]/g, "");
       const bidCount = bidText ? parseInt(bidText, 10) : undefined;
 
       // 終了日
-      const dateEl = row.querySelector("[class*='Time'], [class*='time'], [class*='date'], time");
+      const dateEl  = row.querySelector("[class*='Time'], [class*='time'], [class*='date'], time");
       const endedAt = dateEl?.textContent?.trim()
         ? parseJpDate(dateEl.textContent.trim())
         : undefined;
 
-      items.push({ title, price, url: linkEl?.href, bidCount, endedAt });
+      items.push({ title, price, url: linkEl.href, bidCount, endedAt });
     });
 
     console.log("[GCI] scraped items:", items.length);
