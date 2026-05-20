@@ -26,6 +26,14 @@
     )];
     console.log("[GCI] auction links found:", auctionLinks.length);
 
+    auctionLinks.slice(0, 3).forEach((a, i) => {
+      const container = a.closest("li") ?? a.closest("div[class]") ?? a.parentElement;
+      const titleEl   = container?.querySelector("h3, h2, h1") ?? a;
+      const title     = titleEl?.textContent?.trim() ?? "(none)";
+      const text      = container?.textContent?.slice(0, 100) ?? "(no container)";
+      console.log(`[GCI] link[${i}] url=${a.href} title="${title}" container_text="${text}"`);
+    });
+
     auctionLinks.forEach((a) => {
       const url = a.href;
       if (seen.has(url)) return;
@@ -40,7 +48,7 @@
       const title   = titleEl.textContent?.trim() ?? "";
       if (title.length < 5 || /^[\d,¥￥〜～\s]+$/.test(title)) return;
 
-      // 価格: コンテナ内の数値から最大値を採用（サムネイルの件数等を除くため大きい方）
+      // 価格: コンテナ内の数値から最大値を採用
       const allNums = [...(container.textContent ?? "").matchAll(/[\d,]{3,}/g)]
         .map((m) => parseInt(m[0].replace(/,/g, ""), 10))
         .filter((n) => n >= 100 && n <= 10_000_000);
