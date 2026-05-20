@@ -19,79 +19,84 @@
   function scrapeItems() {
     const items = [];
 
-    // 落札済みページ
-    if (isClosed) {
-      // 落札済み検索結果の各行
-      const rows = document.querySelectorAll(
-        "div.Products__list li.Product, " +          // 旧UI
-        "li[class*='Product'], " +                   // 新UI候補
-        "div[class*='sc-'] li[class*='Product']"     // 動的クラス
-      );
+    // ── セレクター候補を順番に試す ──────────────────────────────────────────
+    const ITEM_SELECTORS = [
+      "li.Product",
+      "li[class*='Product']",
+      "[class*='sc-'] li",
+      "ul[class*='list'] li",
+      "div[class*='item']",
+      "[data-auction-id]",
+      "article",
+    ];
 
-      rows.forEach((row) => {
-        const titleEl  = row.querySelector("h3, .Product__title, [class*='Title']");
-        const priceEl  = row.querySelector(".Product__price, .u-txb, [class*='Price']");
-        const bidEl    = row.querySelector(".Product__bid, [class*='bid'], [class*='Bid']");
-        const dateEl   = row.querySelector(".Product__time, [class*='endDate'], [class*='Time']");
-        const linkEl   = row.querySelector("a[href*='page.auctions']");
-
-        const title = titleEl?.textContent?.trim();
-        const priceText = priceEl?.textContent?.replace(/[^0-9]/g, "");
-        const price = priceText ? parseInt(priceText, 10) : null;
-
-        if (!title || !price) return;
-
-        const bidText  = bidEl?.textContent?.replace(/[^0-9]/g, "");
-        const bidCount = bidText ? parseInt(bidText, 10) : undefined;
-        const endedAt  = dateEl?.textContent?.trim()
-          ? parseJpDate(dateEl.textContent.trim())
-          : undefined;
-
-        items.push({
-          title,
-          price,
-          url:      linkEl?.href,
-          bidCount,
-          endedAt,
-        });
-      });
-
-      // フォールバック：テーブル形式
-      if (items.length === 0) {
-        document.querySelectorAll("table.list1 tr").forEach((tr) => {
-          const cells = tr.querySelectorAll("td");
-          if (cells.length < 3) return;
-          const titleEl = cells[0]?.querySelector("a");
-          const title   = titleEl?.textContent?.trim();
-          const price   = parseInt((cells[2]?.textContent ?? "").replace(/[^0-9]/g, ""), 10);
-          if (!title || !price) return;
-          items.push({ title, price, url: titleEl?.href });
-        });
+    let rows = [];
+    for (const sel of ITEM_SELECTORS) {
+      rows = [...document.querySelectorAll(sel)];
+      if (rows.length > 0) {
+        console.log("[GCI] selector matched:", sel, "→", rows.length, "rows");
+        break;
       }
-
-    } else {
-      // 開催中オークション
-      document.querySelectorAll(
-        "li.Product, li[class*='Product'], [class*='sc-'] li"
-      ).forEach((row) => {
-        const titleEl = row.querySelector("h3, .Product__title, [class*='Title']");
-        const priceEl = row.querySelector(".Product__price, [class*='Price']");
-        const bidEl   = row.querySelector("[class*='bid'], [class*='Bid']");
-        const linkEl  = row.querySelector("a");
-
-        const title = titleEl?.textContent?.trim();
-        const priceText = priceEl?.textContent?.replace(/[^0-9]/g, "");
-        const price = priceText ? parseInt(priceText, 10) : null;
-
-        if (!title || !price) return;
-
-        const bidText  = bidEl?.textContent?.replace(/[^0-9]/g, "");
-        const bidCount = bidText ? parseInt(bidText, 10) : undefined;
-
-        items.push({ title, price, url: linkEl?.href, bidCount });
-      });
     }
 
+    // セレクターで見つからない場合はリンクから推測
+    if (rows.length === 0) {
+      console.log("[GCI] fallback: scanning all links");
+      const links = [...document.querySelectorAll("a[href*='page.auctions.yahoo'], a[href*='/auction/']")];
+      links.forEach((a) => {
+        const title = a.textContent?.trim();
+        // リンクの近くにある価格テキストを探す
+        const parent = a.closest("li, div, tr") ?? a.parentElement;
+        if (!parent) return;
+        const priceMatch = parent.textContent?.match(/[\d,]{3,}/g);
+        const price = priceMatch
+          ? parseInt(priceMatch[priceMatch.length - 1].replace(/,/g, ""), 10)
+          : null;
+        if (!title || !price || title.length < 3) return;
+        items.push({ title, price, url: a.href });
+      });
+      return items;
+    }
+
+    // ── 各行からデータを抽出 ──────────────────────────────────────────────
+    rows.forEach((row) => {
+      // タイトル
+      const titleEl = row.querySelector(
+        "h3, h2, .Product__title, [class*='Title'], [class*='title'], a[class*='title']"
+      ) ?? row.querySelector("a");
+      const title = titleEl?.textContent?.trim();
+
+      // リンク
+      const linkEl = row.querySelector("a[href*='auctions.yahoo'], a[href*='/auction/']")
+                  ?? row.querySelector("a");
+
+      // 価格（数字3桁以上を含むテキストを探す）
+      const priceEl = row.querySelector(
+        ".Product__price, [class*='Price'], [class*='price'], .u-txb, strong"
+      );
+      const priceText = (priceEl?.textContent ?? row.textContent ?? "")
+        .match(/[\d,]{3,}/g);
+      const price = priceText
+        ? parseInt(priceText[priceText.length - 1].replace(/,/g, ""), 10)
+        : null;
+
+      if (!title || !price || title.length < 3 || price < 100) return;
+
+      // 入札数
+      const bidEl = row.querySelector("[class*='bid'], [class*='Bid'], [class*='count']");
+      const bidText = bidEl?.textContent?.replace(/[^0-9]/g, "");
+      const bidCount = bidText ? parseInt(bidText, 10) : undefined;
+
+      // 終了日
+      const dateEl = row.querySelector("[class*='Time'], [class*='time'], [class*='date'], time");
+      const endedAt = dateEl?.textContent?.trim()
+        ? parseJpDate(dateEl.textContent.trim())
+        : undefined;
+
+      items.push({ title, price, url: linkEl?.href, bidCount, endedAt });
+    });
+
+    console.log("[GCI] scraped items:", items.length);
     return items;
   }
 
