@@ -3,7 +3,7 @@ import { getGameSlugs }       from "@gci/core";
 import { getAllSetNames, getAllCardSlugs } from "@gci/core";
 import { getRecentRecapDates }            from "@gci/core";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://globalcardindex.com";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://gci-index.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [setNames, cardSlugs, recapDates] = await Promise.all([

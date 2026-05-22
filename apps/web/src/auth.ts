@@ -9,7 +9,7 @@
  *   AUTH_RESEND_KEY      — Resend API key (reuses RESEND_API_KEY if not set)
  *   RESEND_FROM_EMAIL    — sender address
  *   DATABASE_URL         — PostgreSQL connection string
- *   NEXT_PUBLIC_BASE_URL — e.g. https://globalcardindex.com
+ *   NEXT_PUBLIC_BASE_URL — e.g. https://gci-index.com
  */
 
 import NextAuth                from "next-auth";
@@ -17,7 +17,7 @@ import Resend                  from "next-auth/providers/resend";
 import { PrismaAdapter }       from "@auth/prisma-adapter";
 import { prisma }              from "@gci/db";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://globalcardindex.com";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://gci-index.com";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -26,7 +26,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Resend({
       apiKey: process.env.AUTH_RESEND_KEY ?? process.env.RESEND_API_KEY,
-      from:   process.env.RESEND_FROM_EMAIL ?? "GCI <noreply@globalcardindex.com>",
+      from:   process.env.RESEND_FROM_EMAIL ?? "GCI <noreply@gci-index.com>",
       // カスタム送信関数で件名・本文を完全制御
       sendVerificationRequest: async ({ identifier: email, url }) => {
         const { sendMagicLinkEmail } = await import("@gci/email");

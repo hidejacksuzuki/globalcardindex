@@ -7,7 +7,7 @@ import { PlausibleAnalytics } from "@/components/analytics/PlausibleAnalytics";
 
 const inter = Inter({ subsets: ["latin"] });
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://globalcardindex.com";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://gci-index.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),

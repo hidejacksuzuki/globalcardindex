@@ -31,7 +31,7 @@ export async function generateMetadata({
 
   const title       = `${card.name} (${card.setName}) 相場${priceStr} | Global Card Index`;
   const description = `${card.name} ${card.rarity}・${card.condition} の市場相場。${card.setName} 収録。${card.priceCount} 件の価格データから算出した最新値・変動率を掲載。`;
-  const url         = `https://globalcardindex.com/cards/${card.slug}`;
+  const url         = `https://gci-index.com/cards/${card.slug}`;
 
   return {
     title,
@@ -284,7 +284,7 @@ export default async function CardSlugPage({
             "@type":    "Product",
             name:       card.name,
             description: `${card.name} ${card.rarity}・${card.condition} — ${card.setName}`,
-            url:        `https://globalcardindex.com/cards/${card.slug}`,
+            url:        `https://gci-index.com/cards/${card.slug}`,
             ...(card.latestPrice !== null && card.currency
               ? {
                   offers: {
@@ -292,7 +292,7 @@ export default async function CardSlugPage({
                     priceCurrency:   card.currency,
                     price:           card.latestPrice.toFixed(0),
                     availability:    "https://schema.org/InStock",
-                    url:             `https://globalcardindex.com/cards/${card.slug}`,
+                    url:             `https://gci-index.com/cards/${card.slug}`,
                   },
                 }
               : {}),

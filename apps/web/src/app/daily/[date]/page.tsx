@@ -29,7 +29,7 @@ export async function generateMetadata({
   });
   const title       = `Daily Recap ${displayDate} | Global Card Index`;
   const description = snap.editorNote.slice(0, 120);
-  const url         = `https://globalcardindex.com/daily/${params.date}`;
+  const url         = `https://gci-index.com/daily/${params.date}`;
 
   return {
     title,

@@ -21,7 +21,7 @@ export async function generateMetadata({
 
   const title       = `${stats.setName} 相場・価格一覧 | Global Card Index`;
   const description = `${stats.setName} (${stats.cardCount}種) の市場価格データ。レアリティ・状態別の最新価格・7日間騰落率を掲載。`;
-  const url         = `https://globalcardindex.com/sets/${encodeURIComponent(stats.setName)}`;
+  const url         = `https://gci-index.com/sets/${encodeURIComponent(stats.setName)}`;
 
   return {
     title,
@@ -143,7 +143,7 @@ export default async function SetPage({
             "@type":     "ItemList",
             name:        `${stats.setName} カード一覧`,
             description: `${stats.setName} の市場価格データ`,
-            url:         `https://globalcardindex.com/sets/${encodeURIComponent(stats.setName)}`,
+            url:         `https://gci-index.com/sets/${encodeURIComponent(stats.setName)}`,
             numberOfItems: stats.cardCount,
           }),
         }}

@@ -4,7 +4,7 @@
  * Loads the Plausible Analytics script in the <head>.
  * Privacy-first, no cookies, no consent banner required.
  *
- * Env var: NEXT_PUBLIC_PLAUSIBLE_DOMAIN (e.g. "globalcardindex.com")
+ * Env var: NEXT_PUBLIC_PLAUSIBLE_DOMAIN (e.g. "gci-index.com")
  * Leave unset to disable tracking (dev / staging).
  *
  * Custom event API (call from any Client Component or onClick handler):
