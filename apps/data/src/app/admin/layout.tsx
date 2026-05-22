@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { href: "/admin/cards",        label: "Cards"        },
   { href: "/admin/collector",    label: "Collector"    },
   { href: "/admin/card-requests", label: "Requests"    },
+  { href: "/admin/bookmarklet",   label: "Bookmarklet" },
 ];
 
 export default function AdminLayout({
