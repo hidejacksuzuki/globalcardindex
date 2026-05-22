@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default function BookmarkletPage() {
   const cronSecret = process.env.CRON_SECRET ?? "";
-  const apiUrl     = "https://gci-data.com";
+  const apiUrl     = "https://gci-data-hidejacksuzukis-projects.vercel.app";
 
   if (!cronSecret) {
     return (
