@@ -66,26 +66,28 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const todayStart = new Date(now);
   todayStart.setHours(0, 0, 0, 0);
 
-  // ── Today's CollectorRun stats ────────────────────────────────────────────
+  // ── Today's RawListing stats (bookmarklet / import) ──────────────────────
   const [
     totalItems,
     pendingItems,
     approvedItems,
-    filteredItems,
-    errorItems,
-    sessionIds,
+    rejectedItems,
   ] = await Promise.all([
-    prisma.collectorRun.count({ where: { createdAt: { gte: todayStart } } }),
-    prisma.collectorRun.count({ where: { createdAt: { gte: todayStart }, status: "pending" } }),
-    prisma.collectorRun.count({ where: { createdAt: { gte: todayStart }, status: "imported" } }),
-    prisma.collectorRun.count({ where: { createdAt: { gte: todayStart }, status: "filtered" } }),
-    prisma.collectorRun.count({ where: { createdAt: { gte: todayStart }, status: "error" } }),
-    prisma.collectorRun.findMany({
-      where:   { createdAt: { gte: todayStart } },
-      select:  { sessionId: true },
-      distinct: ["sessionId"],
-    }),
+    prisma.rawListing.count({ where: { createdAt: { gte: todayStart } } }),
+    prisma.rawListing.count({ where: { createdAt: { gte: todayStart }, status: "pending" } }),
+    prisma.rawListing.count({ where: { createdAt: { gte: todayStart }, status: "approved" } }),
+    prisma.rawListing.count({ where: { createdAt: { gte: todayStart }, status: "rejected" } }),
   ]);
+
+  // CollectorRun は旧フロー互換で残す（セッション数のみ参照）
+  const sessionIds = await prisma.collectorRun.findMany({
+    where:   { createdAt: { gte: todayStart } },
+    select:  { sessionId: true },
+    distinct: ["sessionId"],
+  });
+
+  const filteredItems = rejectedItems;
+  const errorItems    = 0;
 
   // ── Last RecalcLog ────────────────────────────────────────────────────────
   const lastRecalc = await prisma.recalcLog.findFirst({
