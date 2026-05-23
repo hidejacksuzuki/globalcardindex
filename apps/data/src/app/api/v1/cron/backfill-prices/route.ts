@@ -1,8 +1,8 @@
 /**
  * POST /api/v1/cron/backfill-prices
  *
- * 承認済み RawAuctionResult から Price レコードを作成する一回限りのバックフィル。
- * fingerprint = "rar:{id}" で重複スキップするため何度実行しても安全。
+ * 承認済み RawAuctionResult・RawListing から Price レコードを作成するバックフィル。
+ * fingerprint で重複スキップするため何度実行しても安全。
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -25,27 +25,49 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
-  // 承認済み落札データを全件取得
-  const approved = await prisma.rawAuctionResult.findMany({
+  // 1. 承認済み落札データ（Yahoo Auction）
+  const approvedAuctions = await prisma.rawAuctionResult.findMany({
     where:  { source: "yahoo_auction_closed", status: "approved" },
     select: { id: true, cardId: true, price: true, endedAt: true, capturedAt: true },
   });
 
-  if (approved.length === 0) {
-    return NextResponse.json({ ok: true, created: 0, message: "対象なし" });
-  }
+  const auctionResult = approvedAuctions.length > 0
+    ? await prisma.price.createMany({
+        data: approvedAuctions.map((r) => ({
+          cardId:      r.cardId,
+          price:       r.price,
+          observedAt:  r.endedAt ?? r.capturedAt,
+          sourceType:  "yahoo_auction_closed",
+          sourceName:  "yahoo_auction",
+          fingerprint: `rar:${r.id}`,
+        })),
+        skipDuplicates: true,
+      })
+    : { count: 0 };
 
-  const result = await prisma.price.createMany({
-    data: approved.map((r) => ({
-      cardId:      r.cardId,
-      price:       r.price,
-      observedAt:  r.endedAt ?? r.capturedAt,
-      sourceType:  "yahoo_auction_closed",
-      sourceName:  "yahoo_auction",
-      fingerprint: `rar:${r.id}`,
-    })),
-    skipDuplicates: true,
+  // 2. 承認済みリスティングデータ（Mercari 等）
+  const approvedListings = await prisma.rawListing.findMany({
+    where:  { status: "approved" },
+    select: { id: true, cardId: true, price: true, source: true, createdAt: true },
   });
 
-  return NextResponse.json({ ok: true, created: result.count, total: approved.length });
+  const listingResult = approvedListings.length > 0
+    ? await prisma.price.createMany({
+        data: approvedListings.map((r) => ({
+          cardId:      r.cardId,
+          price:       r.price,
+          observedAt:  r.createdAt,
+          sourceType:  r.source,
+          sourceName:  r.source,
+          fingerprint: `rl:${r.id}`,
+        })),
+        skipDuplicates: true,
+      })
+    : { count: 0 };
+
+  return NextResponse.json({
+    ok: true,
+    auction:  { created: auctionResult.count,  total: approvedAuctions.length },
+    listings: { created: listingResult.count,  total: approvedListings.length },
+  });
 }

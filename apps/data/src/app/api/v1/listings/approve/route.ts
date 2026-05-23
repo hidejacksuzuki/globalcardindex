@@ -76,6 +76,26 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
 
     if (sample) {
+      // Create Price records for the newly approved listings
+      const newlyApproved = await prisma.rawListing.findMany({
+        where:  { id: { in: approveIds } },
+        select: { id: true, cardId: true, price: true, source: true, createdAt: true },
+      });
+
+      if (newlyApproved.length > 0) {
+        await prisma.price.createMany({
+          data: newlyApproved.map((r) => ({
+            cardId:      r.cardId,
+            price:       r.price,
+            observedAt:  r.createdAt,
+            sourceType:  r.source,
+            sourceName:  r.source,
+            fingerprint: `rl:${r.id}`,   // unique per RawListing → prevents double-insert
+          })),
+          skipDuplicates: true,
+        });
+      }
+
       // Fetch all approved listings for this card+source
       const approved = await prisma.rawListing.findMany({
         where:  { cardId: sample.cardId, source: sample.source, status: "approved" },
