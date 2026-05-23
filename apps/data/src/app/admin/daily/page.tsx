@@ -142,11 +142,13 @@ export default function AdminDailyPage() {
     setRecalcMsg(null);
     try {
       const res  = await fetch("/api/v1/index/recalc", { method: "POST" });
-      const json = await res.json() as { ok: boolean; data?: { saved: boolean; value?: number } };
-      if (json.ok && json.data?.saved) {
-        setRecalcMsg(`✓ 完了 — Index: ${json.data.value?.toFixed(2) ?? "—"}`);
+      const json = await res.json() as { ok: boolean; result?: { saved: boolean; value?: number } };
+      if (json.ok && json.result?.saved) {
+        setRecalcMsg(`✓ 完了 — Index: ${json.result.value?.toFixed(2) ?? "—"}`);
+      } else if (json.ok) {
+        setRecalcMsg("⚠ 完了（データ不足）");
       } else {
-        setRecalcMsg("⚠ 完了（データなし）");
+        setRecalcMsg("✗ エラー");
       }
       await fetchStatus();
     } catch (err) {
