@@ -11,6 +11,7 @@
 import { prisma }                from "@gci/db";
 import { cardDedupeKey }         from "@gci/core";
 import { ImportWatchlistButton } from "./ImportWatchlistButton";
+import { CardInventoryTable }    from "./CardInventoryTable";
 
 export const dynamic = "force-dynamic";
 
@@ -229,83 +230,7 @@ export default async function AdminCardsPage() {
       )}
 
       {/* ── Full inventory table ────────────────────────────────────────────── */}
-      <section>
-        <h2 className="mb-4 text-xs uppercase tracking-widest text-navy/40">
-          Card Inventory ({cards.length.toLocaleString()} total)
-        </h2>
-
-        {cards.length === 0 ? (
-          <p className="border border-navy/10 bg-white p-6 text-sm text-navy/40">
-            No cards yet. Import a CSV to get started.
-          </p>
-        ) : (
-          <div className="overflow-x-auto border border-navy/10 bg-white">
-            <table className="min-w-full divide-y divide-navy/10 text-sm">
-              <thead className="bg-navy/5 text-left text-xs uppercase tracking-widest text-navy/50">
-                <tr>
-                  <th className="px-4 py-3">Name</th>
-                  <th className="px-4 py-3">Set</th>
-                  <th className="px-4 py-3">Rarity</th>
-                  <th className="px-4 py-3">Cond</th>
-                  <th className="px-4 py-3">Game</th>
-                  <th className="px-4 py-3 text-right">Prices</th>
-                  <th className="px-4 py-3 text-right">Latest ¥</th>
-                  <th className="px-4 py-3">Last Observed</th>
-                  <th className="px-4 py-3">Slug</th>
-                  <th className="px-4 py-3"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-navy/5">
-                {cards.map((c) => (
-                  <tr
-                    key={c.id}
-                    className={[
-                      "hover:bg-navy/[0.02]",
-                      c.priceCount === 0 ? "opacity-50" : "",
-                    ].join(" ")}
-                  >
-                    <td className="px-4 py-3 font-medium text-navy">{c.name}</td>
-                    <td className="px-4 py-3 text-navy/60">{c.setName}</td>
-                    <td className="px-4 py-3 text-navy/60">{c.rarity}</td>
-                    <td className="px-4 py-3 text-navy/50">{c.condition}</td>
-                    <td className="px-4 py-3 text-navy/40 text-xs">
-                      {c.game ?? <span className="text-navy/20">—</span>}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      {c.priceCount === 0 ? (
-                        <span className="text-amber-500">0</span>
-                      ) : (
-                        <span className="text-navy">{c.priceCount.toLocaleString()}</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-navy/70">
-                      {c.latestPrice != null
-                        ? `¥${c.latestPrice.toLocaleString()}`
-                        : <span className="text-navy/25">—</span>}
-                    </td>
-                    <td className="px-4 py-3 text-[11px] text-navy/40 tabular-nums">
-                      {c.latestAt
-                        ? c.latestAt.toLocaleDateString("ja-JP")
-                        : <span className="text-navy/25">—</span>}
-                    </td>
-                    <td className="px-4 py-3 font-mono text-[11px] text-navy/40">
-                      {c.slug ?? <span className="text-navy/25">—</span>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <a
-                        href={`/admin/cards/${c.id}/collect`}
-                        className="rounded bg-navy px-3 py-1 text-xs font-medium text-white hover:bg-navy/80"
-                      >
-                        Collect
-                      </a>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      <CardInventoryTable cards={cards} />
 
       {/* ── Orphans ─────────────────────────────────────────────────────────── */}
       {orphans.length > 0 && (
