@@ -8,8 +8,9 @@
  *   – Full card inventory table (sortable by price count, latest price)
  */
 
-import { prisma }         from "@gci/db";
-import { cardDedupeKey }  from "@gci/core";
+import { prisma }                from "@gci/db";
+import { cardDedupeKey }         from "@gci/core";
+import { ImportWatchlistButton } from "./ImportWatchlistButton";
 
 export const dynamic = "force-dynamic";
 
@@ -120,12 +121,17 @@ export default async function AdminCardsPage() {
 
   return (
     <div className="space-y-10">
-      <header className="border-b border-navy/10 pb-6">
-        <p className="text-xs uppercase tracking-widest text-navy/40">Admin</p>
-        <h1 className="mt-1 text-2xl font-semibold text-navy">Cards</h1>
-        <p className="mt-1 text-sm text-navy/50">
-          カードDB在庫の確認、孤立カードの検出、表記ゆれ重複の検出。
-        </p>
+      <header className="border-b border-navy/10 pb-6 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-navy/40">Admin</p>
+          <h1 className="mt-1 text-2xl font-semibold text-navy">Cards</h1>
+          <p className="mt-1 text-sm text-navy/50">
+            カードDB在庫の確認、孤立カードの検出、表記ゆれ重複の検出。
+          </p>
+        </div>
+        <div className="mt-2 shrink-0">
+          <ImportWatchlistButton />
+        </div>
       </header>
 
       {/* ── Summary stats ──────────────────────────────────────────────────── */}
