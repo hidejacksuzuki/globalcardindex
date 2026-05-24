@@ -228,53 +228,6 @@ export default async function AdminCardsPage() {
         </section>
       )}
 
-      {/* ── Orphans ─────────────────────────────────────────────────────────── */}
-      {orphans.length > 0 && (
-        <section>
-          <h2 className="mb-1 text-xs uppercase tracking-widest text-navy/40">
-            Orphan Cards
-          </h2>
-          <p className="mb-4 text-[11px] text-navy/40">
-            価格データが 0 件のカード行です。安全に削除できます。
-          </p>
-          <div className="overflow-x-auto border border-amber-200 bg-white">
-            <table className="min-w-full divide-y divide-navy/10 text-sm">
-              <thead className="bg-amber-50 text-left text-xs uppercase tracking-widest text-navy/50">
-                <tr>
-                  <th className="px-4 py-3">ID</th>
-                  <th className="px-4 py-3">Name</th>
-                  <th className="px-4 py-3">Set</th>
-                  <th className="px-4 py-3">Rarity</th>
-                  <th className="px-4 py-3">Condition</th>
-                  <th className="px-4 py-3">Slug</th>
-                  <th className="px-4 py-3">Created</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-navy/5">
-                {orphans.map((c) => (
-                  <tr key={c.id} className="hover:bg-amber-50/40">
-                    <td className="px-4 py-2 font-mono text-[11px] text-navy/40">{c.id}</td>
-                    <td className="px-4 py-2 font-medium text-navy">{c.name}</td>
-                    <td className="px-4 py-2 text-navy/60">{c.setName}</td>
-                    <td className="px-4 py-2 text-navy/60">{c.rarity}</td>
-                    <td className="px-4 py-2 text-navy/60">{c.condition}</td>
-                    <td className="px-4 py-2 font-mono text-[11px] text-navy/40">
-                      {c.slug ?? <span className="text-navy/25">—</span>}
-                    </td>
-                    <td className="px-4 py-2 text-[11px] text-navy/40 tabular-nums">
-                      {c.createdAt.toLocaleDateString("ja-JP")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="mt-2 text-[11px] text-navy/40">
-            削除: <code className="font-mono">DELETE FROM Card WHERE id IN (…) AND (SELECT COUNT(*) FROM Price WHERE cardId = Card.id) = 0;</code>
-          </p>
-        </section>
-      )}
-
       {/* ── Full inventory table ────────────────────────────────────────────── */}
       <section>
         <h2 className="mb-4 text-xs uppercase tracking-widest text-navy/40">
@@ -353,6 +306,53 @@ export default async function AdminCardsPage() {
           </div>
         )}
       </section>
+
+      {/* ── Orphans ─────────────────────────────────────────────────────────── */}
+      {orphans.length > 0 && (
+        <section>
+          <h2 className="mb-1 text-xs uppercase tracking-widest text-navy/40">
+            Orphan Cards
+          </h2>
+          <p className="mb-4 text-[11px] text-navy/40">
+            価格データが 0 件のカード行です。安全に削除できます。
+          </p>
+          <div className="overflow-x-auto border border-amber-200 bg-white">
+            <table className="min-w-full divide-y divide-navy/10 text-sm">
+              <thead className="bg-amber-50 text-left text-xs uppercase tracking-widest text-navy/50">
+                <tr>
+                  <th className="px-4 py-3">ID</th>
+                  <th className="px-4 py-3">Name</th>
+                  <th className="px-4 py-3">Set</th>
+                  <th className="px-4 py-3">Rarity</th>
+                  <th className="px-4 py-3">Condition</th>
+                  <th className="px-4 py-3">Slug</th>
+                  <th className="px-4 py-3">Created</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-navy/5">
+                {orphans.map((c) => (
+                  <tr key={c.id} className="hover:bg-amber-50/40">
+                    <td className="px-4 py-2 font-mono text-[11px] text-navy/40">{c.id}</td>
+                    <td className="px-4 py-2 font-medium text-navy">{c.name}</td>
+                    <td className="px-4 py-2 text-navy/60">{c.setName}</td>
+                    <td className="px-4 py-2 text-navy/60">{c.rarity}</td>
+                    <td className="px-4 py-2 text-navy/60">{c.condition}</td>
+                    <td className="px-4 py-2 font-mono text-[11px] text-navy/40">
+                      {c.slug ?? <span className="text-navy/25">—</span>}
+                    </td>
+                    <td className="px-4 py-2 text-[11px] text-navy/40 tabular-nums">
+                      {c.createdAt.toLocaleDateString("ja-JP")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-2 text-[11px] text-navy/40">
+            削除: <code className="font-mono">DELETE FROM Card WHERE id IN (…) AND (SELECT COUNT(*) FROM Price WHERE cardId = Card.id) = 0;</code>
+          </p>
+        </section>
+      )}
     </div>
   );
 }
