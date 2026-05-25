@@ -67,10 +67,11 @@ function mercariUrl(kw: string, sort: "score" | "price", order?: string) {
 }
 
 function yahooUrl(kw: string, closed: boolean) {
-  const base = closed
-    ? "https://auctions.yahoo.co.jp/closedsearch/closedsearch"
-    : "https://auctions.yahoo.co.jp/search/search";
-  return `${base}?p=${encKw(kw)}`;
+  if (closed) {
+    // 落札相場（終了分）: tab_ex=commerce で落札済みに絞る
+    return `https://auctions.yahoo.co.jp/search/search?p=${encKw(kw)}&tab_ex=commerce&auccat=0&s1=end&o1=d&b=1&n=50&ei=utf-8`;
+  }
+  return `https://auctions.yahoo.co.jp/search/search?p=${encKw(kw)}`;
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
