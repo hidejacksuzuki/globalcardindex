@@ -29,7 +29,8 @@ export type CronName =
   | "daily-newsletter"
   | "watchlist-alerts"
   | "weekly-recap"
-  | "backup";
+  | "backup"
+  | "auto-approve";
 
 export type CronStatus = "ok" | "error" | "skipped";
 

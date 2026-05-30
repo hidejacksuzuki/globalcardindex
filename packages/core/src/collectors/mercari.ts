@@ -194,3 +194,28 @@ function splitCsvLine(line: string): string[] {
   result.push(current);
   return result;
 }
+
+// ── source 別 URL ビルダー ────────────────────────────────────────────────────
+
+/** Mercari 売り切れ (sold_out) 検索URL */
+export function buildMercariSoldSearchUrl(keyword: string): string {
+  const params = new URLSearchParams({
+    keyword,
+    exclude_keyword: DEFAULT_EXCLUDE_KEYWORDS,
+    status: "sold_out",
+    sort:   "score",
+  });
+  return `${MERCARI_BASE}?${params.toString()}`;
+}
+
+/** Mercari 販売中 (on_sale) 検索URL */
+export function buildMercariListingSearchUrl(keyword: string): string {
+  const params = new URLSearchParams({
+    keyword,
+    exclude_keyword: DEFAULT_EXCLUDE_KEYWORDS,
+    status: "on_sale",
+    sort:   "score",
+  });
+  return `${MERCARI_BASE}?${params.toString()}`;
+}
+

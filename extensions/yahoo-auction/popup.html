@@ -87,6 +87,29 @@
   <button id="save">保存</button>
   <div id="msg" class="msg"></div>
 
+  <hr style="margin:16px 0;border:none;border-top:1px solid #eee;">
+
+  <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;color:#666;margin-bottom:8px;">
+    自動バッチ収集
+  </div>
+  <p style="font-size:11px;color:#999;margin-bottom:10px;line-height:1.5;">
+    全ウォッチリストカードのヤフオク落札データを自動収集します。
+  </p>
+
+  <button id="batch-start" style="background:#16a34a;">▶ バッチ開始</button>
+  <button id="batch-stop"  style="background:#dc2626;display:none;">■ 停止</button>
+
+  <div id="batch-progress" style="margin-top:10px;display:none;">
+    <div style="font-size:11px;color:#666;margin-bottom:4px;">
+      進捗: <span id="batch-index">0</span> / <span id="batch-total">0</span>
+    </div>
+    <div style="background:#eee;border-radius:4px;height:6px;overflow:hidden;margin-bottom:6px;">
+      <div id="batch-bar" style="background:#1a1a2e;height:100%;width:0%;transition:width 0.3s;"></div>
+    </div>
+    <div id="batch-current" style="font-size:11px;color:#999;word-break:break-all;"></div>
+    <div id="batch-results" style="margin-top:8px;max-height:120px;overflow-y:auto;font-size:11px;"></div>
+  </div>
+
   <script src="popup.js"></script>
 </body>
 </html>

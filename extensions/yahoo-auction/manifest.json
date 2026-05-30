@@ -4,7 +4,11 @@
   "version": "1.0.0",
   "description": "ヤフオクの落札データをGlobal Card Indexに取り込む",
 
-  "permissions": ["storage", "activeTab"],
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "permissions": ["storage", "activeTab", "tabs"],
   "host_permissions": [
     "https://auctions.yahoo.co.jp/*",
     "https://*.vercel.app/*",

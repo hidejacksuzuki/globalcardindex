@@ -41,7 +41,7 @@ type PendingListing = {
   status:     string;
 };
 
-type TabId = "mercari" | "yahoo_active" | "yahoo_closed";
+type TabId = "mercari_sold" | "mercari_listing" | "yahoo_auction_closed" | "yahoo_auction_active";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -79,7 +79,7 @@ function yahooUrl(kw: string, closed: boolean) {
 export default function CollectPage() {
   const { id }                    = useParams<{ id: string }>();
   const [card, setCard]           = useState<CardInfo | null>(null);
-  const [tab, setTab]             = useState<TabId>("mercari");
+  const [tab, setTab]             = useState<TabId>("mercari_sold");
   const [pasteText, setPasteText] = useState("");
   const [scored, setScored]       = useState<ScoredItem[]>([]);
   const [pending, setPending]     = useState<PendingListing[]>([]);
@@ -96,15 +96,14 @@ export default function CollectPage() {
 
   const fetchPending = (tabId: TabId, inclRejected: boolean) => {
     if (!id) return;
-    const source = tabId === "mercari" ? undefined : tabId === "yahoo_active" ? "yahoo_auction_active" : "yahoo_auction_closed";
-    const qs = [
-      source ? `source=${source}` : "",
-      `cardId=${id}`,
-      inclRejected ? "includeRejected=1" : "",
-    ].filter(Boolean).join("&");
-    fetch(`/api/v1/listings/pending?${qs}`)
+    const statusParam = inclRejected ? "all" : "pending";
+    const qs = [`source=${tabId}`, `cardId=${id}`, `status=${statusParam}`].join("&");
+    fetch(`/api/v1/market-listings/pending?${qs}`)
       .then((r) => r.json())
-      .then((d) => { if (d.ok) setPending(d.listings); setSelected(new Set()); });
+      .then((d: { ok: boolean; listings?: PendingListing[] }) => {
+        if (d.ok) setPending(d.listings ?? []);
+        setSelected(new Set());
+      });
   };
 
   useEffect(() => {
@@ -129,19 +128,17 @@ export default function CollectPage() {
     if (items.length === 0) { setMsg("解析できるデータがありませんでした"); return; }
     setLoading(true); setMsg("");
     try {
-      const isYahoo = tab !== "mercari";
-      const url     = isYahoo ? "/api/v1/import/yahoo-auction" : "/api/v1/import/mercari";
-      const body    = isYahoo
-        ? { cardId: id, mode: tab === "yahoo_closed" ? "closed" : "active", items }
-        : { cardId: id, source: "mercari", items };
-
-      const res  = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      const data = await res.json();
+      const res  = await fetch("/api/v1/import/market-results", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ cardId: id, source: tab, items }),
+      });
+      const data = await res.json() as { ok: boolean; saved?: number; autoApproved?: number; skipped?: number; items?: ScoredItem[]; error?: string };
       if (data.ok) {
-        setScored(data.items); setMsg(`${data.saved} 件を取り込みました`); setPasteText("");
-        const source = tab === "mercari" ? undefined : tab === "yahoo_active" ? "yahoo_auction_active" : "yahoo_auction_closed";
-        const qs = source ? `cardId=${id}&source=${source}` : `cardId=${id}`;
-        fetch(`/api/v1/listings/pending?${qs}`).then((r) => r.json()).then((d) => { if (d.ok) setPending(d.listings); });
+        setScored(data.items ?? []);
+        setMsg(`${data.saved}件取り込み（自動承認: ${data.autoApproved}件）`);
+        setPasteText("");
+        fetchPending(tab, showRejected);
       } else {
         setMsg(`エラー: ${data.error}`);
       }
@@ -154,15 +151,15 @@ export default function CollectPage() {
     if (ids.length === 0) { setMsg("承認するものを選択してください"); return; }
     setLoading(true);
     try {
-      const endpoint = tab === "mercari" ? "/api/v1/listings/approve" : "/api/v1/auction-listings/approve";
-      const res  = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids }) });
-      const data = await res.json();
+      const res  = await fetch("/api/v1/market-listings/approve", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      const data = await res.json() as { ok: boolean; approved?: number; error?: string };
       if (data.ok) {
-        setMsg(`${data.approved} 件を承認、PriceSnapshot 作成完了`);
+        setMsg(`${data.approved}件 承認しました`);
         setSelected(new Set());
-        const source = tab === "mercari" ? undefined : tab === "yahoo_active" ? "yahoo_auction_active" : "yahoo_auction_closed";
-        const qs = source ? `cardId=${id}&source=${source}` : `cardId=${id}`;
-        fetch(`/api/v1/listings/pending?${qs}`).then((r) => r.json()).then((d) => { if (d.ok) setPending(d.listings); });
+        fetchPending(tab, showRejected);
       } else { setMsg(`エラー: ${data.error}`); }
     } catch { setMsg("通信エラー"); }
     finally { setLoading(false); }
@@ -173,12 +170,13 @@ export default function CollectPage() {
     if (ids.length === 0) { setMsg("除外するものを選択してください"); return; }
     setLoading(true);
     try {
-      const endpoint = tab === "mercari" ? "/api/v1/listings/approve" : "/api/v1/auction-listings/approve";
-      await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reject: ids }) });
-      setMsg(`${ids.length} 件を除外しました`); setSelected(new Set());
-      const source = tab === "mercari" ? undefined : tab === "yahoo_active" ? "yahoo_auction_active" : "yahoo_auction_closed";
-      const qs = source ? `cardId=${id}&source=${source}` : `cardId=${id}`;
-      fetch(`/api/v1/listings/pending?${qs}`).then((r) => r.json()).then((d) => { if (d.ok) setPending(d.listings); });
+      await fetch("/api/v1/market-listings/approve", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reject: ids }),
+      });
+      setMsg(`${ids.length}件 除外しました`);
+      setSelected(new Set());
+      fetchPending(tab, showRejected);
     } finally { setLoading(false); }
   }
 
@@ -187,9 +185,10 @@ export default function CollectPage() {
   const kw = `${card.name} ${card.rarity} ${card.setName}`.trim();
 
   const TABS: { id: TabId; label: string }[] = [
-    { id: "mercari",      label: "メルカリ" },
-    { id: "yahoo_active", label: "ヤフオク開催中" },
-    { id: "yahoo_closed", label: "ヤフオク落札済み" },
+    { id: "mercari_sold",          label: "Mercari 売り切れ"  },
+    { id: "mercari_listing",       label: "Mercari 販売中"    },
+    { id: "yahoo_auction_closed",  label: "ヤフオク落札済み"  },
+    { id: "yahoo_auction_active",  label: "ヤフオク開催中"    },
   ];
 
   return (
@@ -224,15 +223,18 @@ export default function CollectPage() {
         <p className="text-xs font-medium uppercase tracking-widest text-navy/40">検索URL</p>
         <p className="font-mono text-xs text-navy/50 break-all">{kw}</p>
         <div className="flex flex-wrap gap-2">
-          {tab === "mercari" && <>
-            <SearchBtn href={mercariUrl(kw, "score")}          label="おすすめ順" color="bg-red-500 hover:bg-red-600" />
-            <SearchBtn href={mercariUrl(kw, "price", "asc")}   label="安い順"    color="bg-blue-500 hover:bg-blue-600" />
-            <SearchBtn href={mercariUrl(kw, "price", "dsc")}   label="高い順"    color="bg-amber-500 hover:bg-amber-600" />
+          {tab === "mercari_sold" && <>
+            <SearchBtn href={mercariUrl(kw, "score")}         label="おすすめ順（売切）" color="bg-red-500 hover:bg-red-600" />
+            <SearchBtn href={mercariUrl(kw, "price", "asc")}  label="安い順"             color="bg-blue-500 hover:bg-blue-600" />
+            <SearchBtn href={mercariUrl(kw, "price", "dsc")}  label="高い順"             color="bg-amber-500 hover:bg-amber-600" />
           </>}
-          {tab === "yahoo_active" && <>
+          {tab === "mercari_listing" && <>
+            <SearchBtn href={mercariUrl(kw, "score")}         label="おすすめ順（販売中）" color="bg-orange-500 hover:bg-orange-600" />
+          </>}
+          {tab === "yahoo_auction_active" && <>
             <SearchBtn href={yahooUrl(kw, false)} label="ヤフオク開催中" color="bg-purple-500 hover:bg-purple-600" />
           </>}
-          {tab === "yahoo_closed" && <>
+          {tab === "yahoo_auction_closed" && <>
             <SearchBtn href={yahooUrl(kw, true)} label="落札相場を開く" color="bg-indigo-500 hover:bg-indigo-600" />
           </>}
         </div>
@@ -241,9 +243,9 @@ export default function CollectPage() {
       {/* Paste area */}
       <section className="space-y-3">
         <p className="text-xs font-medium uppercase tracking-widest text-navy/40">取り込み</p>
-        {tab === "yahoo_closed" && (
+        {(tab === "yahoo_auction_closed" || tab === "mercari_sold") && (
           <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
-            落札済みデータのみ指数に反映されます（source = yahoo_auction_closed）
+            成約データ（{tab}）は指数に直接反映されます。自動スコアリングで高スコアのものは自動承認されます。
           </p>
         )}
         <p className="text-xs text-navy/50">
@@ -251,9 +253,10 @@ export default function CollectPage() {
         </p>
         <textarea
           className="w-full h-32 rounded-lg border border-navy/20 bg-white px-3 py-2 font-mono text-xs text-navy focus:outline-none focus:ring-2 focus:ring-navy/20"
-          placeholder={tab === "mercari"
-            ? '[{"title":"ナンジャモ SAR sv2D","price":12800}]'
-            : '[{"title":"ナンジャモ SAR sv2D","price":11500,"bidCount":12,"endedAt":"2026-05-10T10:00:00Z"}]'
+          placeholder={
+            tab === "mercari_sold" || tab === "mercari_listing"
+              ? '[{"title":"ナンジャモ SAR sv2D","price":12800,"url":"https://jp.mercari.com/item/m123"}]'
+              : '[{"title":"ナンジャモ SAR sv2D","price":11500,"bidCount":12,"endedAt":"2026-05-10T10:00:00Z"}]'
           }
           value={pasteText}
           onChange={(e) => setPasteText(e.target.value)}
@@ -277,7 +280,7 @@ export default function CollectPage() {
                 <tr>
                   <th className="px-4 py-2">タイトル</th>
                   <th className="px-4 py-2 text-right">価格</th>
-                  {tab !== "mercari" && <th className="px-4 py-2 text-right">入札</th>}
+                  {tab === "yahoo_auction_closed" || tab === "yahoo_auction_active" && <th className="px-4 py-2 text-right">入札</th>}
                   <th className="px-4 py-2 text-right">Match</th>
                   <th className="px-4 py-2">判定</th>
                 </tr>
@@ -287,7 +290,7 @@ export default function CollectPage() {
                   <tr key={i} className="hover:bg-navy/[0.02]">
                     <td className="max-w-xs truncate px-4 py-2 text-navy/80">{item.title}</td>
                     <td className="px-4 py-2 text-right tabular-nums">¥{item.price.toLocaleString()}</td>
-                    {tab !== "mercari" && <td className="px-4 py-2 text-right tabular-nums">{item.bidCount ?? "-"}</td>}
+                    {tab === "yahoo_auction_closed" || tab === "yahoo_auction_active" && <td className="px-4 py-2 text-right tabular-nums">{item.bidCount ?? "-"}</td>}
                     <td className="px-4 py-2 text-right tabular-nums">{item.matchScore}</td>
                     <td className="px-4 py-2">
                       <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${verdictColor(item.verdict)}`}>
@@ -329,8 +332,8 @@ export default function CollectPage() {
                   <th className="px-3 py-2"></th>
                   <th className="px-4 py-2">タイトル</th>
                   <th className="px-4 py-2 text-right">価格</th>
-                  {tab !== "mercari" && <th className="px-4 py-2 text-right">入札</th>}
-                  {tab !== "mercari" && <th className="px-4 py-2">終了日</th>}
+                  {tab === "yahoo_auction_closed" || tab === "yahoo_auction_active" && <th className="px-4 py-2 text-right">入札</th>}
+                  {tab === "yahoo_auction_closed" || tab === "yahoo_auction_active" && <th className="px-4 py-2">終了日</th>}
                   <th className="px-4 py-2 text-right">Match</th>
                   <th className="px-4 py-2">状態</th>
                 </tr>
@@ -345,8 +348,8 @@ export default function CollectPage() {
                     </td>
                     <td className="max-w-xs truncate px-4 py-2 text-navy/80">{l.title}</td>
                     <td className="px-4 py-2 text-right tabular-nums">¥{l.price.toLocaleString()}</td>
-                    {tab !== "mercari" && <td className="px-4 py-2 text-right tabular-nums">{l.bidCount ?? "-"}</td>}
-                    {tab !== "mercari" && (
+                    {tab === "yahoo_auction_closed" || tab === "yahoo_auction_active" && <td className="px-4 py-2 text-right tabular-nums">{l.bidCount ?? "-"}</td>}
+                    {tab === "yahoo_auction_closed" || tab === "yahoo_auction_active" && (
                       <td className="px-4 py-2 text-xs text-navy/50">
                         {l.endedAt ? new Date(l.endedAt).toLocaleDateString("ja-JP") : "-"}
                       </td>

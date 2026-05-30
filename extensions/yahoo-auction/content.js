@@ -239,4 +239,63 @@
       msgEl.style.color = isError ? "#e74c3c" : "#27ae60";
     }
   });
+
+  // ── AUTO_SUBMIT: background.js からの自動バッチ指示を受ける ─────────────────
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg.type !== "AUTO_SUBMIT") return;
+
+    const { cardId, apiUrl, cronSecret } = msg;
+    const items = scrapeItems();
+
+    if (!items.length) {
+      chrome.runtime.sendMessage({ type: "AUTO_SUBMIT_DONE", saved: 0, skipped: 0, error: "0件" });
+      return;
+    }
+
+    fetch(`${apiUrl}/api/v1/import/yahoo-auction`, {
+      method:  "POST",
+      headers: {
+        "Content-Type":  "application/json",
+        "Authorization": `Bearer ${cronSecret}`,
+      },
+      body: JSON.stringify({ cardId, mode: "closed", items }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        // 小さなバナーを表示（邪魔にならない程度）
+        showAutoStatus(data.ok
+          ? `✓ ${data.saved}件 取り込み完了`
+          : `エラー: ${data.error}`
+        );
+        chrome.runtime.sendMessage({
+          type:    "AUTO_SUBMIT_DONE",
+          saved:   data.saved   ?? 0,
+          skipped: data.skipped ?? 0,
+          error:   data.ok ? null : data.error,
+        });
+      })
+      .catch((e) => {
+        chrome.runtime.sendMessage({ type: "AUTO_SUBMIT_DONE", saved: 0, skipped: 0, error: e.message });
+      });
+  });
+
+  /** バッチモード用の軽量ステータスバナー */
+  function showAutoStatus(text) {
+    let banner = document.getElementById("gci-auto-banner");
+    if (!banner) {
+      banner = document.createElement("div");
+      banner.id = "gci-auto-banner";
+      banner.style.cssText = `
+        position:fixed;top:12px;right:12px;z-index:999999;
+        background:#1a1a2e;color:#fff;padding:8px 14px;
+        border-radius:8px;font-family:sans-serif;font-size:12px;
+        box-shadow:0 2px 12px rgba(0,0,0,0.2);
+        transition:opacity 0.3s;
+      `;
+      document.body.appendChild(banner);
+    }
+    banner.textContent = text;
+    banner.style.opacity = "1";
+    setTimeout(() => { banner.style.opacity = "0"; }, 3000);
+  }
 })();

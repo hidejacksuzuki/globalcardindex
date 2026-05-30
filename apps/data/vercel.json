@@ -34,6 +34,10 @@
       "schedule": "*/30 * * * *"
     },
     {
+      "path": "/api/v1/cron/auto-approve",
+      "schedule": "15 * * * *"
+    },
+    {
       "path": "/api/v1/cron/watchlist-alerts",
       "schedule": "30 18 * * *"
     },

@@ -28,6 +28,7 @@ model Card {
   indexValues        IndexValue[]
   rawListings        RawListing[]
   rawAuctionResults  RawAuctionResult[]
+  rawMarketListings  RawMarketListing[]
   priceSnapshots     PriceSnapshot[]
   sourceSearchUrls   SourceSearchUrl[]
   createdAt DateTime @default(now())
@@ -628,4 +629,58 @@ model CardRequest {
   @@index([status])
   @@index([game])
   @@index([createdAt])
+}
+
+// ============================================================
+// CardCandidate — 一括入力からの自動推定候補
+// ============================================================
+model CardCandidate {
+  id            String   @id @default(cuid())
+  inputText     String
+  game          String?
+  name          String
+  rarity        String?
+  version       String?
+  condition     String   @default("raw")
+  searchKeyword String
+  confidence    Int      @default(0)
+  // pending / auto_candidate / approved / rejected / held
+  status        String   @default("pending")
+  createdAt     DateTime @default(now())
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============================================================
+// RawMarketListing — 新統合生データ（新規import用）
+// source: mercari_sold / mercari_listing / yahoo_auction_closed / yahoo_auction_active
+// ============================================================
+model RawMarketListing {
+  id         String    @id @default(cuid())
+  cardId     String
+  card       Card      @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  source     String
+  title      String
+  price      Int
+  url        String?
+  imageUrl   String?
+  bidCount   Int?
+  endedAt    DateTime?
+  rawText    String?
+
+  matchScore Int       @default(0)
+  trustScore Int       @default(0)
+  // pending / auto_approved / approved / rejected / held
+  status     String    @default("pending")
+
+  capturedAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+
+  @@index([cardId])
+  @@index([status])
+  @@index([cardId, status])
+  @@index([source])
+  @@index([capturedAt])
 }

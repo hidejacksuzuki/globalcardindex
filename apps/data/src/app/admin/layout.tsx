@@ -13,9 +13,12 @@ const NAV_ITEMS = [
   { href: "/admin/newsletter",   label: "Newsletter"   },
   { href: "/admin/import",       label: "Import"       },
   { href: "/admin/cards",        label: "Cards"        },
+  { href: "/admin/cards/add",    label: "＋ Add Cards"  },
   { href: "/admin/collector",    label: "Collector"    },
   { href: "/admin/card-requests", label: "Requests"    },
-  { href: "/admin/bookmarklet",   label: "Bookmarklet" },
+  { href: "/admin/bookmarklet",    label: "Bookmarklet" },
+  { href: "/admin/cards/auto-add", label: "Auto Add"   },
+  { href: "/admin/prices/inbox",   label: "Inbox"      },
 ];
 
 export default function AdminLayout({

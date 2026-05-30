@@ -16,9 +16,18 @@ export function buildYahooAuctionSearchUrl(keyword: string): string {
   return `${YAHUOKU_SEARCH_BASE}?${new URLSearchParams({ p: keyword }).toString()}`;
 }
 
-/** 落札相場（終了済み）検索 */
+/** 落札相場（終了済み）検索 — tab_ex=commerce で落札済みを明示 */
 export function buildYahooAuctionClosedSearchUrl(keyword: string): string {
-  return `${YAHUOKU_CLOSED_BASE}?${new URLSearchParams({ p: keyword }).toString()}`;
+  const params = new URLSearchParams({
+    p: keyword, tab_ex: "commerce", auccat: "0",
+    s1: "end", o1: "d", b: "1", n: "50", ei: "utf-8",
+  });
+  return `${YAHUOKU_SEARCH_BASE}?${params.toString()}`;
+}
+
+/** 開催中オークション検索（別名エクスポート） */
+export function buildYahooAuctionActiveSearchUrl(keyword: string): string {
+  return buildYahooAuctionSearchUrl(keyword);
 }
 
 /** カード情報から両方のURLをまとめて生成 */
