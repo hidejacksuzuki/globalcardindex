@@ -8,9 +8,8 @@
  *
  * 自動承認条件（すべて満たす場合のみ）:
  *   - source が mercari_sold または yahoo_auction_closed
- *   - trustScore >= 90 && matchScore >= 90
+ *   - matchScore >= 75
  *   - 除外ワードなし
- *   - URL あり
  *   - price > 0
  *   - 価格が既存中央値の ±50% 以内（medianPrice が渡された場合）
  */
@@ -115,11 +114,9 @@ export function scoreMarketListing(
 
   if (
     closedSource &&
-    trust >= 90 &&
-    match >= 90 &&
+    match >= 75 &&
     !hasPenaltyWord &&
     priceOk &&
-    !!input.url &&
     input.price > 0
   ) {
     status = "auto_approved";
