@@ -109,6 +109,31 @@ btnCancel.addEventListener("click", () => {
   closeSettings();
 });
 
+document.getElementById("btn-test-key").addEventListener("click", async () => {
+  const key = apiKeyInput.value.trim();
+  const resultEl = document.getElementById("test-result");
+  if (!key) { resultEl.textContent = "API Key を入力してください"; resultEl.style.color = "#c00"; return; }
+
+  resultEl.textContent = "テスト中...";
+  resultEl.style.color = "#666";
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/cards?limit=1`, {
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.ok) {
+      resultEl.textContent = `✓ 接続OK（${data.cards?.length ?? 0} cards）`;
+      resultEl.style.color = "#1b5e20";
+    } else {
+      resultEl.textContent = `✗ HTTP ${res.status} — API Key が違う可能性があります`;
+      resultEl.style.color = "#c00";
+    }
+  } catch (e) {
+    resultEl.textContent = `✗ ${e.message}`;
+    resultEl.style.color = "#c00";
+  }
+});
+
 // ── Card search ───────────────────────────────────────────────────────────────
 cardSearch.addEventListener("input", () => {
   clearTimeout(searchTimer);
@@ -124,11 +149,14 @@ async function searchCards(query) {
       `${API_BASE}/api/v1/cards?search=${encodeURIComponent(query)}&limit=30`,
       { headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {} },
     );
-    if (!res.ok) throw new Error(res.status);
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`HTTP ${res.status}${txt ? ": " + txt.slice(0, 80) : ""}`);
+    }
     const data = await res.json();
     renderCardList(data.cards || []);
-  } catch {
-    cardList.innerHTML = '<div class="card-empty">取得エラー — API Key を確認してください</div>';
+  } catch (err) {
+    cardList.innerHTML = `<div class="card-empty" style="color:#c00">エラー: ${esc(err.message)}</div>`;
   }
 }
 
