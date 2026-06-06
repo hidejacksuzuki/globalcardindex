@@ -82,6 +82,7 @@ export async function updatePrices(options?: {
               title:     item.title,
               price:     Math.round(item.price),
               url:       item.url,
+              imageUrl:  item.imageUrl ?? null,
               bidCount:  item.bidCount ?? null,
               endedAt:   item.endedAt ? new Date(item.endedAt) : null,
               matchScore,
