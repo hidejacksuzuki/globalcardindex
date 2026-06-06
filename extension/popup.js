@@ -11,7 +11,7 @@
  *   7. 結果表示
  */
 
-const API_BASE = "https://gci-data.com";
+const API_BASE = "https://gci-data-hidejacksuzukis-projects.vercel.app";
 
 // ── State ──────────────────────────────────────────────────────────────────────
 let apiKey       = "";

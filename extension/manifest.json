@@ -6,7 +6,7 @@
   "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": [
     "https://jp.mercari.com/*",
-    "https://gci-data.com/*"
+    "https://gci-data-hidejacksuzukis-projects.vercel.app/*"
   ],
   "action": {
     "default_popup": "popup.html",
