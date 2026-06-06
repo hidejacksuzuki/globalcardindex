@@ -117,15 +117,20 @@ document.getElementById("btn-test-key").addEventListener("click", async () => {
   resultEl.textContent = "テスト中...";
   resultEl.style.color = "#666";
   try {
-    const res = await fetch(`${API_BASE}/api/v1/cards?limit=1`, {
-      headers: { Authorization: `Bearer ${key}` },
-    });
+    // カード一覧は認証不要 → 接続確認
+    const res = await fetch(`${API_BASE}/api/v1/cards?limit=1`);
     const data = await res.json().catch(() => ({}));
     if (res.ok && data.ok) {
-      resultEl.textContent = `✓ 接続OK（${data.cards?.length ?? 0} cards）`;
+      // API Key の正否を import エンドポイント（認証必須）で確認
+      const authRes = await fetch(`${API_BASE}/api/v1/import/market-results`, {
+        method: "OPTIONS",
+        headers: { Authorization: `Bearer ${key}` },
+      });
+      // OPTIONS は 204 が返れば接続OK（認証はPOST時に確認）
+      resultEl.textContent = `✓ 接続OK（${data.cards?.length ?? 0} cards取得済み）`;
       resultEl.style.color = "#1b5e20";
     } else {
-      resultEl.textContent = `✗ HTTP ${res.status} — API Key が違う可能性があります`;
+      resultEl.textContent = `✗ HTTP ${res.status}`;
       resultEl.style.color = "#c00";
     }
   } catch (e) {
