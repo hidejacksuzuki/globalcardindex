@@ -1,12 +1,11 @@
 /**
  * GET /api/v1/debug/yahoo-fetch?keyword=XXX
  *
- * Yahoo closedsearch の実レスポンスを診断する。
- * __NEXT_DATA__ JSON を抽出してパーサーの修正に使う。
+ * Yahoo closedsearch の __NEXT_DATA__ から search.items を抽出して構造を確認する。
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { parseClosedAuctionHtml, buildServerClosedSearchUrl } from "@gci/core";
+import { buildServerClosedSearchUrl } from "@gci/core";
 
 export const dynamic = "force-dynamic";
 
@@ -21,61 +20,48 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const keyword = req.nextUrl.searchParams.get("keyword") ?? "ピカチュウ";
   const url     = buildServerClosedSearchUrl(keyword);
 
-  let httpStatus   = 0;
-  let htmlLength   = 0;
-  let parsedCount  = 0;
-  let items: unknown[] = [];
-  let fetchError   = "";
-  let nextData: unknown = null;
-  let nextDataKeys = "";
-
   try {
     const res  = await fetch(url, { headers: FETCH_HEADERS, redirect: "follow", signal: AbortSignal.timeout(15_000) });
-    httpStatus  = res.status;
-    const html  = await res.text();
-    htmlLength  = html.length;
+    const html = await res.text();
 
     // __NEXT_DATA__ を抽出
     const m = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
-    if (m) {
-      try {
-        nextData     = JSON.parse(m[1]);
-        // トップレベルキーを返す（構造把握用）
-        nextDataKeys = JSON.stringify(deepKeys(nextData, 4), null, 2).slice(0, 5000);
-      } catch {
-        nextDataKeys = m[1].slice(0, 1000);
-      }
+    if (!m) {
+      return NextResponse.json({ ok: false, error: "no __NEXT_DATA__ found", httpStatus: res.status });
     }
 
-    items        = parseClosedAuctionHtml(html, 5);
-    parsedCount  = items.length;
-  } catch (err) {
-    fetchError = err instanceof Error ? err.message : String(err);
-  }
+    const data = JSON.parse(m[1]) as Record<string, unknown>;
 
-  return NextResponse.json({
-    ok: true,
-    keyword,
-    fetchUrl:    url,
-    httpStatus,
-    htmlLength,
-    parsedCount,
-    items,
-    nextDataKeys,  // ← これで JSON 構造が分かる
-    fetchError:  fetchError || null,
-  });
+    // search.items を探す (props.pageProps.initialState or props.initialState)
+    const pageState  = getPath(data, ["props", "pageProps", "initialState", "search"]);
+    const globalState = getPath(data, ["props", "initialState", "search"]);
+    const searchState = pageState ?? globalState;
+
+    const items = getPath(searchState, ["items"]);
+    const firstItem = Array.isArray(items) && items.length > 0 ? items[0] : items;
+
+    return NextResponse.json({
+      ok:           true,
+      keyword,
+      httpStatus:   res.status,
+      htmlLength:   html.length,
+      // search state のトップキー
+      searchKeys:   searchState && typeof searchState === "object" ? Object.keys(searchState as object) : null,
+      // items の型と件数
+      itemsType:    Array.isArray(items) ? `array[${(items as unknown[]).length}]` : typeof items,
+      // 最初の1件の全フィールド
+      firstItem,
+    });
+  } catch (err) {
+    return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : String(err) });
+  }
 }
 
-/** オブジェクトのキー構造を depth 段階まで取得 */
-function deepKeys(obj: unknown, depth: number): unknown {
-  if (depth <= 0 || typeof obj !== "object" || obj === null) return typeof obj;
-  if (Array.isArray(obj)) {
-    return obj.length > 0 ? [`[${obj.length}]`, deepKeys(obj[0], depth - 1)] : [];
+function getPath(obj: unknown, keys: string[]): unknown {
+  let cur = obj;
+  for (const k of keys) {
+    if (cur == null || typeof cur !== "object") return null;
+    cur = (cur as Record<string, unknown>)[k];
   }
-  return Object.fromEntries(
-    Object.keys(obj as Record<string, unknown>).slice(0, 20).map((k) => [
-      k,
-      deepKeys((obj as Record<string, unknown>)[k], depth - 1),
-    ])
-  );
+  return cur;
 }
