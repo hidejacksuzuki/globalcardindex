@@ -60,8 +60,9 @@ function verdictLabel(v: string) {
 function encKw(s: string) { return encodeURIComponent(s); }
 const EXCL = encKw("オリパ 引退品 まとめ 海外 英語 proxy プレイ用 傷あり");
 
-function mercariUrl(kw: string, sort: "score" | "price", order?: string) {
-  let u = `https://jp.mercari.com/search?keyword=${encKw(kw)}&exclude_keyword=${EXCL}&status=on_sale&sort=${sort}`;
+function mercariUrl(kw: string, sort: "score" | "price", order?: string, sold = false) {
+  const status = sold ? "sold_out" : "on_sale";
+  let u = `https://jp.mercari.com/search?keyword=${encKw(kw)}&exclude_keyword=${EXCL}&status=${status}&sort=${sort}`;
   if (sort === "price" && order) u += `&order=${order}`;
   return u;
 }
@@ -224,9 +225,9 @@ export default function CollectPage() {
         <p className="font-mono text-xs text-navy/50 break-all">{kw}</p>
         <div className="flex flex-wrap gap-2">
           {tab === "mercari_sold" && <>
-            <SearchBtn href={mercariUrl(kw, "score")}         label="おすすめ順（売切）" color="bg-red-500 hover:bg-red-600" />
-            <SearchBtn href={mercariUrl(kw, "price", "asc")}  label="安い順"             color="bg-blue-500 hover:bg-blue-600" />
-            <SearchBtn href={mercariUrl(kw, "price", "dsc")}  label="高い順"             color="bg-amber-500 hover:bg-amber-600" />
+            <SearchBtn href={mercariUrl(kw, "score", undefined, true)}      label="おすすめ順（売切）" color="bg-red-500 hover:bg-red-600" />
+            <SearchBtn href={mercariUrl(kw, "price", "asc",    true)}       label="安い順"             color="bg-blue-500 hover:bg-blue-600" />
+            <SearchBtn href={mercariUrl(kw, "price", "dsc",    true)}       label="高い順"             color="bg-amber-500 hover:bg-amber-600" />
           </>}
           {tab === "mercari_listing" && <>
             <SearchBtn href={mercariUrl(kw, "score")}         label="おすすめ順（販売中）" color="bg-orange-500 hover:bg-orange-600" />
