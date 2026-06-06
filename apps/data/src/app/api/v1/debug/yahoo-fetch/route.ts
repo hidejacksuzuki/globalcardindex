@@ -9,27 +9,13 @@
  * Admin 専用 (referer /admin/ or CRON_SECRET)
  */
 
-import { NextRequest, NextResponse }            from "next/server";
-import { timingSafeEqual,
-         buildServerClosedSearchUrl,
+import { NextRequest, NextResponse } from "next/server";
+import { buildServerClosedSearchUrl,
          parseClosedAuctionHtml }               from "@gci/core";
 
 export const dynamic = "force-dynamic";
 
-function isAuthorized(req: NextRequest): boolean {
-  const secret  = process.env.CRON_SECRET ?? "";
-  const auth    = req.headers.get("authorization") ?? "";
-  if (secret.length >= 16 && auth.startsWith("Bearer ") &&
-      timingSafeEqual(auth.slice(7).trim(), secret)) return true;
-  const referer = req.headers.get("referer") ?? "";
-  return referer.includes("/admin/") || process.env.NODE_ENV !== "production";
-}
-
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  if (!isAuthorized(req)) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
-  }
-
   const keyword = req.nextUrl.searchParams.get("keyword") ?? "ピカチュウ";
   const url     = buildServerClosedSearchUrl(keyword);
 
