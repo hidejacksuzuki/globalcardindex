@@ -29,6 +29,12 @@ type DailyStatus = {
     filtered:     number;
     error:        number;
   };
+  yahoo: {
+    total:        number;
+    approved:     number;
+    pending:      number;
+    lastCardAt:   string | null;
+  };
   recalc: {
     lastRunAt:      string | null;
     lastValue:      number | null;
@@ -304,6 +310,26 @@ export default function AdminDailyPage() {
                 <StatCell label="除外"      value={s.sessions.filtered} />
                 <StatCell label="エラー"    value={s.sessions.error}   color={s.sessions.error > 0 ? "red" : undefined} />
               </dl>
+            </div>
+
+            {/* Yahoo auto-collection */}
+            <div className="rounded border border-navy/10 bg-white p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs uppercase tracking-widest text-navy/40">ヤフオク 自動収集</p>
+                {s.yahoo.lastCardAt && (
+                  <span className="text-[10px] text-navy/30">
+                    最終: {fmtTime(s.yahoo.lastCardAt)}
+                  </span>
+                )}
+              </div>
+              <dl className="grid grid-cols-3 gap-3">
+                <StatCell label="本日取得"   value={s.yahoo.total}    />
+                <StatCell label="自動承認"   value={s.yahoo.approved} color="green" />
+                <StatCell label="保留中"     value={s.yahoo.pending}  color={s.yahoo.pending > 0 ? "amber" : undefined} />
+              </dl>
+              {s.yahoo.total === 0 && (
+                <p className="text-[11px] text-navy/30">本日の取得なし（10分ごとに自動実行）</p>
+              )}
             </div>
 
             {/* Recalc status */}

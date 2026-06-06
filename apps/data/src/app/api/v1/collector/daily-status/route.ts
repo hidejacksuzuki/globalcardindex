@@ -89,6 +89,29 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const filteredItems = rejectedItems;
   const errorItems    = 0;
 
+  // ── Today's RawAuctionResult stats (server-side Yahoo cron) ─────────────
+  const [
+    yahooTotal,
+    yahooApproved,
+    yahooPending,
+    yahooLastRow,
+  ] = await Promise.all([
+    prisma.rawAuctionResult.count({
+      where: { createdAt: { gte: todayStart }, source: "yahoo_auction_closed" },
+    }),
+    prisma.rawAuctionResult.count({
+      where: { createdAt: { gte: todayStart }, source: "yahoo_auction_closed", status: "approved" },
+    }),
+    prisma.rawAuctionResult.count({
+      where: { createdAt: { gte: todayStart }, source: "yahoo_auction_closed", status: "pending" },
+    }),
+    prisma.rawAuctionResult.findFirst({
+      where:   { source: "yahoo_auction_closed" },
+      orderBy: { createdAt: "desc" },
+      select:  { createdAt: true },
+    }),
+  ]);
+
   // ── Last RecalcLog ────────────────────────────────────────────────────────
   const lastRecalc = await prisma.recalcLog.findFirst({
     orderBy: { createdAt: "desc" },
@@ -116,6 +139,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         approved: approvedItems,
         filtered: filteredItems,
         error:    errorItems,
+      },
+      yahoo: {
+        total:      yahooTotal,
+        approved:   yahooApproved,
+        pending:    yahooPending,
+        lastCardAt: yahooLastRow?.createdAt?.toISOString() ?? null,
       },
       recalc: {
         lastRunAt:      lastRecalc?.createdAt?.toISOString() ?? null,
