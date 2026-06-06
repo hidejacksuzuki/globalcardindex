@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "GCI Mercari Collector",
+  "version": "1.0.0",
+  "description": "Mercari 売切れ価格を GCI に1クリックで取込む",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": [
+    "https://jp.mercari.com/*",
+    "https://gci-data.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "GCI Collect"
+  }
+}

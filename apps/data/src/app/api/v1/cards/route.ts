@@ -34,12 +34,22 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
-  const sp    = new URL(req.url).searchParams;
-  const limit = Math.min(parseInt(sp.get("limit") ?? "200", 10), 500);
-  const game  = sp.get("game") ?? undefined;
+  const sp     = new URL(req.url).searchParams;
+  const limit  = Math.min(parseInt(sp.get("limit") ?? "200", 10), 500);
+  const game   = sp.get("game")   ?? undefined;
+  const search = sp.get("search") ?? undefined;
 
   const cards = await prisma.card.findMany({
-    where:   game ? { game } : undefined,
+    where: {
+      ...(game   ? { game }  : {}),
+      ...(search ? {
+        OR: [
+          { name:    { contains: search, mode: "insensitive" } },
+          { setName: { contains: search, mode: "insensitive" } },
+          { rarity:  { contains: search, mode: "insensitive" } },
+        ],
+      } : {}),
+    },
     orderBy: [{ game: "asc" }, { name: "asc" }],
     take:    limit,
     select:  { id: true, name: true, rarity: true, setName: true, game: true },

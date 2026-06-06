@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { href: "/admin/bookmarklet",    label: "Bookmarklet" },
   { href: "/admin/cards/auto-add", label: "Auto Add"   },
   { href: "/admin/prices/inbox",   label: "Inbox"      },
+  { href: "/admin/extension",      label: "Extension"  },
 ];
 
 export default function AdminLayout({
