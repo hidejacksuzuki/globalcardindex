@@ -43,7 +43,7 @@ async function getCronData() {
     orderBy: { createdAt: "desc" },
     take:    50,
     select:  { id: true, name: true, status: true, isDry: true,
-               createdAt: true, durationMs: true, errorMessage: true, triggeredBy: true },
+               createdAt: true, durationMs: true, errorMessage: true, triggeredBy: true, result: true },
   });
 
   const latestMap = Object.fromEntries(latestRuns.map((r) => [r.name, r]));
@@ -106,6 +106,25 @@ function HealthBadge({ health }: { health: "ok" | "stale" | "error" | "never_run
   return (
     <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${map[health]}`}>
       {labels[health]}
+    </span>
+  );
+}
+
+function CollectSummary({ name, result }: { name: string; result: unknown }) {
+  if (name !== "fetch" || !result || typeof result !== "object") return <span className="text-navy/30">—</span>;
+  const r = result as Record<string, unknown>;
+  const c = r.collect as Record<string, number> | undefined;
+  if (!c) return <span className="text-navy/30">—</span>;
+  return (
+    <span className="flex flex-wrap gap-x-2 gap-y-0.5 text-[11px]">
+      <span className="text-navy/60">{c.processed ?? 0}枚</span>
+      <span className="text-emerald-700">+{c.saved ?? 0}件</span>
+      {(c.autoApproved ?? 0) > 0 && (
+        <span className="text-blue-600">✓{c.autoApproved}自動</span>
+      )}
+      {(c.skipped ?? 0) > 0 && (
+        <span className="text-navy/30">skip{c.skipped}</span>
+      )}
     </span>
   );
 }
@@ -211,7 +230,7 @@ export default async function AdminLogsPage() {
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Mode</th>
                 <th className="px-4 py-3 font-medium">Duration</th>
-                <th className="px-4 py-3 font-medium">Trigger</th>
+                <th className="px-4 py-3 font-medium">収集結果</th>
                 <th className="px-4 py-3 font-medium">Error</th>
               </tr>
             </thead>
@@ -248,7 +267,9 @@ export default async function AdminLogsPage() {
                         : "live"}
                     </td>
                     <td className="px-4 py-2.5 text-navy/60">{fmtDuration(log.durationMs)}</td>
-                    <td className="px-4 py-2.5 text-navy/40">{log.triggeredBy}</td>
+                    <td className="px-4 py-2.5">
+                      <CollectSummary name={log.name} result={log.result} />
+                    </td>
                     <td className="px-4 py-2.5 max-w-xs truncate text-red-600">
                       {log.errorMessage ?? ""}
                     </td>
