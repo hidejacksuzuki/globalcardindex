@@ -42,8 +42,10 @@ async function init() {
   const stored = await chrome.storage.local.get("apiKey");
   apiKey = stored.apiKey || "";
 
+  // API Key 未設定なら設定画面を自動で開く
   if (!apiKey) {
-    showAlert("warn", "まず ⚙ から API Key を設定してください。");
+    openSettings();
+    return;
   }
 
   // Get current tab
@@ -75,16 +77,20 @@ async function init() {
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────────
+function openSettings() {
+  settingsView.style.display = "block";
+  mainView.style.display     = "none";
+  apiKeyInput.value = apiKey;
+}
+
+function closeSettings() {
+  settingsView.style.display = "none";
+  mainView.style.display     = "block";
+}
+
 btnToggle.addEventListener("click", () => {
   const isSettings = settingsView.style.display !== "none";
-  if (isSettings) {
-    settingsView.style.display = "none";
-    mainView.style.display     = "block";
-  } else {
-    settingsView.style.display = "block";
-    mainView.style.display     = "none";
-    apiKeyInput.value = apiKey;
-  }
+  if (isSettings) closeSettings(); else openSettings();
 });
 
 btnSaveKey.addEventListener("click", async () => {
@@ -99,8 +105,8 @@ btnSaveKey.addEventListener("click", async () => {
 });
 
 btnCancel.addEventListener("click", () => {
-  settingsView.style.display = "none";
-  mainView.style.display     = "block";
+  if (!apiKey) return; // 未設定なら閉じられない
+  closeSettings();
 });
 
 // ── Card search ───────────────────────────────────────────────────────────────

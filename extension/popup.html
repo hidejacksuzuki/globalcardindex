@@ -162,10 +162,13 @@
 
   <!-- Settings view -->
   <div class="body" id="settings-view">
-    <label>API Key（CRON_SECRET）</label>
-    <input type="password" id="api-key-input" placeholder="your-cron-secret" />
-    <p class="text-xs">gci-data.com の Vercel 環境変数 CRON_SECRET を入力してください。</p>
-    <button class="btn btn-primary mt12" id="btn-save-key">保存</button>
+    <label>API Key（初回のみ設定）</label>
+    <input type="password" id="api-key-input" placeholder="CRON_SECRET の値を貼り付け" />
+    <p class="text-xs" style="margin-top:6px">
+      取得場所：<strong>Vercel</strong> → プロジェクト → Settings → Environment Variables →
+      <code style="background:rgba(0,0,0,.08);padding:1px 4px;border-radius:3px">CRON_SECRET</code> の値
+    </p>
+    <button class="btn btn-primary mt12" id="btn-save-key">保存して使い始める</button>
     <button class="btn btn-ghost" id="btn-cancel-settings">キャンセル</button>
   </div>
 
