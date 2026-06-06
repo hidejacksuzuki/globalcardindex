@@ -11,10 +11,9 @@
  */
 
 import { prisma }  from "@gci/db";
-import { fetchClosedAuctions }  from "../collectors/yahoo-auction-server.js";
-import { calcAuctionScore }     from "../collectors/yahoo-auction.js";
-import { autoVerdict }          from "../collectors/scoring.js";
-import { buildYahooAuctionUrls } from "../collectors/yahoo-auction.js";
+import { fetchClosedAuctions }   from "../collectors/yahoo-auction-server";
+import { calcAuctionScore, buildYahooAuctionUrls } from "../collectors/yahoo-auction";
+import { autoVerdict }           from "../collectors/scoring";
 
 const RATE_LIMIT_MS      = 2500;
 const DEFAULT_BATCH      = 20;
