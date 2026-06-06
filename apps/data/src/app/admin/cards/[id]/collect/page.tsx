@@ -69,8 +69,8 @@ function mercariUrl(kw: string, sort: "score" | "price", order?: string, sold = 
 
 function yahooUrl(kw: string, closed: boolean) {
   if (closed) {
-    // 落札相場（終了分）: tab_ex=commerce で落札済みに絞る
-    return `https://auctions.yahoo.co.jp/search/search?p=${encKw(kw)}&tab_ex=commerce&auccat=0&s1=end&o1=d&b=1&n=50&ei=utf-8`;
+    // 落札相場: closedsearch エンドポイント + auctype=2 で落札済みに絞る
+    return `https://auctions.yahoo.co.jp/closedsearch/closedsearch?p=${encKw(kw)}&auctype=2&b=1&n=50&ei=utf-8`;
   }
   return `https://auctions.yahoo.co.jp/search/search?p=${encKw(kw)}`;
 }

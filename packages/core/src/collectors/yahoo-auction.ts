@@ -16,13 +16,12 @@ export function buildYahooAuctionSearchUrl(keyword: string): string {
   return `${YAHUOKU_SEARCH_BASE}?${new URLSearchParams({ p: keyword }).toString()}`;
 }
 
-/** 落札相場（終了済み）検索 — tab_ex=commerce で落札済みを明示 */
+/** 落札相場（終了済み）検索 — closedsearch エンドポイント + auctype=2 */
 export function buildYahooAuctionClosedSearchUrl(keyword: string): string {
   const params = new URLSearchParams({
-    p: keyword, tab_ex: "commerce", auccat: "0",
-    s1: "end", o1: "d", b: "1", n: "50", ei: "utf-8",
+    p: keyword, auctype: "2", b: "1", n: "50", ei: "utf-8",
   });
-  return `${YAHUOKU_SEARCH_BASE}?${params.toString()}`;
+  return `${YAHUOKU_CLOSED_BASE}?${params.toString()}`;
 }
 
 /** 開催中オークション検索（別名エクスポート） */
