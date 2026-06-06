@@ -117,20 +117,26 @@ document.getElementById("btn-test-key").addEventListener("click", async () => {
   resultEl.textContent = "テスト中...";
   resultEl.style.color = "#666";
   try {
-    // カード一覧は認証不要 → 接続確認
-    const res = await fetch(`${API_BASE}/api/v1/cards?limit=1`);
-    const data = await res.json().catch(() => ({}));
-    if (res.ok && data.ok) {
-      // API Key の正否を import エンドポイント（認証必須）で確認
-      const authRes = await fetch(`${API_BASE}/api/v1/import/market-results`, {
-        method: "OPTIONS",
-        headers: { Authorization: `Bearer ${key}` },
-      });
-      // OPTIONS は 204 が返れば接続OK（認証はPOST時に確認）
-      resultEl.textContent = `✓ 接続OK（${data.cards?.length ?? 0} cards取得済み）`;
+    // API Key を POST で実際に認証確認（空 items → 400 なら認証OK、401 なら Key 不正）
+    const authRes = await fetch(`${API_BASE}/api/v1/import/market-results`, {
+      method:  "POST",
+      headers: {
+        "Content-Type":  "application/json",
+        "Authorization": `Bearer ${key}`,
+      },
+      body: JSON.stringify({ cardId: "_test_", source: "mercari_sold", items: [] }),
+    });
+    if (authRes.status === 401) {
+      resultEl.textContent = "✗ API Key が違います（Vercel の CRON_SECRET を確認してください）";
+      resultEl.style.color = "#c00";
+      return;
+    }
+    // 400 = 認証OK（body 不正）、200 = 認証OK
+    if (authRes.status === 400 || authRes.status === 200 || authRes.status === 404) {
+      resultEl.textContent = "✓ API Key OK — 収集する準備ができました";
       resultEl.style.color = "#1b5e20";
     } else {
-      resultEl.textContent = `✗ HTTP ${res.status}`;
+      resultEl.textContent = `✗ HTTP ${authRes.status}`;
       resultEl.style.color = "#c00";
     }
   } catch (e) {
@@ -242,6 +248,9 @@ btnCollect.addEventListener("click", async () => {
 
     const data = await res.json();
 
+    if (res.status === 401) {
+      throw new Error("API Key が違います。⚙ 設定で Vercel の CRON_SECRET を確認してください");
+    }
     if (!res.ok || !data.ok) {
       throw new Error(data.error || `HTTP ${res.status}`);
     }
