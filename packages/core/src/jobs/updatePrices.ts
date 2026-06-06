@@ -45,14 +45,14 @@ export async function updatePrices(options?: {
   const cards = await prisma.card.findMany({
     orderBy: { updatedAt: "asc" },
     take:    batchSize,
-    select:  { id: true, name: true, rarity: true, setName: true },
+    select:  { id: true, name: true, rarity: true, setName: true, condition: true },
   });
 
   for (const card of cards) {
     result.processed++;
 
     try {
-      const { keyword } = buildYahooAuctionUrls(card.name, card.rarity, card.setName);
+      const { keyword } = buildYahooAuctionUrls(card.name, card.rarity, card.setName, card.condition);
 
       if (dryRun) {
         await prisma.card.update({ where: { id: card.id }, data: { updatedAt: new Date() } });
@@ -64,7 +64,7 @@ export async function updatePrices(options?: {
       for (const item of items) {
         const { matchScore, trustScore } = calcAuctionScore(
           item.title,
-          { name: card.name, rarity: card.rarity, setName: card.setName },
+          { name: card.name, rarity: card.rarity, setName: card.setName, condition: card.condition },
           true,
           item.bidCount,
         );

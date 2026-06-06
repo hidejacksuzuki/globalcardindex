@@ -30,12 +30,14 @@ export function buildYahooAuctionActiveSearchUrl(keyword: string): string {
 }
 
 /** カード情報から両方のURLをまとめて生成 */
-export function buildYahooAuctionUrls(name: string, rarity: string, setName: string): {
+export function buildYahooAuctionUrls(name: string, rarity: string, setName: string, condition?: string): {
   keyword:   string;
   activeUrl: string;
   closedUrl: string;
 } {
-  const keyword = `${name} ${rarity} ${setName}`.trim();
+  // PSA/BGS 等のグレーディング条件はキーワードに含める
+  const condTag = condition && /^(PSA|BGS|ARS)\d/i.test(condition) ? ` ${condition}` : "";
+  const keyword = `${name} ${rarity} ${setName}${condTag}`.trim();
   return {
     keyword,
     activeUrl: buildYahooAuctionSearchUrl(keyword),
@@ -56,9 +58,10 @@ const LANGUAGE_YA     = ["海外版", "英語版", "中国語", "韓国語", "�
 const CONDITION_BAD   = ["傷あり", "状態難", "ジャンク"];
 
 export type AuctionScoringTarget = {
-  name:    string;
-  rarity:  string;
-  setName: string;
+  name:       string;
+  rarity:     string;
+  setName:    string;
+  condition?: string;
 };
 
 export type AuctionScoringResult = {
@@ -98,9 +101,21 @@ export function calcAuctionScore(
   if (bidCount != null && bidCount > 0) {
     score += 10; reasons.push(`入札数あり(${bidCount}) +10`);
   }
-  // +20: grading
-  if (/psa|bgs|ars/i.test(title)) {
-    score += 20; reasons.push("鑑定品 +20");
+  // グレーディング条件チェック
+  const cardIsGraded   = /^(PSA|BGS|ARS)\d/i.test(target.condition ?? "");
+  const titleHasGrading = /psa|bgs|ars/i.test(title);
+
+  if (cardIsGraded && titleHasGrading) {
+    score += 20; reasons.push("鑑定品一致 +20");
+    // 同グレード（例: PSA10 ↔ "PSA10"）ならさらに加点
+    const grade = (target.condition ?? "").toLowerCase().replace(/\s/g, "");
+    if (t.replace(/\s/g, "").includes(grade)) {
+      score += 10; reasons.push(`グレード一致(${target.condition}) +10`);
+    }
+  } else if (cardIsGraded && !titleHasGrading) {
+    score -= 30; reasons.push("グレーディングカードなのに非鑑定品 -30");
+  } else if (!cardIsGraded && titleHasGrading) {
+    score -= 30; reasons.push("NM/rawカードに鑑定タグ混入 -30");
   }
 
   // -50: オリパ

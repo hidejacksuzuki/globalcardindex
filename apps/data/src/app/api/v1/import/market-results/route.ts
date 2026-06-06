@@ -78,7 +78,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const card = await prisma.card.findUnique({
     where:  { id: body.cardId },
-    select: { id: true, name: true, rarity: true, setName: true },
+    select: { id: true, name: true, rarity: true, setName: true, condition: true },
   });
   if (!card) {
     return NextResponse.json({ ok: false, error: "card not found" }, { status: 404 });
@@ -117,7 +117,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         bidCount: item.bidCount,
         url:      item.url,
       },
-      { name: card.name, rarity: card.rarity, setName: card.setName },
+      { name: card.name, rarity: card.rarity, setName: card.setName, condition: card.condition },
       medianPrice,
     );
 

@@ -23,9 +23,10 @@ export type ScoreInput = {
 };
 
 export type CardMeta = {
-  name:    string;
-  rarity:  string;
-  setName: string;
+  name:       string;
+  rarity:     string;
+  setName:    string;
+  condition?: string;
 };
 
 export type ScoreResult = {
@@ -67,8 +68,20 @@ export function scoreMarketListing(
   if (card.rarity && t.includes(card.rarity.toLowerCase()))  match += 25;
   if (card.setName && t.includes(card.setName.toLowerCase())) match += 20;
 
-  // PSA条件一致
-  if (t.includes("psa10") || t.includes("psa 10"))       match += 20;
+  // グレーディング条件チェック
+  const cardIsGraded    = /^(PSA|BGS|ARS)\d/i.test(card.condition ?? "");
+  const titleHasGrading = /psa|bgs|ars/i.test(t);
+
+  if (cardIsGraded && titleHasGrading) {
+    match += 20;
+    // 同グレード一致でさらに加点
+    const grade = (card.condition ?? "").toLowerCase().replace(/\s/g, "");
+    if (t.replace(/\s/g, "").includes(grade)) match += 10;
+  } else if (cardIsGraded && !titleHasGrading) {
+    match -= 25; // グレーディングカードなのに非鑑定品
+  } else if (!cardIsGraded && titleHasGrading) {
+    match -= 25; // NM/rawカードに鑑定タグ混入
+  }
 
   // 短いタイトル = 単品の可能性
   if (input.title.length < 60)                           match += 10;
