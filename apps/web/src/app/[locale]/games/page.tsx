@@ -1,20 +1,34 @@
-import type { Metadata }  from "next";
-import Link                from "next/link";
-import { GAMES }           from "@gci/core";
+import type { Metadata }  from 'next';
+import Link               from 'next/link';
+import { GAMES }          from '@gci/core';
+import { getTranslations } from '@/i18n';
+import type { Locale }    from '@/i18n/config';
 
-export const metadata: Metadata = {
-  title:       "カードゲーム別相場 | Global Card Index",
-  description: "ポケモンカード・ワンピースカード・遊戯王OCG・マジックの市場価格指数を一覧。ゲーム別の相場動向を確認できます。",
-};
+export async function generateMetadata({ params }: { params: { locale: Locale } }): Promise<Metadata> {
+  const isEn = params.locale === 'en';
+  return {
+    title: isEn
+      ? 'Games | Global Card Index'
+      : 'カードゲーム別相場 | Global Card Index',
+    description: isEn
+      ? 'Browse trading card market indices by game — Pokémon TCG, One Piece Card Game, Yu-Gi-Oh! OCG, and Magic: The Gathering.'
+      : 'ポケモンカード・ワンピースカード・遊戯王OCG・マジックの市場価格指数を一覧。ゲーム別の相場動向を確認できます。',
+  };
+}
 
-export default function GamesPage() {
+export default function GamesPage({ params }: { params: { locale: Locale } }) {
+  const t  = getTranslations(params.locale);
+  const isEn = params.locale === 'en';
+
   return (
     <div className="space-y-8">
       <header className="border-b border-navy/10 pb-6">
         <p className="text-xs uppercase tracking-widest text-navy/50">Market Data</p>
-        <h1 className="mt-1 text-2xl font-semibold text-navy">カードゲーム別相場</h1>
+        <h1 className="mt-1 text-2xl font-semibold text-navy">{t.games.title}</h1>
         <p className="mt-1 text-sm text-navy/50">
-          ゲーム別の市場価格指数・セット相場をリアルタイムで追跡。
+          {isEn
+            ? 'Browse market price indices and set data by game in real time.'
+            : 'ゲーム別の市場価格指数・セット相場をリアルタイムで追跡。'}
         </p>
       </header>
 

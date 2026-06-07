@@ -1,18 +1,22 @@
-import Link                from "next/link";
+import Link                from 'next/link';
 import {
   getWatchlistCards,
   type WatchlistCard,
   type PriceSignal,
   type SignalType,
-} from "@gci/core";
-import { WatchButton }   from "@/components/watchlist/WatchButton";
-import { formatPrice }   from "@gci/core";
-import { formatDateTime } from "@gci/core";
-import { auth }          from "@/auth";
+  formatPrice,
+  formatDateTime,
+} from '@gci/core';
+import { WatchButton }    from '@/components/watchlist/WatchButton';
+import { auth }           from '@/auth';
+import { getTranslations } from '@/i18n';
+import type { Locale }    from '@/i18n/config';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
-export default async function WatchlistPage() {
+export default async function WatchlistPage({ params }: { params: { locale: Locale } }) {
+  const t       = getTranslations(params.locale);
+  const isEn    = params.locale === 'en';
   const session = await auth();
   const userId  = session?.user?.id ?? null;
   const cards   = await getWatchlistCards();
@@ -20,22 +24,17 @@ export default async function WatchlistPage() {
   return (
     <div className="space-y-8">
       <header className="border-b border-navy/10 pb-6">
-        <h1 className="text-2xl font-semibold text-navy">Watchlist</h1>
-        <p className="mt-1 text-sm text-navy/50">
-          監視中のカード — 価格変動・ボリュームスパイクを追跡します。
-        </p>
+        <h1 className="text-2xl font-semibold text-navy">{t.watchlist.title}</h1>
+        <p className="mt-1 text-sm text-navy/50">{t.watchlist.description}</p>
       </header>
 
       {cards.length === 0 ? (
-        <EmptyState />
+        <EmptyState isEn={isEn} />
       ) : (
         <>
-          {/* ── シグナルがあるカードをハイライト ── */}
           {cards.some((c) => c.signals.length > 0) && (
             <section>
-              <h2 className="mb-4 text-xs uppercase tracking-widest text-navy/40">
-                Alerts
-              </h2>
+              <h2 className="mb-4 text-xs uppercase tracking-widest text-navy/40">Alerts</h2>
               <div className="space-y-3">
                 {cards
                   .filter((c) => c.signals.length > 0)
@@ -46,10 +45,9 @@ export default async function WatchlistPage() {
             </section>
           )}
 
-          {/* ── 全カード一覧 ── */}
           <section>
             <h2 className="mb-4 text-xs uppercase tracking-widest text-navy/40">
-              All watched cards
+              {isEn ? 'All watched cards' : '全ウォッチ中カード'}
               <span className="ml-2 text-navy/30 normal-case">({cards.length})</span>
             </h2>
             <div className="overflow-x-auto border border-navy/10 bg-white">
@@ -61,7 +59,7 @@ export default async function WatchlistPage() {
                     <th className="px-4 py-3 text-right">Price</th>
                     <th className="px-4 py-3 text-right">7d</th>
                     <th className="px-4 py-3">Signals</th>
-                    <th className="px-4 py-3">Added</th>
+                    <th className="px-4 py-3">{isEn ? 'Added' : '追加日'}</th>
                     <th className="px-4 py-3"></th>
                   </tr>
                 </thead>
@@ -109,31 +107,31 @@ export default async function WatchlistPage() {
   );
 }
 
-// ----------------------------------------------------------------
-// Sub components
-// ----------------------------------------------------------------
-
-function EmptyState() {
+function EmptyState({ isEn }: { isEn: boolean }) {
   return (
     <div className="border border-navy/10 bg-white p-12 text-center">
       <p className="text-3xl">☆</p>
-      <p className="mt-3 text-sm font-medium text-navy">ウォッチリストが空です</p>
+      <p className="mt-3 text-sm font-medium text-navy">
+        {isEn ? 'Your watchlist is empty' : 'ウォッチリストが空です'}
+      </p>
       <p className="mt-1 text-xs text-navy/50">
-        カード詳細ページの「Watch」ボタンで追加できます。
+        {isEn
+          ? 'Add cards via the Watch button on any card detail page.'
+          : 'カード詳細ページの「Watch」ボタンで追加できます。'}
       </p>
       <Link
         href="/cards"
         className="mt-6 inline-block border border-navy/20 px-4 py-2 text-xs uppercase tracking-widest text-navy/60 hover:border-navy/40 hover:text-navy transition"
       >
-        カード一覧へ
+        {isEn ? 'Browse cards' : 'カード一覧へ'}
       </Link>
     </div>
   );
 }
 
 function AlertCard({ card }: { card: WatchlistCard }) {
-  const hasBull = card.signals.some((s) => s.type === "up" || s.type === "new_high");
-  const border  = hasBull ? "border-gold-300 bg-gold-50/40" : "border-red-200 bg-red-50/30";
+  const hasBull = card.signals.some((s) => s.type === 'up' || s.type === 'new_high');
+  const border  = hasBull ? 'border-gold-300 bg-gold-50/40' : 'border-red-200 bg-red-50/30';
 
   return (
     <div className={`border p-4 ${border}`}>
@@ -164,12 +162,10 @@ function AlertCard({ card }: { card: WatchlistCard }) {
 }
 
 function Change7d({ value }: { value: number | null }) {
-  if (value === null) {
-    return <span className="text-navy/25 text-xs">—</span>;
-  }
-  const isPos = value > 0;
-  const color = isPos ? "text-gold-700" : value < 0 ? "text-red-600" : "text-navy/40";
-  const prefix = isPos ? "▲" : value < 0 ? "▼" : "";
+  if (value === null) return <span className="text-navy/25 text-xs">—</span>;
+  const isPos  = value > 0;
+  const color  = isPos ? 'text-gold-700' : value < 0 ? 'text-red-600' : 'text-navy/40';
+  const prefix = isPos ? '▲' : value < 0 ? '▼' : '';
   return (
     <span className={`tabular-nums text-xs ${color}`}>
       {prefix}{Math.abs(value).toFixed(1)}%
@@ -178,25 +174,23 @@ function Change7d({ value }: { value: number | null }) {
 }
 
 const SIGNAL_STYLES: Record<SignalType, string> = {
-  up:           "bg-gold-100 text-gold-700 border-gold-300",
-  down:         "bg-red-50 text-red-600 border-red-200",
-  new_high:     "bg-gold-200 text-gold-800 border-gold-400 font-semibold",
-  new_low:      "bg-blue-50 text-blue-600 border-blue-200",
-  volume_spike: "bg-purple-50 text-purple-600 border-purple-200",
+  up:           'bg-gold-100 text-gold-700 border-gold-300',
+  down:         'bg-red-50 text-red-600 border-red-200',
+  new_high:     'bg-gold-200 text-gold-800 border-gold-400 font-semibold',
+  new_low:      'bg-blue-50 text-blue-600 border-blue-200',
+  volume_spike: 'bg-purple-50 text-purple-600 border-purple-200',
 };
 
 const SIGNAL_ICONS: Record<SignalType, string> = {
-  up:           "▲",
-  down:         "▼",
-  new_high:     "★",
-  new_low:      "◆",
-  volume_spike: "⚡",
+  up:           '▲',
+  down:         '▼',
+  new_high:     '★',
+  new_low:      '◆',
+  volume_spike: '⚡',
 };
 
 function SignalBadges({ signals }: { signals: PriceSignal[] }) {
-  if (signals.length === 0) {
-    return <span className="text-[10px] text-navy/25">—</span>;
-  }
+  if (signals.length === 0) return <span className="text-[10px] text-navy/25">—</span>;
   return (
     <div className="flex flex-wrap gap-1.5">
       {signals.map((s, i) => (

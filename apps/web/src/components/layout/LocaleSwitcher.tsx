@@ -1,8 +1,7 @@
 'use client';
 
 import { useLocale, useT } from '@/i18n/context';
-import { locales, type Locale } from '@/i18n/config';
-import { LOCALE_COOKIE } from '@/i18n/server';
+import { locales, LOCALE_COOKIE, type Locale } from '@/i18n/config';
 import { useRouter, usePathname } from 'next/navigation';
 
 export function LocaleSwitcher() {

@@ -1,25 +1,24 @@
 /**
- * /cards
- *
- * Week 19: card catalog with per-card index value, confidence badge,
- * sample count, and filter controls.
+ * /cards — i18n対応版
  */
 
-import Link             from "next/link";
-import { listCards }    from "@gci/core";
-import { SearchBar }    from "@/components/ui/SearchBar";
-import { formatPrice }  from "@gci/core";
-import type { CardSortKey, SortOrder } from "@gci/core";
-import { prisma }       from "@gci/db";
-import { Disclaimer }          from "@/components/common/Disclaimer";
-import { CardRequestButton }   from "@/components/cards/CardRequestButton";
+import Link             from 'next/link';
+import { listCards, formatPrice } from '@gci/core';
+import { SearchBar }    from '@/components/ui/SearchBar';
+import type { CardSortKey, SortOrder } from '@gci/core';
+import { prisma }       from '@gci/db';
+import { Disclaimer }          from '@/components/common/Disclaimer';
+import { CardRequestButton }   from '@/components/cards/CardRequestButton';
+import { getTranslations }     from '@/i18n';
+import type { Locale }         from '@/i18n/config';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE     = 100;
 
 type Props = {
+  params: { locale: Locale };
   searchParams: {
     q?:          string;
     sort?:       string;
@@ -40,16 +39,16 @@ function parsePositiveInt(raw: string | undefined, fallback: number): number {
 }
 
 function parseSort(raw: string | undefined): CardSortKey {
-  return raw === "latestPrice" ? "latestPrice" : "name";
+  return raw === 'latestPrice' ? 'latestPrice' : 'name';
 }
 
 function parseOrder(raw: string | undefined): SortOrder {
-  return raw === "desc" ? "desc" : "asc";
+  return raw === 'desc' ? 'desc' : 'asc';
 }
 
-// ── Page ─────────────────────────────────────────────────────────────────────
-
-export default async function CardsPage({ searchParams }: Props) {
+export default async function CardsPage({ params, searchParams }: Props) {
+  const t          = getTranslations(params.locale);
+  const isEn       = params.locale === 'en';
   const q          = searchParams.q?.trim()         || undefined;
   const gameFilter = searchParams.game?.trim()       || undefined;
   const condFilter = searchParams.condition?.trim()  || undefined;
@@ -62,15 +61,13 @@ export default async function CardsPage({ searchParams }: Props) {
     Math.max(1, parsePositiveInt(searchParams.pageSize, DEFAULT_PAGE_SIZE)),
   );
 
-  // ── Data ─────────────────────────────────────────────────────────
   const result = await listCards({ search: q, sort, order, page, pageSize });
   const { cards, totalCount, totalPages } = result;
 
-  // Per-page IndexValue lookup (one query for all cards on this page)
   const cardIds = cards.map((c) => c.id);
   const indexRows = await prisma.indexValue.findMany({
     where:   { cardId: { in: cardIds } },
-    orderBy: { calculatedAt: "desc" },
+    orderBy: { calculatedAt: 'desc' },
     select: {
       cardId:       true,
       value:        true,
@@ -81,7 +78,6 @@ export default async function CardsPage({ searchParams }: Props) {
     },
   });
 
-  // Keep only most-recent per card
   const indexMap = new Map<string, typeof indexRows[0]>();
   for (const row of indexRows) {
     if (row.cardId && !indexMap.has(row.cardId)) {
@@ -89,42 +85,35 @@ export default async function CardsPage({ searchParams }: Props) {
     }
   }
 
-  // Filter by confidence if requested
   const displayedCards = confFilter
     ? cards.filter((c) => {
         const idx = indexMap.get(c.id);
-        if (confFilter === "none") return !idx;
+        if (confFilter === 'none') return !idx;
         return idx?.confidence === confFilter;
       })
     : cards;
 
-  // Filter by condition
   const condFiltered = condFilter
     ? displayedCards.filter((c) => c.condition === condFilter)
     : displayedCards;
 
-  // Get unique conditions for filter pills
   const allConditions = [...new Set(cards.map((c) => c.condition))].sort();
 
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold text-navy">Cards</h1>
-        <p className="text-sm text-navy/60">
-          追跡カードのカタログ。指数値・信頼度・サンプル数を確認できます。
-        </p>
+        <h1 className="text-2xl font-semibold text-navy">{t.cards.title}</h1>
+        <p className="text-sm text-navy/60">{t.cards.description}</p>
       </header>
 
-      {/* ── Search ─────────────────────────────────────────────── */}
       <SearchBar
         action="/cards"
         defaultValue={q}
-        placeholder="カード名・セット名で検索"
+        placeholder={t.cards.searchPlaceholder}
       />
 
-      {/* ── Filter bar ─────────────────────────────────────────── */}
+      {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-2">
-        {/* Condition filter */}
         {allConditions.map((cond) => (
           <FilterPill
             key={cond}
@@ -133,20 +122,16 @@ export default async function CardsPage({ searchParams }: Props) {
             active={condFilter === cond}
           />
         ))}
-
         {condFilter && (
           <FilterPill
-            label="× Condition"
+            label={isEn ? '× Condition' : '× Condition'}
             href={buildFilterHref({ q, sort, order, confidence: confFilter })}
             active={false}
             clear
           />
         )}
-
         <span className="mx-1 h-4 w-px bg-navy/15" />
-
-        {/* Confidence filter */}
-        {(["HIGH", "MED", "LOW"] as const).map((tier) => (
+        {(['HIGH', 'MED', 'LOW'] as const).map((tier) => (
           <FilterPill
             key={tier}
             label={tier}
@@ -156,13 +141,13 @@ export default async function CardsPage({ searchParams }: Props) {
           />
         ))}
         <FilterPill
-          label="No index"
-          href={buildFilterHref({ q, sort, order, condition: condFilter, confidence: confFilter === "none" ? undefined : "none" })}
-          active={confFilter === "none"}
+          label={isEn ? 'No index' : 'No index'}
+          href={buildFilterHref({ q, sort, order, condition: condFilter, confidence: confFilter === 'none' ? undefined : 'none' })}
+          active={confFilter === 'none'}
         />
         {confFilter && (
           <FilterPill
-            label="× Confidence"
+            label={isEn ? '× Confidence' : '× Confidence'}
             href={buildFilterHref({ q, sort, order, condition: condFilter })}
             active={false}
             clear
@@ -170,22 +155,36 @@ export default async function CardsPage({ searchParams }: Props) {
         )}
       </div>
 
-      {/* ── Count line ─────────────────────────────────────────── */}
+      {/* Count line */}
       <p className="text-xs text-navy/50">
-        {q
-          ? <>{totalCount} 件 <span className="text-navy/70">&ldquo;{q}&rdquo;</span> · <Link href="/cards" className="underline hover:text-navy">クリア</Link></>
-          : <>{totalCount} カード収録</>
-        }
-        {condFiltered.length !== cards.length && ` · ${condFiltered.length} 件表示中`}
+        {q ? (
+          <>
+            {totalCount} {t.search.results}{' '}
+            <span className="text-navy/70">&ldquo;{q}&rdquo;</span>
+            {' · '}
+            <Link href="/cards" className="underline hover:text-navy">{t.search.clear}</Link>
+          </>
+        ) : (
+          <>
+            {totalCount} {isEn ? 'cards' : 'カード収録'}
+          </>
+        )}
+        {condFiltered.length !== cards.length && (
+          <> · {condFiltered.length} {isEn ? 'shown' : '件表示中'}</>
+        )}
       </p>
 
-      {/* ── Table ──────────────────────────────────────────────── */}
+      {/* Table */}
       {condFiltered.length === 0 ? (
         <div className="rounded border border-navy/10 bg-white p-6 text-sm text-navy/50 space-y-3">
-          <p>該当するカードがありません。</p>
+          <p>{t.cards.noCards}</p>
           {q && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-navy/40">お探しのカードはまだ収録されていませんか？</span>
+              <span className="text-xs text-navy/40">
+                {isEn
+                  ? 'Not tracked yet?'
+                  : 'お探しのカードはまだ収録されていませんか？'}
+              </span>
               <CardRequestButton defaultName={q} />
             </div>
           )}
@@ -196,17 +195,17 @@ export default async function CardsPage({ searchParams }: Props) {
             <thead className="bg-navy/5 text-left text-[10px] uppercase tracking-widest text-navy/50">
               <tr>
                 <th className="px-4 py-3">
-                  <SortLink k="name" sort={sort} order={order} q={q}>Card</SortLink>
+                  <SortLink k="name" sort={sort} order={order} q={q}>{t.cards.colCard}</SortLink>
                 </th>
-                <th className="px-4 py-3">Set</th>
-                <th className="px-4 py-3">Cond</th>
-                <th className="px-4 py-3">Confidence</th>
-                <th className="px-4 py-3 text-right">Index</th>
+                <th className="px-4 py-3">{t.cards.colSet}</th>
+                <th className="px-4 py-3">{t.cards.colCondition}</th>
+                <th className="px-4 py-3">{t.cards.colConfidence}</th>
+                <th className="px-4 py-3 text-right">{t.cards.colIndex}</th>
                 <th className="px-4 py-3 text-right">Δ</th>
-                <th className="px-4 py-3 text-right">Samples</th>
+                <th className="px-4 py-3 text-right">{t.cards.colSamples}</th>
                 <th className="px-4 py-3 text-right">
                   <SortLink k="latestPrice" sort={sort} order={order} q={q}>
-                    Latest ¥
+                    {t.cards.colLatestPrice}
                   </SortLink>
                 </th>
               </tr>
@@ -268,7 +267,7 @@ export default async function CardsPage({ searchParams }: Props) {
         </div>
       )}
 
-      {/* ── Pagination ─────────────────────────────────────────── */}
+      {/* Pagination */}
       {totalPages > 1 && (
         <Pagination
           currentPage={page}
@@ -279,6 +278,7 @@ export default async function CardsPage({ searchParams }: Props) {
           pageSize={pageSize}
           condition={condFilter}
           confidence={confFilter}
+          isEn={isEn}
         />
       )}
 
@@ -297,13 +297,13 @@ function buildFilterHref(params: {
   confidence?: string;
 }): string {
   const p = new URLSearchParams();
-  if (params.q)          p.set("q",          params.q);
-  if (params.sort && params.sort !== "name") p.set("sort", params.sort);
-  if (params.order && params.order !== "asc") p.set("order", params.order);
-  if (params.condition)  p.set("condition",  params.condition);
-  if (params.confidence) p.set("confidence", params.confidence);
+  if (params.q)          p.set('q',          params.q);
+  if (params.sort && params.sort !== 'name') p.set('sort', params.sort);
+  if (params.order && params.order !== 'asc') p.set('order', params.order);
+  if (params.condition)  p.set('condition',  params.condition);
+  if (params.confidence) p.set('confidence', params.confidence);
   const qs = p.toString();
-  return qs ? `/cards?${qs}` : "/cards";
+  return qs ? `/cards?${qs}` : '/cards';
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -314,15 +314,15 @@ function SortLink({
   k: CardSortKey; sort: CardSortKey; order: SortOrder; q?: string;
   children: React.ReactNode;
 }) {
-  const nextOrder: SortOrder = sort === k && order === "asc" ? "desc" : "asc";
+  const nextOrder: SortOrder = sort === k && order === 'asc' ? 'desc' : 'asc';
   const params = new URLSearchParams();
-  if (q)          params.set("q",     q);
-  if (k !== "name") params.set("sort", k);
-  if (nextOrder !== "asc") params.set("order", nextOrder);
-  const arrow = sort === k ? (order === "asc" ? " ↑" : " ↓") : "";
+  if (q)            params.set('q',     q);
+  if (k !== 'name') params.set('sort',  k);
+  if (nextOrder !== 'asc') params.set('order', nextOrder);
+  const arrow = sort === k ? (order === 'asc' ? ' ↑' : ' ↓') : '';
   return (
     <Link href={`/cards?${params.toString()}`} className="inline-flex items-center gap-1 hover:text-navy">
-      {children}<span className="text-[9px]">{arrow || " ↕"}</span>
+      {children}<span className="text-[9px]">{arrow || ' ↕'}</span>
     </Link>
   );
 }
@@ -331,20 +331,20 @@ function FilterPill({
   label, href, active, confidence, clear,
 }: {
   label: string; href: string; active: boolean;
-  confidence?: "HIGH" | "MED" | "LOW"; clear?: boolean;
+  confidence?: 'HIGH' | 'MED' | 'LOW'; clear?: boolean;
 }) {
   const confColors: Record<string, string> = {
-    HIGH: active ? "bg-green-600 text-white border-green-600" : "border-green-300 text-green-700 hover:bg-green-50",
-    MED:  active ? "bg-amber-500 text-white border-amber-500" : "border-amber-300 text-amber-700 hover:bg-amber-50",
-    LOW:  active ? "bg-red-500 text-white border-red-500"     : "border-red-300 text-red-700 hover:bg-red-50",
+    HIGH: active ? 'bg-green-600 text-white border-green-600' : 'border-green-300 text-green-700 hover:bg-green-50',
+    MED:  active ? 'bg-amber-500 text-white border-amber-500' : 'border-amber-300 text-amber-700 hover:bg-amber-50',
+    LOW:  active ? 'bg-red-500 text-white border-red-500'     : 'border-red-300 text-red-700 hover:bg-red-50',
   };
   const base = clear
-    ? "border-navy/20 text-navy/40 hover:text-navy/70"
+    ? 'border-navy/20 text-navy/40 hover:text-navy/70'
     : confidence
       ? confColors[confidence]
       : active
-        ? "bg-navy text-white border-navy"
-        : "border-navy/20 text-navy/60 hover:border-navy/40 hover:text-navy";
+        ? 'bg-navy text-white border-navy'
+        : 'border-navy/20 text-navy/60 hover:border-navy/40 hover:text-navy';
 
   return (
     <Link
@@ -358,14 +358,14 @@ function FilterPill({
 
 function CondBadge({ condition }: { condition: string }) {
   const colors: Record<string, string> = {
-    NM:  "bg-green-100 text-green-700",
-    LP:  "bg-blue-100  text-blue-700",
-    MP:  "bg-amber-100 text-amber-700",
-    HP:  "bg-red-100   text-red-700",
-    DMG: "bg-red-200   text-red-800",
+    NM:  'bg-green-100 text-green-700',
+    LP:  'bg-blue-100  text-blue-700',
+    MP:  'bg-amber-100 text-amber-700',
+    HP:  'bg-red-100   text-red-700',
+    DMG: 'bg-red-200   text-red-800',
   };
   return (
-    <span className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${colors[condition] ?? "bg-navy/10 text-navy/50"}`}>
+    <span className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${colors[condition] ?? 'bg-navy/10 text-navy/50'}`}>
       {condition}
     </span>
   );
@@ -373,20 +373,20 @@ function CondBadge({ condition }: { condition: string }) {
 
 function ConfidenceBadge({ tier }: { tier: string }) {
   const styles: Record<string, string> = {
-    HIGH: "bg-green-100 text-green-700",
-    MED:  "bg-amber-100 text-amber-700",
-    LOW:  "bg-red-100   text-red-600",
+    HIGH: 'bg-green-100 text-green-700',
+    MED:  'bg-amber-100 text-amber-700',
+    LOW:  'bg-red-100   text-red-600',
   };
   return (
-    <span className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${styles[tier] ?? "bg-navy/10 text-navy/50"}`}>
+    <span className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${styles[tier] ?? 'bg-navy/10 text-navy/50'}`}>
       {tier}
     </span>
   );
 }
 
 function ChangeRate({ rate }: { rate: number }) {
-  const color  = rate > 0 ? "text-gold-700" : rate < 0 ? "text-red-600" : "text-navy/40";
-  const prefix = rate > 0 ? "▲" : rate < 0 ? "▼" : "";
+  const color  = rate > 0 ? 'text-gold-700' : rate < 0 ? 'text-red-600' : 'text-navy/40';
+  const prefix = rate > 0 ? '▲' : rate < 0 ? '▼' : '';
   return (
     <span className={`text-xs tabular-nums ${color}`}>
       {prefix}{Math.abs(rate).toFixed(1)}%
@@ -395,39 +395,41 @@ function ChangeRate({ rate }: { rate: number }) {
 }
 
 function Pagination({
-  currentPage, totalPages, query, sort, order, pageSize, condition, confidence,
+  currentPage, totalPages, query, sort, order, pageSize, condition, confidence, isEn,
 }: {
   currentPage: number; totalPages: number; query?: string;
   sort: CardSortKey; order: SortOrder; pageSize: number;
-  condition?: string; confidence?: string;
+  condition?: string; confidence?: string; isEn: boolean;
 }) {
   const buildHref = (p: number) => {
     const params = new URLSearchParams();
-    if (query)                          params.set("q",          query);
-    if (sort !== "name")                params.set("sort",       sort);
-    if (order !== "asc")                params.set("order",      order);
-    if (pageSize !== DEFAULT_PAGE_SIZE) params.set("pageSize",   String(pageSize));
-    if (condition)                      params.set("condition",  condition);
-    if (confidence)                     params.set("confidence", confidence);
-    if (p > 1)                          params.set("page",       String(p));
+    if (query)                          params.set('q',          query);
+    if (sort !== 'name')                params.set('sort',       sort);
+    if (order !== 'asc')                params.set('order',      order);
+    if (pageSize !== DEFAULT_PAGE_SIZE) params.set('pageSize',   String(pageSize));
+    if (condition)                      params.set('condition',  condition);
+    if (confidence)                     params.set('confidence', confidence);
+    if (p > 1)                          params.set('page',       String(p));
     const qs = params.toString();
-    return qs ? `/cards?${qs}` : "/cards";
+    return qs ? `/cards?${qs}` : '/cards';
   };
 
   const prev = currentPage > 1          ? buildHref(currentPage - 1) : null;
   const next = currentPage < totalPages ? buildHref(currentPage + 1) : null;
+  const prevLabel = isEn ? 'Previous' : 'Previous';
+  const nextLabel = isEn ? 'Next' : 'Next';
 
   return (
     <nav className="flex items-center justify-between text-xs text-navy/60">
       <span>Page {currentPage} / {totalPages}</span>
       <div className="flex gap-2">
         {prev
-          ? <Link href={prev} className="border border-navy/10 bg-white px-3 py-1 transition hover:border-navy">Previous</Link>
-          : <span className="border border-navy/10 bg-navy/5 px-3 py-1 text-navy/30">Previous</span>
+          ? <Link href={prev} className="border border-navy/10 bg-white px-3 py-1 transition hover:border-navy">{prevLabel}</Link>
+          : <span className="border border-navy/10 bg-navy/5 px-3 py-1 text-navy/30">{prevLabel}</span>
         }
         {next
-          ? <Link href={next} className="border border-navy/10 bg-white px-3 py-1 transition hover:border-navy">Next</Link>
-          : <span className="border border-navy/10 bg-navy/5 px-3 py-1 text-navy/30">Next</span>
+          ? <Link href={next} className="border border-navy/10 bg-white px-3 py-1 transition hover:border-navy">{nextLabel}</Link>
+          : <span className="border border-navy/10 bg-navy/5 px-3 py-1 text-navy/30">{nextLabel}</span>
         }
       </div>
     </nav>

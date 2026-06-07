@@ -15,7 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { locales, defaultLocale, isValidLocale, type Locale } from '@/i18n/config';
-import { LOCALE_COOKIE } from '@/i18n/server';
+import { LOCALE_COOKIE } from '@/i18n/config';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

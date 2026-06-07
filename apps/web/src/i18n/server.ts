@@ -1,8 +1,8 @@
 import { cookies } from 'next/headers';
-import { defaultLocale, isValidLocale, type Locale } from './config';
+import { defaultLocale, isValidLocale, LOCALE_COOKIE, type Locale } from './config';
 import { getTranslations } from './index';
 
-export const LOCALE_COOKIE = 'gci_locale';
+export { LOCALE_COOKIE };
 
 /** Read locale from cookie (set by middleware). Falls back to defaultLocale. */
 export function getLocale(): Locale {

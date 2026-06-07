@@ -1,36 +1,34 @@
-import Link from "next/link";
+import Link from 'next/link';
 import {
   getLatestIndex,
   getIndexHistory,
   getPreviousDaySnapshot,
   INDEX_PERIODS,
   type IndexPeriodDays,
-} from "@gci/core";
-import { IndexHero } from "@/components/index/IndexHero";
-import { formatDateTime } from "@gci/core";
+  formatDateTime,
+} from '@gci/core';
+import { IndexHero } from '@/components/index/IndexHero';
+import type { Locale } from '@/i18n/config';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 type Props = {
+  params:       { locale: Locale };
   searchParams: { period?: string };
 };
 
 function parsePeriod(raw: string | undefined): IndexPeriodDays {
   const n = Number(raw);
-  return (INDEX_PERIODS as readonly number[]).includes(n)
-    ? (n as IndexPeriodDays)
-    : 30;
+  return (INDEX_PERIODS as readonly number[]).includes(n) ? (n as IndexPeriodDays) : 30;
 }
 
 function buildPeriodHref(days: IndexPeriodDays): string {
-  return days === 30 ? "/indices" : `/indices?period=${days}`;
+  return days === 30 ? '/indices' : `/indices?period=${days}`;
 }
 
-// ----------------------------------------------------------------
-// Page
-// ----------------------------------------------------------------
-export default async function IndicesPage({ searchParams }: Props) {
+export default async function IndicesPage({ params, searchParams }: Props) {
   const period = parsePeriod(searchParams.period);
+  const isEn   = params.locale === 'en';
 
   const [latest, prevDay, history] = await Promise.all([
     getLatestIndex(),
@@ -38,10 +36,8 @@ export default async function IndicesPage({ searchParams }: Props) {
     getIndexHistory(period),
   ]);
 
-  // IndexHero のスパークラインは古い順
   const series = history.map((h) => h.value).reverse();
 
-  // 前日比を直接計算
   const dayChangeRate =
     latest && prevDay && prevDay.value !== 0
       ? ((latest.value - prevDay.value) / prevDay.value) * 100
@@ -50,40 +46,39 @@ export default async function IndicesPage({ searchParams }: Props) {
   return (
     <div className="space-y-8">
 
-      {/* ── ヒーロー ── */}
-      <IndexHero snapshot={latest} series={series} dayChangeRate={dayChangeRate} />
+      <IndexHero snapshot={latest} series={series} dayChangeRate={dayChangeRate} locale={params.locale} />
 
-      {/* ── 期間タブ ── */}
+      {/* Period tabs */}
       <div className="flex items-center gap-1">
         {INDEX_PERIODS.map((d) => (
           <Link
             key={d}
             href={buildPeriodHref(d)}
             className={[
-              "px-4 py-1.5 text-xs uppercase tracking-widest transition",
+              'px-4 py-1.5 text-xs uppercase tracking-widest transition',
               d === period
-                ? "bg-navy text-white"
-                : "border border-navy/10 bg-white text-navy/60 hover:border-navy/30 hover:text-navy",
-            ].join(" ")}
+                ? 'bg-navy text-white'
+                : 'border border-navy/10 bg-white text-navy/60 hover:border-navy/30 hover:text-navy',
+            ].join(' ')}
           >
             {d}D
           </Link>
         ))}
         <span className="ml-auto text-xs text-navy/40">
-          {history.length} data point{history.length !== 1 ? "s" : ""}
+          {history.length} data point{history.length !== 1 ? 's' : ''}
         </span>
       </div>
 
-      {/* ── 履歴テーブル ── */}
+      {/* History table */}
       <section>
         <h2 className="mb-4 text-xs uppercase tracking-widest text-navy/50">
           Index history · {period}D
         </h2>
         {history.length === 0 ? (
           <p className="border border-navy/10 bg-white p-6 text-sm text-navy/50">
-            No history yet. Run{" "}
-            <code className="text-navy/70">npm run recalc-index</code> to
-            generate the first value.
+            {isEn
+              ? 'No history yet. Run recalc-index to generate the first value.'
+              : 'まだデータがありません。recalc-index を実行してください。'}
           </p>
         ) : (
           <div className="overflow-x-auto border border-navy/10 bg-white">
@@ -114,17 +109,17 @@ export default async function IndicesPage({ searchParams }: Props) {
                       </td>
                       <td
                         className={[
-                          "px-4 py-3 text-right tabular-nums",
+                          'px-4 py-3 text-right tabular-nums',
                           delta === null
-                            ? "text-navy/30"
+                            ? 'text-navy/30'
                             : positive
-                              ? "text-gold-700"
-                              : "text-red-700",
-                        ].join(" ")}
+                              ? 'text-gold-700'
+                              : 'text-red-700',
+                        ].join(' ')}
                       >
                         {delta === null
-                          ? "—"
-                          : `${positive ? "+" : ""}${delta.toFixed(2)}%`}
+                          ? '—'
+                          : `${positive ? '+' : ''}${delta.toFixed(2)}%`}
                       </td>
                     </tr>
                   );
