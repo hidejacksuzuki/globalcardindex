@@ -15,9 +15,9 @@ export async function Header() {
           <Image
             src="/logo.png"
             alt="Global Card Index"
-            width={180}
-            height={48}
-            className="h-9 w-auto"
+            width={360}
+            height={96}
+            className="h-16 w-auto"
             priority
           />
         </Link>
