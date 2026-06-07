@@ -1,4 +1,5 @@
-import Link from 'next/link';
+import Link  from 'next/link';
+import Image from 'next/image';
 import { getServerTranslations } from '@/i18n/server';
 import { LocaleSwitcher }   from './LocaleSwitcher';
 import { CurrencySwitcher } from './CurrencySwitcher';
@@ -10,11 +11,15 @@ export async function Header() {
     <header className="border-b border-navy/10 bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 gap-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 shrink-0">
-          <span className="text-lg font-semibold tracking-tight text-navy">GCI</span>
-          <span className="text-xs uppercase tracking-widest text-navy/50 hidden sm:inline">
-            Global Card Index
-          </span>
+        <Link href="/" className="shrink-0">
+          <Image
+            src="/logo.png"
+            alt="Global Card Index"
+            width={180}
+            height={48}
+            className="h-9 w-auto"
+            priority
+          />
         </Link>
 
         {/* Main nav */}
