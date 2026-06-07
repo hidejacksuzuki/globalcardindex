@@ -25,11 +25,11 @@ function shouldBypass(pathname: string): boolean {
   return BYPASS_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
-function getLocaleFromPath(pathname: string): { locale: Locale; rest: string; isDefault: boolean } | null {
+function getLocaleFromPath(pathname: string): { locale: Locale; rest: string } | null {
   for (const locale of locales) {
     if (pathname === `/${locale}` || pathname.startsWith(`/${locale}/`)) {
       const rest = pathname.slice(locale.length + 1) || '/';
-      return { locale: locale as Locale, rest, isDefault: locale === defaultLocale };
+      return { locale: locale as Locale, rest };
     }
   }
   return null;
@@ -57,16 +57,8 @@ export async function middleware(req: NextRequest) {
   let rewritePath: string;
 
   if (fromPath) {
-    // /ja/... → redirect to /... (default locale has no prefix)
-    if (fromPath.isDefault) {
-      const target = new URL(fromPath.rest, req.url);
-      target.search = req.nextUrl.search;
-      const res = NextResponse.redirect(target, { status: 301 });
-      res.cookies.set(LOCALE_COOKIE, defaultLocale, {
-        path: '/', maxAge: 60 * 60 * 24 * 365, sameSite: 'lax',
-      });
-      return res;
-    }
+    // URL が /ja/... または /en/... → そのままリライト
+    // (Vercel Edge はリライト後に middleware を再実行するため redirect は使わない)
     locale      = fromPath.locale;
     rewritePath = `/${locale}${fromPath.rest === '/' ? '' : fromPath.rest}`;
   } else {
