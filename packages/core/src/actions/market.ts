@@ -273,6 +273,42 @@ export async function getVolumeSpikes(limit = 30, game?: string): Promise<Market
 }
 
 // ================================================================
+// Game Snapshots — per-game weighted average change7d for homepage
+// ================================================================
+
+export type GameSnapshot = {
+  game:      string;
+  change7d:  number;   // weighted avg %
+  cardCount: number;
+};
+
+/**
+ * Returns per-game aggregate 7d change rates.
+ * Uses the same candidate pool as Trending/Gainers.
+ * Games with no data are omitted.
+ */
+export async function getGameSnapshots(): Promise<GameSnapshot[]> {
+  const all = await fetchCandidates();
+
+  const gameMap = new Map<string, { sum: number; count: number; total: number }>();
+  for (const c of all) {
+    if (!c.game || c.change7d === null) continue;
+    const entry = gameMap.get(c.game) ?? { sum: 0, count: 0, total: 0 };
+    entry.sum   += c.change7d;
+    entry.count += 1;
+    entry.total += 1;
+    gameMap.set(c.game, entry);
+  }
+
+  const results: GameSnapshot[] = [];
+  for (const [game, { sum, count }] of gameMap.entries()) {
+    if (count < 3) continue;  // 少なすぎるゲームは除外
+    results.push({ game, change7d: sum / count, cardCount: count });
+  }
+  return results.sort((a, b) => b.cardCount - a.cardCount);
+}
+
+// ================================================================
 // (既存) Marketboard
 // ================================================================
 

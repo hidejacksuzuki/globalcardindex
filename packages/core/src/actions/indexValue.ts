@@ -4,6 +4,23 @@
 // Imported as `@/actions` (index.ts is the default module of the directory).
 // Pages and the v1 API route share these functions.
 
+export type HomepageStats = {
+  trackingCards:    number;
+  trustedIndices:   number;
+  marketDataPoints: number;
+};
+
+export async function getHomepageStats(): Promise<HomepageStats> {
+  const [trackingCards, trustedIndices, marketDataPoints] = await Promise.all([
+    prisma.card.count(),
+    prisma.indexValue.count({
+      where: { cardId: { not: null }, confidence: { in: ["HIGH", "MED"] } },
+    }),
+    prisma.price.count(),
+  ]);
+  return { trackingCards, trustedIndices, marketDataPoints };
+}
+
 import { prisma } from "@gci/db";
 import type { IndexSnapshot } from "../types";
 import { INDEX_PERIODS, type IndexPeriodDays } from "./_helpers";
