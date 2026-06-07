@@ -39,12 +39,6 @@ export default async function TrendingPage({ params }: { params: { locale: Local
         </div>
       </header>
 
-      <div className="border border-navy/10 bg-navy/[0.02] px-4 py-3 text-xs text-navy/50">
-        {isEn
-          ? 'trendScore = price momentum × 0.5 + log(24h listings) × 2.0 + data quality bonus'
-          : 'trendScore = 価格上昇率 × 0.5 + log(24h出品数) × 2.0 + データ品質ボーナス'}
-      </div>
-
       <TrendTable cards={cards} mode="trending" />
     </div>
   );
