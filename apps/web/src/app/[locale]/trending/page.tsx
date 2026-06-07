@@ -29,9 +29,6 @@ export default async function TrendingPage({ params }: { params: { locale: Local
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-semibold text-navy">{t.trending.title}</h1>
-              <span className="rounded-sm border border-navy/15 px-2 py-0.5 text-[10px] uppercase tracking-widest text-navy/40">
-                Live · 5m cache
-              </span>
             </div>
             <p className="mt-1 text-sm text-navy/50">{t.trending.description}</p>
           </div>

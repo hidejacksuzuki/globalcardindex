@@ -77,8 +77,8 @@ export default async function IndicesPage({ params, searchParams }: Props) {
         {history.length === 0 ? (
           <p className="border border-navy/10 bg-white p-6 text-sm text-navy/50">
             {isEn
-              ? 'No history yet. Run recalc-index to generate the first value.'
-              : 'まだデータがありません。recalc-index を実行してください。'}
+              ? 'No history data available yet.'
+              : 'まだデータがありません。'}
           </p>
         ) : (
           <div className="overflow-x-auto border border-navy/10 bg-white">

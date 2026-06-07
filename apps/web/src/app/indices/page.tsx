@@ -81,9 +81,7 @@ export default async function IndicesPage({ searchParams }: Props) {
         </h2>
         {history.length === 0 ? (
           <p className="border border-navy/10 bg-white p-6 text-sm text-navy/50">
-            No history yet. Run{" "}
-            <code className="text-navy/70">npm run recalc-index</code> to
-            generate the first value.
+            No history data available yet.
           </p>
         ) : (
           <div className="overflow-x-auto border border-navy/10 bg-white">

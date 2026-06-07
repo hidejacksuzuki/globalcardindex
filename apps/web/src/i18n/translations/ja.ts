@@ -97,7 +97,7 @@ export const ja = {
   indexHero: {
     label:       'GCI Index',
     noData:      'No data yet',
-    noDataHint:  'Import price observations and run recalc-index to publish the first index value.',
+    noDataHint:  '指数データが準備でき次第、こちらに表示されます。',
     lastUpdated: '最終更新',
     prev:        'prev',
     h24:         '24h',
