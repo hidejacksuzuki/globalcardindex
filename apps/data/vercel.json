@@ -11,19 +11,19 @@
     },
     {
       "path": "/api/v1/cron/daily-snapshot",
-      "schedule": "0 0 * * *"
+      "schedule": "0 23 * * *"
     },
     {
       "path": "/api/v1/cron/daily-post",
-      "schedule": "0 1 * * *"
+      "schedule": "5 23 * * *"
     },
     {
       "path": "/api/v1/cron/daily-discord",
-      "schedule": "0 2 * * *"
+      "schedule": "10 23 * * *"
     },
     {
       "path": "/api/v1/cron/daily-newsletter",
-      "schedule": "0 1 * * *"
+      "schedule": "15 23 * * *"
     },
     {
       "path": "/api/v1/cron/backup",
