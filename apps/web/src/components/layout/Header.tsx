@@ -17,7 +17,7 @@ export async function Header() {
             alt="Global Card Index"
             width={360}
             height={96}
-            className="h-16 w-auto"
+            className="h-20 w-auto"
             priority
           />
         </Link>
