@@ -1,5 +1,5 @@
 import { formatDateTime } from '@gci/core';
-import type { IndexSnapshot } from '@gci/core';
+import type { IndexSnapshot, HomepageStats } from '@gci/core';
 import { getTranslations } from '@/i18n';
 import type { Locale }     from '@/i18n/config';
 
@@ -8,6 +8,7 @@ type Props = {
   series?:        number[];
   dayChangeRate?: number | null;
   locale?:        Locale;
+  stats?:         HomepageStats;
 };
 
 const DEMO_SERIES = [
@@ -15,57 +16,93 @@ const DEMO_SERIES = [
   1035, 1042, 1048, 1055, 1060, 1058, 1065, 1072, 1080, 1085,
 ];
 
-export function IndexHero({ snapshot, series, dayChangeRate, locale = 'ja' }: Props) {
+export function IndexHero({ snapshot, series, dayChangeRate, locale = 'ja', stats }: Props) {
   const t    = getTranslations(locale);
   const hero = t.indexHero;
-
-  if (!snapshot) {
-    return (
-      <section className="border border-navy/10 bg-white p-10">
-        <p className="text-xs uppercase tracking-widest text-navy/50">{hero.label}</p>
-        <p className="mt-4 text-3xl text-navy/40">{hero.noData}</p>
-        <p className="mt-2 text-sm text-navy/40">{hero.noDataHint}</p>
-      </section>
-    );
-  }
+  const h    = t.home;
 
   const data   = series && series.length > 1 ? series : DEMO_SERIES;
   const isDemo = !series || series.length <= 1;
-  const prevRate = snapshot.changeRate;
-  const dayRate  = dayChangeRate ?? null;
 
   return (
-    <section className="border border-navy/10 bg-white p-10">
-      <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-
-        {/* Left: numbers */}
-        <div>
-          <p className="text-xs uppercase tracking-widest text-navy/50">{hero.label}</p>
-
-          <div className="mt-4 flex items-baseline gap-6">
-            <p className="text-5xl font-semibold tabular-nums text-navy">
-              {snapshot.value.toFixed(2)}
-            </p>
-            <ChangeRate label={hero.prev} rate={prevRate} />
-            {dayRate !== null && <ChangeRate label={hero.h24} rate={dayRate} />}
-          </div>
-
-          <p className="mt-3 text-xs text-navy/50">
-            {hero.lastUpdated} {formatDateTime(snapshot.calculatedAt, locale)}
-          </p>
-        </div>
-
-        {/* Right: sparkline */}
-        <div className="lg:w-96">
-          <Sparkline data={data} />
-          {isDemo && (
-            <p className="mt-2 text-right text-[10px] uppercase tracking-widest text-navy/30">
-              {hero.awaiting}
-            </p>
-          )}
-        </div>
+    <section className="border border-navy/10 bg-white">
+      {/* ── Top: title + tagline ──────────────────────────────── */}
+      <div className="border-b border-navy/8 px-10 pt-10 pb-6">
+        <h1 className="text-3xl font-bold tracking-tight text-navy leading-none">
+          Global Card Index
+        </h1>
+        <p className="mt-3 text-base font-medium text-navy/70 leading-snug">
+          {h.heroTagline}
+        </p>
+        <p className="mt-2 text-sm text-navy/50 leading-relaxed max-w-xl">
+          {h.heroSubtitle}
+        </p>
       </div>
+
+      {/* ── Middle: index value + sparkline ──────────────────── */}
+      <div className="px-10 py-8">
+        {snapshot ? (
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            {/* Left: numbers */}
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-navy/40">{hero.label}</p>
+              <div className="mt-3 flex items-baseline gap-6">
+                <p className="text-5xl font-semibold tabular-nums text-navy">
+                  {snapshot.value.toFixed(2)}
+                </p>
+                {dayChangeRate !== null && dayChangeRate !== undefined && (
+                  <ChangeRate label={hero.h24} rate={dayChangeRate} />
+                )}
+                <ChangeRate label={hero.prev} rate={snapshot.changeRate} />
+              </div>
+              <p className="mt-3 text-xs text-navy/50">
+                {hero.lastUpdated} {formatDateTime(snapshot.calculatedAt, locale)}
+              </p>
+            </div>
+
+            {/* Right: sparkline */}
+            <div className="lg:w-96">
+              <Sparkline data={data} />
+              {isDemo && (
+                <p className="mt-2 text-right text-[10px] uppercase tracking-widest text-navy/30">
+                  {hero.awaiting}
+                </p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <p className="text-xs uppercase tracking-widest text-navy/50">{hero.label}</p>
+            <p className="mt-4 text-3xl text-navy/40">{hero.noData}</p>
+            <p className="mt-2 text-sm text-navy/40">{hero.noDataHint}</p>
+          </div>
+        )}
+      </div>
+
+      {/* ── Bottom: data scale stats ──────────────────────────── */}
+      {stats && (
+        <div className="border-t border-navy/8 grid grid-cols-2 sm:grid-cols-4 divide-x divide-navy/8">
+          <StatCell label={h.statsTrackingCards}  value={stats.trackingCards.toLocaleString()} />
+          <StatCell label={h.statsTrustedIndices}  value={stats.trustedIndices.toLocaleString()} />
+          <StatCell label={h.statsDataPoints}     value={stats.marketDataPoints.toLocaleString()} />
+          <StatCell
+            label={h.statsLastUpdated}
+            value={snapshot ? formatDateTime(snapshot.calculatedAt, locale) : '—'}
+          />
+        </div>
+      )}
     </section>
+  );
+}
+
+// ── Sub-components ────────────────────────────────────────────────
+
+function StatCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="px-6 py-4">
+      <p className="text-[10px] uppercase tracking-widest text-navy/40">{label}</p>
+      <p className="mt-1 text-lg font-semibold tabular-nums text-navy">{value}</p>
+    </div>
   );
 }
 
