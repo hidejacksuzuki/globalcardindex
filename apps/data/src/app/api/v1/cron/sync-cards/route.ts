@@ -14,9 +14,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { readFileSync }              from "node:fs";
 import { resolve }                   from "node:path";
 import { prisma }                    from "@gci/db";
-import { parseWatchlistCsv, authorizeCron, writeCronLog } from "@gci/core";
+import { parseWatchlistCsv, timingSafeEqual, writeCronLog } from "@gci/core";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * CRON_SECRET による Bearer 認証 + 管理画面（referer）による認証を許可。
+ * Vercel Cron は Bearer ヘッダーを付与。管理画面のボタンは referer で識別。
+ */
+function isAuthorized(req: NextRequest): boolean {
+  const secret  = process.env.CRON_SECRET ?? "";
+  const header  = req.headers.get("authorization") ?? "";
+  if (secret.length >= 16 && header.startsWith("Bearer ") &&
+      timingSafeEqual(header.slice(7).trim(), secret)) return true;
+  const referer = req.headers.get("referer") ?? "";
+  if (referer.includes("/admin/")) return true;
+  return process.env.NODE_ENV !== "production";
+}
 
 /** カード名・セット・レアリティ・コンディションから URL-safe スラッグを生成 */
 function makeSlug(name: string, setName: string, rarity: string, condition: string): string {
@@ -88,8 +102,9 @@ async function syncCards(dryRun: boolean) {
 }
 
 async function handle(req: NextRequest): Promise<NextResponse> {
-  const authError = authorizeCron(req);
-  if (authError) return authError;
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  }
 
   const startAt = Date.now();
   const dryRun  = req.nextUrl.searchParams.get("dry") === "1";
