@@ -1,0 +1,205 @@
+export const ja = {
+  nav: {
+    games:       'ゲーム',
+    daily:       'Daily',
+    trending:    '🔥 Trending',
+    indices:     'Indices',
+    marketboard: 'Marketboard',
+    cards:       'Cards',
+    watchlist:   '☆ Watchlist',
+    about:       'About',
+    newsletter:  'メール配信',
+  },
+
+  footer: {
+    community:   'Community',
+    communityDesc: '市場アラートや週次まとめは Discord と Newsletter で受け取れます。',
+    discord:     'Discord 参加',
+    newsletterSubscribe: 'Newsletter 登録',
+    terms:       '利用規約',
+    beta:        'β参加',
+    home:        'Home',
+    mostRequested: 'Most Requested',
+  },
+
+  home: {
+    betaBadge:    'Public Beta',
+    betaNote:     'データ収集継続中 · 指数精度は随時向上',
+    whatIsGci:    'GCIとは',
+    feature1Title: 'トレカ相場の指数化',
+    feature1Body:  '外部マーケットから収集した実売価格を集計し、カードゲーム市場全体の価格動向を一本の指数値（GCI）で可視化します。',
+    feature2Title: 'カード別インデックス',
+    feature2Body:  '個々のカードについても独立した指数値を算出。コンディション・レアリティ別に追跡し、relative な価格変動をモニタリングします。',
+    feature3Title: '信頼度の透明化',
+    feature3Body:  'すべての指数値にサンプル数・外れ値率に基づく信頼度（HIGH/MED/LOW）を表示。データ不足の指数は参考値として明示します。',
+    nav: {
+      marketboardBadge: '市場一覧',
+      marketboardDesc:  '全追跡カードの最新価格・変動率一覧。信頼度別に分類して表示。',
+      cardsBadge:       'カード検索',
+      cardsDesc:        'カード別インデックス・サンプル数・信頼度を確認できるカタログ。',
+      gamesBadge:       'ゲーム別',
+      gamesDesc:        'ポケモンカード・ワンピースカードなど対応ゲーム別に閲覧。',
+      dailyBadge:       '日次レポート',
+      dailyDesc:        '毎日更新の市場サマリー。上昇・下落・出来高急増カードを掲載。',
+      indicesBadge:     '指数履歴',
+      indicesDesc:      'GCI指数の推移チャート。30日・90日の価格変動トレンドを確認。',
+      newsletterBadge:  'メール配信',
+      newsletterDesc:   '日次市場サマリーをメールで受け取る。無料・いつでも解除可能。',
+    },
+  },
+
+  confidence: {
+    title:       '信頼度（Confidence）について',
+    description: '各カードの指数値には収集サンプル数・外れ値率に基づく信頼度を付与しています。',
+    highLabel:   'HIGH',
+    highDesc:    'サンプル10件以上・外れ値率20%未満。信頼できる指数値です。',
+    medLabel:    'MED',
+    medDesc:     'サンプル3件以上。参考として有効ですが変動があります。',
+    lowLabel:    'LOW / 参考値',
+    lowDesc:     'サンプルが少なく精度が限定的です。目安としてご利用ください。',
+  },
+
+  disclaimer: {
+    note:        '参考値について：',
+    inline:      '※ 本ページの価格・指数は外部マーケットの参考集計です。投資助言・価格保証ではありません。',
+    banner:      '本サービスの価格・指数データは外部マーケットから収集した参考情報です。投資助言・売買推奨・価格保証を目的とするものではありません。掲載情報の正確性・完全性を保証するものでもありません。',
+    footer:      '価格データは外部マーケットの参考集計です。投資助言・価格保証ではありません。',
+    termsLink:   '詳細は利用規約',
+    termsLinkShort: '利用規約',
+  },
+
+  indexHero: {
+    label:       'GCI Index',
+    noData:      'No data yet',
+    noDataHint:  'Import price observations and run recalc-index to publish the first index value.',
+    lastUpdated: '最終更新',
+    prev:        'prev',
+    h24:         '24h',
+    awaiting:    'illustrative · awaiting history',
+  },
+
+  marketboard: {
+    title:       'Marketboard',
+    description: '追跡カードの最新価格・指数・信頼度一覧。',
+    lastUpdated: '最終更新',
+    searchPlaceholder: 'カード名・セット名で検索',
+    tabReliable:       '信頼できる指数',
+    tabReference:      '参考値 / データ不足',
+    referenceNote:     'このセクションのカードはサンプル数が少なく、指数値の精度が限定的です。目安として参照してください。',
+    results:           '件',
+    clear:             'クリア',
+    noCards:           '該当するカードがありません。',
+    noCardsSection:    'このセクションにカードがありません。',
+    colCard:           'Card',
+    colSet:            'Set',
+    colCond:           'Cond',
+    colConfidence:     'Confidence',
+    colIndex:          'Index',
+    colIndexChange:    'Δ Index',
+    colSamples:        'Samples',
+    colLatest:         'Latest',
+    colChange30d:      'Δ 30d',
+  },
+
+  cards: {
+    title:       'Cards',
+    description: 'カード別インデックス一覧。',
+    searchPlaceholder: 'カード名で検索',
+    noCards:     '該当するカードがありません。',
+    colCard:     'Card',
+    colSet:      'Set',
+    colCondition: 'Condition',
+    colConfidence: 'Confidence',
+    colIndex:    'Index',
+    colLatestPrice: 'Latest Price',
+    colSamples:  'Samples',
+    requestCard: 'カードを追加リクエスト',
+  },
+
+  about: {
+    breadcrumb:  'Home',
+    tagline:     'Global Card Index',
+    heroTitle:   'カード市場に、信頼できる指標を。',
+    heroBody:    'GCI はトレーディングカードの「価格サイト」ではありません。市場全体を映す指数インフラです。',
+    s1Title:     'なぜ指数が必要か',
+    s2Title:     'GCIの仕組み',
+    s3Title:     '誰のためのサービスか',
+    s4Title:     'GCIでないもの',
+    s5Title:     '今後のロードマップ',
+    ctaTitle:    '現在、クローズドβを公開中です。',
+    ctaDesc:     'フィードバックをくれる方を5〜20人募集しています。',
+    ctaBeta:     'β参加を申し込む',
+    ctaSite:     'サービスを見る',
+  },
+
+  trending: {
+    title:       'Trending',
+    description: '取引量・変動率が急増しているカード。',
+  },
+
+  gainers: {
+    title:       '値上がりランキング',
+    description: '直近30日で最も値上がりしたカード。',
+  },
+
+  losers: {
+    title:       '値下がりランキング',
+    description: '直近30日で最も値下がりしたカード。',
+  },
+
+  daily: {
+    title:       'Daily Recap',
+    description: '本日の市場サマリー。',
+  },
+
+  indices: {
+    title:       'Index History',
+    description: 'GCI指数の推移チャート。',
+  },
+
+  watchlist: {
+    title:       'Watchlist',
+    description: '追跡中のカード一覧。',
+    loginPrompt: 'Watchlist を利用するにはログインが必要です。',
+  },
+
+  newsletter: {
+    title:       'Newsletter',
+    description: '日次市場サマリーをメールで受け取る。',
+  },
+
+  games: {
+    title:       'Games',
+    description: '対応ゲーム一覧。',
+  },
+
+  terms: {
+    title:       '利用規約',
+  },
+
+  search: {
+    placeholder: '検索',
+    clear:       'クリア',
+    results:     '件',
+    noResults:   '該当するカードがありません。',
+  },
+
+  currency: {
+    label:       '通貨',
+    JPY:         '円 (JPY)',
+    USD:         'ドル (USD)',
+    EUR:         'ユーロ (EUR)',
+    GBP:         'ポンド (GBP)',
+    KRW:         'ウォン (KRW)',
+    CNY:         '人民元 (CNY)',
+    convertedNote: '概算レート。',
+  },
+
+  locale: {
+    label:       '言語',
+    ja:          '日本語',
+    en:          'English',
+  },
+} as const;
+
+export type TranslationKey = typeof ja;

@@ -44,8 +44,21 @@ const nextConfig = {
   },
 
   // gci-index.com — public-facing app
-  // Routes: /, /games/*, /sets/*, /cards/*, /daily/*, /trending,
-  //         /gainers, /losers, /newsletter/*, /feed.xml, /sitemap.xml
+  // Routes: /[locale]/*, /en/*, /api/*, /feed.xml, /sitemap.xml
+  // Locales: ja (default, no prefix), en (/en/*)
+
+  async redirects() {
+    return [
+      // Legacy root paths — redirect to /ja/* so old bookmarks still work
+      // The middleware handles this for most cases; these are belt-and-suspenders.
+      {
+        source:      "/",
+        destination: "/ja",
+        permanent:   false,
+        missing: [{ type: "cookie", key: "gci_locale", value: "en" }],
+      },
+    ];
+  },
 
   async headers() {
     return [

@@ -40,6 +40,43 @@ type SelectedCard = PtcgCard & {
 const DEFAULT_CONDITIONS = ["NM", "LP"];
 const ALL_CONDITIONS     = ["NM", "LP", "MP", "HP"];
 
+// ── レアリティ別スマートデフォルト ────────────────────────────────────────────
+
+type RarityDefault = { minPrice: number; maxPrice: number; conditions: string[] };
+
+const RARITY_DEFAULTS: Record<string, RarityDefault> = {
+  SAR: { minPrice: 3000,  maxPrice: 200000, conditions: ["NM", "LP"] },
+  SSR: { minPrice: 3000,  maxPrice: 200000, conditions: ["NM", "LP"] },
+  CSR: { minPrice: 3000,  maxPrice: 150000, conditions: ["NM", "LP"] },
+  HR:  { minPrice: 3000,  maxPrice: 150000, conditions: ["NM", "LP"] },
+  UR:  { minPrice: 3000,  maxPrice: 150000, conditions: ["NM", "LP"] },
+  SR:  { minPrice: 1000,  maxPrice:  80000, conditions: ["NM", "LP"] },
+  SER: { minPrice: 1000,  maxPrice:  80000, conditions: ["NM", "LP"] },
+  AR:  { minPrice: 1000,  maxPrice:  50000, conditions: ["NM", "LP"] },
+  CHR: { minPrice: 1000,  maxPrice:  50000, conditions: ["NM", "LP"] },
+  RRR: { minPrice:  800,  maxPrice:  30000, conditions: ["NM", "LP"] },
+  ACE: { minPrice:  800,  maxPrice:  30000, conditions: ["NM", "LP"] },
+  RR:  { minPrice:  300,  maxPrice:  10000, conditions: ["NM", "LP", "MP"] },
+  R:   { minPrice:  100,  maxPrice:   5000, conditions: ["NM", "LP", "MP"] },
+  PR:  { minPrice:  100,  maxPrice:   5000, conditions: ["NM", "LP", "MP"] },
+};
+
+function getRarityDefault(rarity: string | null): RarityDefault {
+  if (!rarity) return { minPrice: 500, maxPrice: 50000, conditions: ["NM", "LP"] };
+  const key = rarity.toUpperCase().trim();
+  return RARITY_DEFAULTS[key] ?? { minPrice: 500, maxPrice: 50000, conditions: ["NM", "LP"] };
+}
+
+// レアリティラベル色
+function rarityColor(rarity: string | null): string {
+  const r = rarity?.toUpperCase() ?? "";
+  if (["SAR","SSR","CSR","HR","UR"].some((x) => r.includes(x))) return "bg-yellow-100 text-yellow-800";
+  if (["SR","SER","AR","CHR"].some((x) => r === x)) return "bg-purple-100 text-purple-700";
+  if (["RRR","ACE"].some((x) => r === x)) return "bg-blue-100 text-blue-700";
+  if (r === "RR") return "bg-sky-100 text-sky-700";
+  return "bg-navy/10 text-navy/50";
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function AddCardsPage() {
@@ -88,11 +125,12 @@ export default function AddCardsPage() {
       if (next.has(card.id)) {
         next.delete(card.id);
       } else {
+        const def = getRarityDefault(card.rarity);
         next.set(card.id, {
           ...card,
-          conditions: [...DEFAULT_CONDITIONS],
-          minPrice:   500,
-          maxPrice:   100000,
+          conditions: [...def.conditions],
+          minPrice:   def.minPrice,
+          maxPrice:   def.maxPrice,
           game:       "pokemon",
         });
       }
@@ -134,11 +172,12 @@ export default function AddCardsPage() {
         const next = new Map(prev);
         for (const card of cards) {
           if (!next.has(card.id)) {
+            const def = getRarityDefault(card.rarity);
             next.set(card.id, {
               ...card,
-              conditions: [...DEFAULT_CONDITIONS],
-              minPrice:   500,
-              maxPrice:   100000,
+              conditions: [...def.conditions],
+              minPrice:   def.minPrice,
+              maxPrice:   def.maxPrice,
               game:       "pokemon",
             });
           }
@@ -283,7 +322,11 @@ export default function AddCardsPage() {
                     />
                   )}
                   <p className="text-xs font-semibold text-navy leading-tight">{card.name}</p>
-                  <p className="mt-0.5 text-[10px] text-navy/50">{card.rarity ?? "—"}</p>
+                  <p className="mt-0.5">
+                    <span className={`inline-block rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${rarityColor(card.rarity)}`}>
+                      {card.rarity ?? "—"}
+                    </span>
+                  </p>
                   <p className="text-[10px] text-navy/40 truncate">{card.set.name}</p>
                   {isSelected && (
                     <div className="mt-1.5 flex items-center gap-1">

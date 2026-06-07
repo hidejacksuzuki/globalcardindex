@@ -1,45 +1,36 @@
-import { formatDateTime } from "@gci/core";
-import type { IndexSnapshot } from "@gci/core";
+import { formatDateTime } from '@gci/core';
+import type { IndexSnapshot } from '@gci/core';
+import { getTranslations } from '@/i18n';
+import type { Locale }     from '@/i18n/config';
 
 type Props = {
-  snapshot: IndexSnapshot | null;
-  /**
-   * 表示期間内の index 値の配列（古い順）。
-   * 渡すと実データのスパークラインを描く。省略時はデモデータ。
-   */
-  series?: number[];
-  /**
-   * 24 時間前比の変化率（%）。
-   * indices/page から計算して渡す。
-   */
+  snapshot:       IndexSnapshot | null;
+  series?:        number[];
   dayChangeRate?: number | null;
+  locale?:        Locale;
 };
 
-// データが溜まるまでの illustrative デモ
 const DEMO_SERIES = [
   998, 1002, 1006, 1010, 1015, 1014, 1020, 1024, 1030, 1028,
   1035, 1042, 1048, 1055, 1060, 1058, 1065, 1072, 1080, 1085,
 ];
 
-export function IndexHero({ snapshot, series, dayChangeRate }: Props) {
+export function IndexHero({ snapshot, series, dayChangeRate, locale = 'ja' }: Props) {
+  const t    = getTranslations(locale);
+  const hero = t.indexHero;
+
   if (!snapshot) {
     return (
       <section className="border border-navy/10 bg-white p-10">
-        <p className="text-xs uppercase tracking-widest text-navy/50">GCI Index</p>
-        <p className="mt-4 text-3xl text-navy/40">No data yet</p>
-        <p className="mt-2 text-sm text-navy/40">
-          Import price observations and run{" "}
-          <code className="text-navy/60">npm run recalc-index</code> to publish
-          the first index value.
-        </p>
+        <p className="text-xs uppercase tracking-widest text-navy/50">{hero.label}</p>
+        <p className="mt-4 text-3xl text-navy/40">{hero.noData}</p>
+        <p className="mt-2 text-sm text-navy/40">{hero.noDataHint}</p>
       </section>
     );
   }
 
   const data   = series && series.length > 1 ? series : DEMO_SERIES;
   const isDemo = !series || series.length <= 1;
-
-  // 前回比（recalc 時点）と前日比（24h）を両方表示
   const prevRate = snapshot.changeRate;
   const dayRate  = dayChangeRate ?? null;
 
@@ -47,31 +38,29 @@ export function IndexHero({ snapshot, series, dayChangeRate }: Props) {
     <section className="border border-navy/10 bg-white p-10">
       <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
 
-        {/* ── 左: 数値 ── */}
+        {/* Left: numbers */}
         <div>
-          <p className="text-xs uppercase tracking-widest text-navy/50">GCI Index</p>
+          <p className="text-xs uppercase tracking-widest text-navy/50">{hero.label}</p>
 
           <div className="mt-4 flex items-baseline gap-6">
             <p className="text-5xl font-semibold tabular-nums text-navy">
               {snapshot.value.toFixed(2)}
             </p>
-            <ChangeRate label="prev" rate={prevRate} />
-            {dayRate !== null && (
-              <ChangeRate label="24h" rate={dayRate} />
-            )}
+            <ChangeRate label={hero.prev} rate={prevRate} />
+            {dayRate !== null && <ChangeRate label={hero.h24} rate={dayRate} />}
           </div>
 
           <p className="mt-3 text-xs text-navy/50">
-            Last updated {formatDateTime(snapshot.calculatedAt)}
+            {hero.lastUpdated} {formatDateTime(snapshot.calculatedAt, locale)}
           </p>
         </div>
 
-        {/* ── 右: スパークライン ── */}
+        {/* Right: sparkline */}
         <div className="lg:w-96">
           <Sparkline data={data} />
           {isDemo && (
             <p className="mt-2 text-right text-[10px] uppercase tracking-widest text-navy/30">
-              illustrative · awaiting history
+              {hero.awaiting}
             </p>
           )}
         </div>
@@ -80,31 +69,18 @@ export function IndexHero({ snapshot, series, dayChangeRate }: Props) {
   );
 }
 
-// ----------------------------------------------------------------
-// 変化率バッジ
-// ----------------------------------------------------------------
 function ChangeRate({ label, rate }: { label: string; rate: number }) {
   const positive = rate >= 0;
   return (
     <span className="flex flex-col items-start">
-      <span className="text-[10px] uppercase tracking-widest text-navy/40">
-        {label}
-      </span>
-      <span
-        className={`text-lg tabular-nums ${
-          positive ? "text-gold-700" : "text-red-700"
-        }`}
-      >
-        {positive ? "+" : ""}
-        {rate.toFixed(2)}%
+      <span className="text-[10px] uppercase tracking-widest text-navy/40">{label}</span>
+      <span className={`text-lg tabular-nums ${positive ? 'text-gold-700' : 'text-red-700'}`}>
+        {positive ? '+' : ''}{rate.toFixed(2)}%
       </span>
     </span>
   );
 }
 
-// ----------------------------------------------------------------
-// スパークライン SVG
-// ----------------------------------------------------------------
 function Sparkline({ data }: { data: number[] }) {
   if (data.length < 2) return null;
 
@@ -115,19 +91,17 @@ function Sparkline({ data }: { data: number[] }) {
   const range  = max - min || 1;
   const dx     = width / (data.length - 1);
 
-  const points = data.map((v, i) => {
+  const points  = data.map((v, i) => {
     const x = i * dx;
     const y = height - ((v - min) / range) * height;
     return `${x.toFixed(2)},${y.toFixed(2)}`;
   });
 
-  const linePath = `M${points.join(" L")}`;
+  const linePath = `M${points.join(' L')}`;
   const areaPath = `${linePath} L${width.toFixed(2)},${height.toFixed(2)} L0,${height.toFixed(2)} Z`;
-
-  // スパークラインの色: 最後の値が最初より高ければ gold、低ければ red
-  const trending = data[data.length - 1] >= data[0];
-  const stroke   = trending ? "#C9A14A" : "#ef4444";
-  const gradId   = `gci-spark-${trending ? "up" : "dn"}`;
+  const trending  = data[data.length - 1] >= data[0];
+  const stroke    = trending ? '#C9A14A' : '#ef4444';
+  const gradId    = `gci-spark-${trending ? 'up' : 'dn'}`;
 
   return (
     <svg

@@ -16,6 +16,7 @@ import {
   buildMercariSearchUrls,
   type MercariSearchLink,
 } from "@gci/core";
+import { RegenerateButton }       from "./RegenerateButton";
 
 export const dynamic = "force-dynamic";
 
@@ -44,11 +45,17 @@ export default function AdminCollectorPage() {
     <div className="space-y-8">
       <header className="border-b border-navy/10 pb-6">
         <p className="text-xs uppercase tracking-widest text-navy/40">Admin › Collector</p>
-        <h1 className="mt-1 text-2xl font-semibold text-navy">Mercari Search URLs</h1>
-        <p className="mt-1 text-sm text-navy/50">
-          ウォッチリストから生成された Mercari 検索URLです。
-          各リンクを開いてリストをコピーし、Import ページに貼り付けてください。
-        </p>
+        <div className="mt-1 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold text-navy">Mercari Search URLs</h1>
+            <p className="mt-1 text-sm text-navy/50">
+              ウォッチリストから生成された Mercari 検索URLです。
+            </p>
+          </div>
+          <div className="mt-2 shrink-0">
+            <RegenerateButton />
+          </div>
+        </div>
       </header>
 
       {/* ── Sub-nav ──────────────────────────────────────────────────────── */}

@@ -102,6 +102,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const verdict = autoVerdict(matchScore);
 
+    const isAutoApprove = matchScore >= 75 && verdict !== "rejected";
+    const status        = verdict === "rejected" ? "rejected" : isAutoApprove ? "approved" : "pending";
+
     try {
       await prisma.rawListing.create({
         data: {
@@ -109,13 +112,28 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           source,
           title:      item.title,
           price:      Math.round(item.price),
-          url:        item.url    ?? null,
+          url:        item.url      ?? null,
           imageUrl:   item.imageUrl ?? null,
           matchScore,
           trustScore,
-          status:     verdict === "rejected" ? "rejected" : "pending",
+          status,
         },
       });
+
+      // 高スコアは即座に Price レコードを作成
+      if (isAutoApprove) {
+        await prisma.price.create({
+          data: {
+            cardId:      card.id,
+            price:       Math.round(item.price),
+            observedAt:  new Date(),
+            sourceType:  source,
+            sourceName:  source,
+            fingerprint: `ia:mc:${item.url ?? item.title.slice(0,40)}:${item.price}`,
+          },
+        }).catch(() => {});
+      }
+
       saved++;
     } catch {
       skipped++;

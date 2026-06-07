@@ -104,6 +104,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const verdict = autoVerdict(matchScore);
 
+    const isAutoApprove = matchScore >= 75 && verdict !== "rejected";
+    const status        = verdict === "rejected" ? "rejected" : isAutoApprove ? "approved" : "pending";
+
     try {
       await prisma.rawAuctionResult.create({
         data: {
@@ -117,9 +120,24 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           endedAt:    item.endedAt  ? new Date(item.endedAt) : null,
           matchScore,
           trustScore,
-          status:     verdict === "rejected" ? "rejected" : "pending",
+          status,
         },
       });
+
+      // 高スコア落札データは即座に Price レコードを作成（レビュー不要）
+      if (isAutoApprove && isClosed) {
+        await prisma.price.create({
+          data: {
+            cardId:      card.id,
+            price:       Math.round(item.price),
+            observedAt:  item.endedAt ? new Date(item.endedAt) : new Date(),
+            sourceType:  source,
+            sourceName:  "yahoo_auction",
+            fingerprint: `ia:yah:${item.url ?? item.title.slice(0,40)}:${item.price}`,
+          },
+        }).catch(() => {});
+      }
+
       saved++;
     } catch {
       skipped++;
