@@ -130,7 +130,7 @@ function DistributionRow({ row }: { row: DistributionLogRow }) {
       {/* Date */}
       <td className="px-4 py-3 font-medium tabular-nums text-navy">
         <Link
-          href={`/daily/${row.date}`}
+          href={`${baseUrl}/daily/${row.date}`}
           className="hover:underline"
           target="_blank"
         >
