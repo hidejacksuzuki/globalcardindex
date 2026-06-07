@@ -3,7 +3,7 @@
  */
 
 import Link             from 'next/link';
-import { listCards, formatPrice } from '@gci/core';
+import { listCards } from '@gci/core';
 import { SearchBar }    from '@/components/ui/SearchBar';
 import type { CardSortKey, SortOrder } from '@gci/core';
 import { prisma }       from '@gci/db';
@@ -11,6 +11,7 @@ import { Disclaimer }          from '@/components/common/Disclaimer';
 import { CardRequestButton }   from '@/components/cards/CardRequestButton';
 import { getTranslations }     from '@/i18n';
 import type { Locale }         from '@/i18n/config';
+import { PriceCell }           from '@/components/market/PriceCell';
 
 export const dynamic = 'force-dynamic';
 
@@ -254,10 +255,7 @@ export default async function CardsPage({ params, searchParams }: Props) {
                       }
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums font-medium">
-                      {c.latestPrice !== null && c.currency
-                        ? formatPrice(c.latestPrice, c.currency)
-                        : <span className="text-navy/25">—</span>
-                      }
+                      <PriceCell price={c.latestPrice} storedCurrency={c.currency} />
                     </td>
                   </tr>
                 );

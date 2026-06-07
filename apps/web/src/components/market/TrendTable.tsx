@@ -2,12 +2,13 @@
  * TrendTable.tsx
  * Trending / Gainers / Losers / Volume Spikes 共通テーブルコンポーネント。
  * mode で列表示を切り替え。
+ * PriceCell を使い、通貨切り替えに対応。
  */
 
 import Link              from "next/link";
 import type { MarketCard } from "@gci/core";
 import { getGame }       from "@gci/core";
-import { formatPrice }   from "@gci/core";
+import { PriceCell, PriceChangeCell } from "@/components/market/PriceCell";
 
 export type TrendMode = "trending" | "gainers" | "losers" | "volume";
 
@@ -107,11 +108,9 @@ function TrendRow({ card, rank, mode }: { card: MarketCard; rank: number; mode: 
         </Link>
       </td>
 
-      {/* 価格 */}
+      {/* 価格 — PriceCell で通貨切り替え対応 */}
       <td className="px-4 py-3 text-right tabular-nums font-medium text-navy whitespace-nowrap">
-        {card.latestPrice !== null && card.currency
-          ? formatPrice(card.latestPrice, card.currency)
-          : <span className="text-navy/25">—</span>}
+        <PriceCell price={card.latestPrice} storedCurrency={card.currency} />
       </td>
 
       {/* 7d 変動 */}
@@ -156,20 +155,14 @@ function Change7d({
   const isNeg  = value < 0;
   const color  = isPos ? "text-gold-700" : isNeg ? "text-red-600" : "text-navy/40";
   const prefix = isPos ? "▲" : isNeg ? "▼" : "";
-  const absStr = abs !== null && currency
-    ? formatPrice(Math.abs(abs), currency)
-    : null;
 
   return (
-    <div className="flex flex-col items-end gap-0.5">
-      <span className={`tabular-nums text-sm font-semibold ${color}`}>
+    <div className={`flex flex-col items-end gap-0.5 ${color}`}>
+      <span className="tabular-nums text-sm font-semibold">
         {prefix}{Math.abs(value).toFixed(1)}%
       </span>
-      {absStr && (
-        <span className={`tabular-nums text-[10px] opacity-55 ${color}`}>
-          {isPos ? "+" : "-"}{absStr}
-        </span>
-      )}
+      {/* PriceChangeCell で通貨切り替え対応 */}
+      <PriceChangeCell abs={abs} storedCurrency={currency} positive={isPos} />
     </div>
   );
 }
