@@ -122,7 +122,7 @@ export default async function AdminDistributionPage() {
 // ----------------------------------------------------------------
 
 function DistributionRow({ row }: { row: DistributionLogRow }) {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://globalcardindex.com";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://gci-index.com";
 
   return (
     <tr className="hover:bg-navy/[0.02]">
