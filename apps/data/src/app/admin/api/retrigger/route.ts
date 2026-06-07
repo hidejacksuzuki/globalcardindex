@@ -25,10 +25,8 @@ export async function GET(req: NextRequest) {
   }
 
   // cron エンドポイントは data アプリ自身にある。
-  // VERCEL_URL は Vercel が自動設定する現デプロイの hostname（スキームなし）。
-  const base = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : (process.env.DATA_BASE_URL ?? "http://localhost:3001");
+  // req.nextUrl.origin でリクエスト元と同じドメインを使う（環境変数不要）。
+  const base = req.nextUrl.origin;
   const cronPath = channel === "x"
     ? `/api/v1/cron/daily-post`
     : `/api/v1/cron/daily-discord`;
