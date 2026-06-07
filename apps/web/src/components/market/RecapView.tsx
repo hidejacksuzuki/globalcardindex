@@ -8,7 +8,7 @@ import Link              from "next/link";
 import type { DailyRecap } from "@gci/core";
 import type { MarketCard } from "@gci/core";
 import { getGame }         from "@gci/core";
-import { formatPrice }     from "@gci/core";
+import { PriceCell }       from "@/components/market/PriceCell";
 
 type Props = {
   recap:    DailyRecap;
@@ -257,9 +257,7 @@ function MiniRow({ card, rank, variant }: { card: MarketCard; rank: number; vari
         <p className="truncate text-[10px] text-navy/40">{card.setName} · {card.rarity}</p>
       </div>
       <span className="shrink-0 tabular-nums text-sm font-medium text-navy">
-        {card.latestPrice !== null && card.currency
-          ? formatPrice(card.latestPrice, card.currency)
-          : <span className="text-navy/25">—</span>}
+        <PriceCell price={card.latestPrice} storedCurrency={card.currency} />
       </span>
       {(variant === "gainers" || variant === "losers" || variant === "trending") && (
         <ChangeChip value={card.change7d} />
