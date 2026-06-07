@@ -10,17 +10,19 @@ const config: Config = {
     extend: {
       colors: {
         navy: {
-          DEFAULT: "#0B1B3B",
-          50:  "#F2F4F8",
-          100: "#D8DEE9",
-          900: "#0B1B3B",
-          950: "#06112A",
+          DEFAULT: "#1A2B5E",
+          50:  "#F0F2F8",
+          100: "#D0D6E8",
+          400: "#5A6FA8",
+          900: "#1A2B5E",
+          950: "#101B40",
         },
         gold: {
-          DEFAULT: "#C9A14A",
-          100: "#F0E5C8",
-          500: "#C9A14A",
-          700: "#9C7A2F",
+          DEFAULT: "#B8963C",
+          100: "#F5EDD0",
+          400: "#D4B060",
+          500: "#B8963C",
+          700: "#8A6E28",
         },
         bull: {
           DEFAULT: "#22c55e",
