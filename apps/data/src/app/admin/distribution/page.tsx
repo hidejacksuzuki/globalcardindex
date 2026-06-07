@@ -1,5 +1,4 @@
 import { getDistributionLogs, type DistributionLogRow } from "@gci/core";
-import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -129,13 +128,14 @@ function DistributionRow({ row }: { row: DistributionLogRow }) {
     <tr className="hover:bg-navy/[0.02]">
       {/* Date */}
       <td className="px-4 py-3 font-medium tabular-nums text-navy">
-        <Link
+        <a
           href={`${baseUrl}/daily/${row.date}`}
           className="hover:underline"
           target="_blank"
+          rel="noopener noreferrer"
         >
           {row.date}
-        </Link>
+        </a>
       </td>
 
       {/* Generated at */}
