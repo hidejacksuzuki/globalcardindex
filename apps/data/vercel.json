@@ -44,6 +44,10 @@
     {
       "path": "/api/v1/cron/weekly-recap",
       "schedule": "0 0 * * 1"
+    },
+    {
+      "path": "/api/v1/cron/sync-cards",
+      "schedule": "30 23 * * *"
     }
   ]
 }

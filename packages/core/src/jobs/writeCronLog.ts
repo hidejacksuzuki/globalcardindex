@@ -23,6 +23,7 @@ import { prisma } from "@gci/db";
 export type CronName =
   | "fetch"
   | "recalc"
+  | "sync-cards"
   | "daily-snapshot"
   | "daily-post"
   | "daily-discord"

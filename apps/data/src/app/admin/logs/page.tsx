@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 const CRON_LABELS: Record<string, string> = {
   "fetch":            "Price Fetch",
   "recalc":           "Index Recalc",
+  "sync-cards":       "Card Sync",
   "daily-snapshot":   "Daily Snapshot",
   "daily-post":       "X Post",
   "daily-discord":    "Discord Post",
@@ -18,6 +19,7 @@ const CRON_LABELS: Record<string, string> = {
 const STALE_LIMITS: Record<string, number> = {
   "fetch":            20,
   "recalc":           80,
+  "sync-cards":       1500,
   "daily-snapshot":   1500,
   "daily-post":       1500,
   "daily-discord":    1500,

@@ -12,10 +12,10 @@ export function ImportWatchlistButton() {
     setMsg(null);
     setIsErr(false);
     try {
-      const res  = await fetch("/api/v1/cards/import-watchlist", { method: "POST" });
-      const json = await res.json() as { ok: boolean; created?: number; skipped?: number; total?: number; error?: string };
-      if (json.ok) {
-        setMsg(`✓ 完了 — 新規登録: ${json.created}件 / スキップ: ${json.skipped}件 / 合計: ${json.total}件`);
+      const res  = await fetch("/api/v1/cron/sync-cards", { method: "POST" });
+      const json = await res.json() as { ok: boolean; data?: { created: number; skipped: number; total: number; dryRun: boolean }; error?: string };
+      if (json.ok && json.data) {
+        setMsg(`✓ 完了 — 新規登録: ${json.data.created}件 / スキップ: ${json.data.skipped}件 / 合計: ${json.data.total}件`);
       } else {
         setIsErr(true);
         setMsg(`✗ エラー: ${json.error}`);
