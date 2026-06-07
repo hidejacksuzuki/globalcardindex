@@ -297,7 +297,7 @@ function NotPostedBadge({
   );
 }
 
-/** 手動再送ボタン（将来のアクション拡張ポイント） */
+/** 手動再送ボタン — /admin/api/retrigger プロキシ経由で CRON_SECRET を付与 */
 function RetriggerLink({
   channel,
   date,
@@ -305,24 +305,31 @@ function RetriggerLink({
   channel: "x" | "discord";
   date:    string;
 }) {
-  const endpoint =
-    channel === "x"
-      ? `/api/v1/cron/daily-post?date=${date}&dry=1`
-      : `/api/v1/cron/daily-discord?date=${date}&dry=1`;
-
-  const icon  = channel === "x" ? "𝕏" : "🎮";
-  const title = `Dry-run ${channel === "x" ? "X" : "Discord"} for ${date}\n（本番投稿は force=1 + Bearer トークン必要）`;
+  const dryUrl   = `/admin/api/retrigger?channel=${channel}&date=${date}`;
+  const forceUrl = `/admin/api/retrigger?channel=${channel}&date=${date}&force=1`;
+  const icon     = channel === "x" ? "𝕏" : "🎮";
 
   return (
-    <a
-      href={endpoint}
-      target="_blank"
-      rel="noopener noreferrer"
-      title={title}
-      className="inline-flex items-center gap-1 rounded border border-navy/15 px-2 py-1 text-[10px] text-navy/50 transition hover:border-navy/30 hover:text-navy/70"
-    >
-      {icon} dry
-    </a>
+    <div className="flex gap-1">
+      <a
+        href={dryUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={`Dry-run ${channel === "x" ? "X" : "Discord"} for ${date}`}
+        className="inline-flex items-center gap-1 rounded border border-navy/15 px-2 py-1 text-[10px] text-navy/50 transition hover:border-navy/30 hover:text-navy/70"
+      >
+        {icon} dry
+      </a>
+      <a
+        href={forceUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={`本番投稿 ${channel === "x" ? "X" : "Discord"} for ${date}（クリックで即投稿）`}
+        className="inline-flex items-center gap-1 rounded border border-red-200 px-2 py-1 text-[10px] text-red-400 transition hover:border-red-400 hover:text-red-600"
+      >
+        {icon} post
+      </a>
+    </div>
   );
 }
 
