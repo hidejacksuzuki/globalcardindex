@@ -12,6 +12,7 @@ import { prisma }                from "@gci/db";
 import { cardDedupeKey }         from "@gci/core";
 import { ImportWatchlistButton } from "./ImportWatchlistButton";
 import { CardInventoryTable }    from "./CardInventoryTable";
+import { AddCardForm }           from "./AddCardForm";
 
 export const dynamic = "force-dynamic";
 
@@ -134,6 +135,9 @@ export default async function AdminCardsPage() {
           <ImportWatchlistButton />
         </div>
       </header>
+
+      {/* ── Add card form ───────────────────────────────────────────────────── */}
+      <AddCardForm />
 
       {/* ── Summary stats ──────────────────────────────────────────────────── */}
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
