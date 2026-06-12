@@ -56,7 +56,7 @@ const RARITY_OPTIONS: Record<string, string[]> = {
 type Result = { ok: boolean; created?: number; skipped?: number; details?: string[]; error?: string };
 
 export function AddCardForm() {
-  const [open, setOpen]       = useState(false);
+  const [open, setOpen]       = useState(true);
   const [game, setGame]       = useState("pokemon");
   const [name, setName]       = useState("");
   const [setName_, setSetName] = useState("");
