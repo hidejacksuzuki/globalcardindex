@@ -29,17 +29,49 @@ export function computeRejectionReasons(p: {
 // Card search WHERE clause (shared by listCards / getMarketboard)
 // ----------------------------------------------------------------
 
+/**
+ * 公開サイト用の Card WHERE 句。
+ * 非表示・削除済み・統合済みカードを自動的に除外する。
+ */
 export function buildCardSearchWhere(
   search?: string,
-): Prisma.CardWhereInput | undefined {
+): Prisma.CardWhereInput {
+  const base: Prisma.CardWhereInput = {
+    isVisible: true,
+    deletedAt: null,
+  };
   const trimmed = search?.trim();
-  if (!trimmed) return undefined;
+  if (!trimmed) return base;
   return {
+    ...base,
     OR: [
       { name:    { contains: trimmed, mode: "insensitive" } },
       { setName: { contains: trimmed, mode: "insensitive" } },
     ],
   };
+}
+
+/**
+ * 管理画面用の Card WHERE 句。
+ * 削除済みカードの表示/非表示をオプションで切り替え可能。
+ */
+export function buildAdminCardWhere(opts: {
+  search?:       string;
+  showDeleted?:  boolean;
+  showHidden?:   boolean;
+}): Prisma.CardWhereInput {
+  const where: Prisma.CardWhereInput = {};
+  if (!opts.showDeleted) where.deletedAt = null;
+  if (!opts.showHidden)  where.isVisible = true;
+
+  const trimmed = opts.search?.trim();
+  if (trimmed) {
+    where.OR = [
+      { name:    { contains: trimmed, mode: "insensitive" } },
+      { setName: { contains: trimmed, mode: "insensitive" } },
+    ];
+  }
+  return where;
 }
 
 // ----------------------------------------------------------------

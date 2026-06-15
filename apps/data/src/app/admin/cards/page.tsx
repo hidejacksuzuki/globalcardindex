@@ -30,6 +30,9 @@ type CardRow = {
   latestPrice: number | null;
   latestAt:    Date   | null;
   createdAt:   Date;
+  isVisible:   boolean;
+  deletedAt:   Date | null;
+  mergedIntoCardId: string | null;
 };
 
 type DuplicateGroup = {
@@ -48,14 +51,17 @@ async function getCardInventory(): Promise<{
   const raw = await prisma.card.findMany({
     orderBy: { createdAt: "desc" },
     select: {
-      id:        true,
-      name:      true,
-      setName:   true,
-      rarity:    true,
-      condition: true,
-      slug:      true,
-      game:      true,
-      createdAt: true,
+      id:               true,
+      name:             true,
+      setName:          true,
+      rarity:           true,
+      condition:        true,
+      slug:             true,
+      game:             true,
+      createdAt:        true,
+      isVisible:        true,
+      deletedAt:        true,
+      mergedIntoCardId: true,
       prices: {
         orderBy: { observedAt: "desc" },
         take:    1,
@@ -66,17 +72,20 @@ async function getCardInventory(): Promise<{
   });
 
   const cards: CardRow[] = raw.map((c) => ({
-    id:          c.id,
-    name:        c.name,
-    setName:     c.setName,
-    rarity:      c.rarity,
-    condition:   c.condition,
-    slug:        c.slug,
-    game:        c.game,
-    priceCount:  c._count.prices,
-    latestPrice: c.prices[0]?.price ?? null,
-    latestAt:    c.prices[0]?.observedAt ?? null,
-    createdAt:   c.createdAt,
+    id:               c.id,
+    name:             c.name,
+    setName:          c.setName,
+    rarity:           c.rarity,
+    condition:        c.condition,
+    slug:             c.slug,
+    game:             c.game,
+    priceCount:       c._count.prices,
+    latestPrice:      c.prices[0]?.price ?? null,
+    latestAt:         c.prices[0]?.observedAt ?? null,
+    createdAt:        c.createdAt,
+    isVisible:        c.isVisible,
+    deletedAt:        c.deletedAt,
+    mergedIntoCardId: c.mergedIntoCardId,
   }));
 
   // Orphans: no price data

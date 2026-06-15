@@ -26,7 +26,7 @@ export async function getMarketboard(
   const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
 
   const cards = await prisma.card.findMany({
-    where: buildCardSearchWhere(opts.search),
+    where: { ...buildCardSearchWhere(opts.search), isVisible: true, deletedAt: null },
     include: {
       prices: { orderBy: { observedAt: "desc" }, take: 200 },
     },
@@ -188,9 +188,9 @@ async function fetchCandidates(): Promise<MarketCard[]> {
     if (!price7dMap.has(p.cardId)) price7dMap.set(p.cardId, p.price);
   }
 
-  // Q4: カードメタデータ
+  // Q4: カードメタデータ（非表示・削除済みを除外）
   const cards = await prisma.card.findMany({
-    where:  { id: { in: candidateIds } },
+    where:  { id: { in: candidateIds }, isVisible: true, deletedAt: null },
     select: { id: true, name: true, setName: true, game: true, slug: true, rarity: true, condition: true },
   });
   const cardMap = new Map(cards.map((c) => [c.id, c]));

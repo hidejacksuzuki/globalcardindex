@@ -62,7 +62,7 @@ export const cardsRoute = new Hono()
       include: { prices: { orderBy: { observedAt: "desc" }, take: 200 } },
     });
 
-    if (!card) {
+    if (!card || !card.isVisible || card.deletedAt) {
       return c.json({ error: "Card not found" } satisfies ApiError, 404);
     }
 

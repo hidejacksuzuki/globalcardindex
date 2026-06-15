@@ -33,6 +33,14 @@ model Card {
   sourceSearchUrls   SourceSearchUrl[]
   aliases            CardAlias[]
   ebayListings       EbayListing[]
+
+  // 管理フラグ
+  isVisible        Boolean   @default(true)
+  deletedAt        DateTime?
+  mergedIntoCardId String?
+  mergedIntoCard   Card?     @relation("CardMerge", fields: [mergedIntoCardId], references: [id])
+  mergedCards      Card[]    @relation("CardMerge")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -41,6 +49,8 @@ model Card {
   @@index([setName])
   @@index([game])
   @@index([slug])
+  @@index([isVisible])
+  @@index([deletedAt])
 }
 
 // ============================================================
