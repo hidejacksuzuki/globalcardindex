@@ -9,6 +9,7 @@ export type DupCard = {
   rarity:      string;
   condition:   string;
   slug:        string | null;
+  game:        string | null;
   priceCount:  number;
   latestPrice: number | null;
   isVisible:   boolean;
