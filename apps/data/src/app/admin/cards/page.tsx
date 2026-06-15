@@ -14,9 +14,10 @@ import { ImportWatchlistButton } from "./ImportWatchlistButton";
 import { CardInventoryTable }    from "./CardInventoryTable";
 import { AddCardForm }           from "./AddCardForm";
 import { DuplicateGroups }       from "./DuplicateGroups";
-import { CardSidebar, SIDEBAR_GAMES } from "./CardSidebar";
+import { CardSidebar }           from "./CardSidebar";
+import { SIDEBAR_GAMES }         from "./_shared";
 import type { DupCard, DupGroup } from "./DuplicateGroups";
-import type { SidebarCounts, GameCounts } from "./CardSidebar";
+import type { SidebarCounts, GameCounts } from "./_shared";
 
 export const dynamic = "force-dynamic";
 
@@ -114,7 +115,7 @@ async function getAllData(): Promise<{
         status:      true,
         createdAt:   true,
       },
-    }),
+    }).catch(() => [] as CardRequestRow[]),
   ]);
 
   const cards: CardRow[] = raw.map((c) => ({
@@ -202,11 +203,10 @@ function computeCounts(
 export default async function AdminCardsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ game?: string; view?: string }>;
+  searchParams: { game?: string; view?: string };
 }) {
-  const sp          = await searchParams;
-  const currentGame = sp.game ?? null;
-  const currentView = sp.view ?? null;
+  const currentGame = searchParams.game ?? null;
+  const currentView = searchParams.view ?? null;
 
   const { cards, dupGroups, dupCardIds, requests } = await getAllData();
   const counts = computeCounts(cards, dupGroups, dupCardIds, requests);

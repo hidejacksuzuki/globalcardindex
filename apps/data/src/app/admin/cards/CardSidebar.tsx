@@ -2,39 +2,12 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { SIDEBAR_GAMES } from "./_shared";
+import type { SidebarCounts, GameCounts, GlobalCounts } from "./_shared";
 
-// ── Exported types (used by page.tsx) ─────────────────────────────────────────
-
-export type GameCounts = {
-  all:     number;
-  visible: number;
-  hidden:  number;
-  orphan:  number;
-  merged:  number;
-  deleted: number;
-};
-
-export type GlobalCounts = {
-  duplicates: number;
-  orphans:    number;
-  requests:   number;
-  recent:     number;
-};
-
-export type SidebarCounts = {
-  games:  Record<string, GameCounts>;
-  global: GlobalCounts;
-};
-
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-export const SIDEBAR_GAMES = [
-  { key: "mtg",         label: "MTG"       },
-  { key: "duelmasters", label: "デュエマ"  },
-  { key: "pokemon",     label: "ポケモン"  },
-  { key: "onepiece",    label: "ワンピース" },
-  { key: "yugioh",      label: "遊戯王"    },
-] as const;
+// Re-export for consumers that used to import from this file
+export type { GameCounts, GlobalCounts, SidebarCounts };
+export { SIDEBAR_GAMES };
 
 const GAME_VIEWS = [
   { key: "all",     label: "全カード"   },
