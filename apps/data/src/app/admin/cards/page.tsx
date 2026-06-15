@@ -13,6 +13,8 @@ import { cardDedupeKey }         from "@gci/core";
 import { ImportWatchlistButton } from "./ImportWatchlistButton";
 import { CardInventoryTable }    from "./CardInventoryTable";
 import { AddCardForm }           from "./AddCardForm";
+import { DuplicateGroups }       from "./DuplicateGroups";
+import type { DupCard }          from "./DuplicateGroups";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +39,7 @@ type CardRow = {
 
 type DuplicateGroup = {
   key:   string;
-  cards: CardRow[];
+  cards: DupCard[];
 };
 
 // ── Data fetching ─────────────────────────────────────────────────────────────
@@ -88,12 +90,28 @@ async function getCardInventory(): Promise<{
     mergedIntoCardId: c.mergedIntoCardId,
   }));
 
+  // DuplicateGroup 用に DupCard 型に変換
+  const cardToDupCard = (c: CardRow): DupCard => ({
+    id:               c.id,
+    name:             c.name,
+    setName:          c.setName,
+    rarity:           c.rarity,
+    condition:        c.condition,
+    slug:             c.slug,
+    priceCount:       c.priceCount,
+    latestPrice:      c.latestPrice,
+    isVisible:        c.isVisible,
+    deletedAt:        c.deletedAt,
+    mergedIntoCardId: c.mergedIntoCardId,
+  });
+
   // Orphans: no price data
   const orphans = cards.filter((c) => c.priceCount === 0);
 
-  // Duplicate detection via cardDedupeKey
+  // Duplicate detection via cardDedupeKey（削除済みを除外して検出）
   const keyMap = new Map<string, CardRow[]>();
   for (const card of cards) {
+    if (card.deletedAt) continue;  // 削除済みはdup検出対象外
     const k = cardDedupeKey({
       name:      card.name,
       setName:   card.setName,
@@ -111,12 +129,10 @@ async function getCardInventory(): Promise<{
   const dupGroups: DuplicateGroup[] = [];
   for (const [key, group] of keyMap) {
     if (group.length > 1) {
-      // Sort group: most prices first (likely the canonical row)
       group.sort((a, b) => b.priceCount - a.priceCount);
-      dupGroups.push({ key, cards: group });
+      dupGroups.push({ key, cards: group.map(cardToDupCard) });
     }
   }
-  // Sort groups by size descending
   dupGroups.sort((a, b) => b.cards.length - a.cards.length);
 
   return { cards, orphans, dupGroups };
@@ -177,70 +193,7 @@ export default async function AdminCardsPage() {
       </section>
 
       {/* ── Duplicate groups ────────────────────────────────────────────────── */}
-      {dupGroups.length > 0 && (
-        <section>
-          <h2 className="mb-1 text-xs uppercase tracking-widest text-navy/40">
-            Potential Duplicates
-          </h2>
-          <p className="mb-4 text-[11px] text-navy/40">
-            同じ normalizeCardKey になるカードが複数 DB に存在します。
-            最もデータが多い行（先頭）を残し、他を削除することを検討してください。
-          </p>
-          <div className="space-y-4">
-            {dupGroups.map((group) => (
-              <div
-                key={group.key}
-                className="overflow-hidden rounded-lg border border-red-200 bg-white"
-              >
-                <div className="border-b border-red-100 bg-red-50 px-4 py-2.5 text-xs">
-                  <span className="font-medium text-red-700">Key: </span>
-                  <code className="font-mono text-red-600">{group.key}</code>
-                  <span className="ml-3 text-red-400">{group.cards.length} rows</span>
-                </div>
-                <table className="min-w-full divide-y divide-navy/5 text-sm">
-                  <thead className="bg-navy/[0.02] text-left text-xs uppercase tracking-wider text-navy/40">
-                    <tr>
-                      <th className="px-4 py-2">ID</th>
-                      <th className="px-4 py-2">Name</th>
-                      <th className="px-4 py-2">Set</th>
-                      <th className="px-4 py-2">Rarity</th>
-                      <th className="px-4 py-2">Cond</th>
-                      <th className="px-4 py-2 text-right">Prices</th>
-                      <th className="px-4 py-2 text-right">Latest ¥</th>
-                      <th className="px-4 py-2">Slug</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-navy/5">
-                    {group.cards.map((c, idx) => (
-                      <tr
-                        key={c.id}
-                        className={idx === 0 ? "bg-green-50" : "bg-red-50/40"}
-                      >
-                        <td className="px-4 py-2 font-mono text-[11px] text-navy/40">{c.id}</td>
-                        <td className="px-4 py-2 font-medium text-navy">{c.name}</td>
-                        <td className="px-4 py-2 text-navy/60">{c.setName}</td>
-                        <td className="px-4 py-2 text-navy/60">{c.rarity}</td>
-                        <td className="px-4 py-2 text-navy/60">{c.condition}</td>
-                        <td className="px-4 py-2 text-right tabular-nums font-medium text-navy">
-                          {c.priceCount.toLocaleString()}
-                        </td>
-                        <td className="px-4 py-2 text-right tabular-nums text-navy/60">
-                          {c.latestPrice != null
-                            ? `¥${c.latestPrice.toLocaleString()}`
-                            : <span className="text-navy/25">—</span>}
-                        </td>
-                        <td className="px-4 py-2 font-mono text-[11px] text-navy/40">
-                          {c.slug ?? <span className="text-navy/25">—</span>}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      {dupGroups.length > 0 && <DuplicateGroups groups={dupGroups} />}
 
       {/* ── Full inventory table ────────────────────────────────────────────── */}
       <CardInventoryTable cards={cards} />
