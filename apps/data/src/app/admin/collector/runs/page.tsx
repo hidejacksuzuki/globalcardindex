@@ -261,12 +261,13 @@ export default async function CollectorRunsPage() {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function CollectorSubNav({ active }: { active: "urls" | "import" | "review" | "runs" }) {
+function CollectorSubNav({ active }: { active: "urls" | "import" | "review" | "runs" | "ebay" }) {
   const items = [
     { href: "/admin/collector",        label: "URL Preview", key: "urls"   },
     { href: "/admin/collector/import", label: "Import",      key: "import" },
     { href: "/admin/collector/review", label: "Review",      key: "review" },
     { href: "/admin/collector/runs",   label: "Runs",        key: "runs"   },
+    { href: "/admin/collector/ebay",   label: "eBay",        key: "ebay"   },
   ];
   return (
     <div className="flex gap-1 border-b border-navy/10">

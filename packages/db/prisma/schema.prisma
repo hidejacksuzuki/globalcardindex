@@ -31,6 +31,8 @@ model Card {
   rawMarketListings  RawMarketListing[]
   priceSnapshots     PriceSnapshot[]
   sourceSearchUrls   SourceSearchUrl[]
+  aliases            CardAlias[]
+  ebayListings       EbayListing[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -649,6 +651,101 @@ model CardCandidate {
   createdAt     DateTime @default(now())
 
   @@index([status])
+  @@index([createdAt])
+}
+
+// ============================================================
+// CardAlias — カードの多言語・市場別エイリアス（eBay検索用）
+// ============================================================
+model CardAlias {
+  id               String   @id @default(cuid())
+  cardId           String
+  card             Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  // ロケール: "ja" | "en" | "ko" | "zh"
+  locale           String   @default("en")
+
+  // 表記名（英語名など）
+  name             String
+  setName          String?
+  cardNumber       String?
+  rarity           String?
+
+  // "Japanese" | "English" | "Korean" | "Chinese"
+  language         String?
+
+  // 対象市場: "JP" | "US" | "GLOBAL"
+  market           String   @default("US")
+
+  // eBay検索クエリ（自動生成 or 手動上書き）
+  searchQuery      String?
+
+  // 除外キーワード（カンマ区切り）
+  negativeKeywords String   @default("PSA,BGS,CGC,graded,slab,proxy,custom,fan made,lot,bulk,sealed,booster,pack,box,case,digital,code")
+
+  isPrimary        Boolean  @default(false)
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  ebayListings     EbayListing[]
+
+  @@index([cardId])
+  @@index([locale])
+  @@index([market])
+}
+
+// ============================================================
+// EbayListing — eBay収集候補（pending→approved→imported）
+// ============================================================
+model EbayListing {
+  id                  String     @id @default(cuid())
+  cardId              String
+  card                Card       @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  cardAliasId         String?
+  cardAlias           CardAlias? @relation(fields: [cardAliasId], references: [id], onDelete: SetNull)
+
+  source              String     @default("ebay")
+  market              String     @default("US")   // "US" | "GLOBAL"
+
+  title               String
+  price               Float
+  currency            String     @default("USD")
+  shippingPrice       Float?
+  totalPrice          Float
+
+  soldAt              DateTime?
+  listingUrl          String?
+  imageUrl            String?
+  sellerName          String?
+  sellerFeedbackScore Int?
+
+  // "sold" | "active"
+  listingType         String     @default("sold")
+  conditionText       String?
+  languageDetected    String?
+
+  matchScore          Int        @default(0)
+
+  // "pending" | "approved" | "rejected" | "imported"
+  status              String     @default("pending")
+  rejectReason        String?
+
+  // 通貨換算（importのみ）
+  priceJpy            Float?
+  priceUsd            Float?
+
+  rawJson             Json?
+
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  @@index([cardId])
+  @@index([cardAliasId])
+  @@index([status])
+  @@index([listingType])
+  @@index([soldAt])
+  @@index([matchScore])
   @@index([createdAt])
 }
 

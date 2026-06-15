@@ -20,6 +20,8 @@ const NAV_ITEMS = [
   { href: "/admin/cards/auto-add", label: "Auto Add"   },
   { href: "/admin/prices/inbox",   label: "Inbox"      },
   { href: "/admin/extension",      label: "Extension"  },
+  { href: "/admin/ebay-aliases",   label: "eBay Alias" },
+  { href: "/admin/collector/ebay", label: "eBay Collect" },
 ];
 
 export default function AdminLayout({
