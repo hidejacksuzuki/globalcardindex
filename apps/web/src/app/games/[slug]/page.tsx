@@ -5,6 +5,8 @@ import { getGame, getGameSlugs } from "@gci/core";
 import { getGameStats }     from "@gci/core";
 import { formatPrice }      from "@gci/core";
 
+export const revalidate = 3600; // ISR: 1時間キャッシュ
+
 // ----------------------------------------------------------------
 // Static params  (ISR / static export に対応)
 // ----------------------------------------------------------------

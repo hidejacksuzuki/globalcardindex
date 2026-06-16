@@ -11,6 +11,7 @@ import type {
   ListCardsResult,
 } from "../types";
 import { buildCardSearchWhere } from "./_helpers";
+import { timedQuery } from "./_query-log";
 
 // ----------------------------------------------------------------
 // listCards オプション
@@ -115,15 +116,18 @@ export async function listCards(
 }
 
 // ----------------------------------------------------------------
-// getCard — 詳細 + 価格履歴 200 件
+// getCard — 詳細 + 価格履歴 30 件 (totalPriceCount で全件数を返す)
 // ----------------------------------------------------------------
 export async function getCard(id: string): Promise<CardWithPrices | null> {
-  const card = await prisma.card.findUnique({
-    where: { id },
-    include: {
-      prices: { orderBy: { observedAt: "desc" }, take: 200 },
-    },
-  });
+  const card = await timedQuery(`getCard(${id})`, () =>
+    prisma.card.findUnique({
+      where: { id },
+      include: {
+        prices: { orderBy: { observedAt: "desc" }, take: 30 },
+        _count: { select: { prices: true } },
+      },
+    }),
+  );
   if (!card) return null;
 
   return {
@@ -132,6 +136,7 @@ export async function getCard(id: string): Promise<CardWithPrices | null> {
     setName:   card.setName,
     rarity:    card.rarity,
     condition: card.condition,
+    totalPriceCount: card._count.prices,
     prices: card.prices.map((p) => ({
       id:         p.id,
       price:      p.price,

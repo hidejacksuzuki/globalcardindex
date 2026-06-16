@@ -2,6 +2,7 @@
 
 import { prisma }         from "@gci/db";
 import { TRUST_THRESHOLD } from "./_helpers";
+import { timedQuery }      from "./_query-log";
 
 // ----------------------------------------------------------------
 // getGameStats — /games/[slug] ページ用
@@ -25,7 +26,7 @@ export type SetSummary = {
 };
 
 export async function getGameStats(game: string): Promise<GameStats | null> {
-  const cards = await prisma.card.findMany({
+  const cards = await timedQuery(`getGameStats(${game})`, () => prisma.card.findMany({
     where: { game },
     select: {
       id:      true,
@@ -41,7 +42,7 @@ export async function getGameStats(game: string): Promise<GameStats | null> {
         select:  { price: true, currency: true, observedAt: true },
       },
     },
-  });
+  }));
 
   if (cards.length === 0) return null;
 
@@ -115,7 +116,7 @@ export type SetCardSummary = {
 
 export async function getSetStats(setNameSlug: string): Promise<SetStats | null> {
   // setName が直接一致するもの、またはスラッグ的に変換して一致するものを検索
-  const cards = await prisma.card.findMany({
+  const cards = await timedQuery(`getSetStats(${setNameSlug})`, () => prisma.card.findMany({
     where: {
       setName: { equals: setNameSlug, mode: "insensitive" },
     },
@@ -139,7 +140,7 @@ export async function getSetStats(setNameSlug: string): Promise<SetStats | null>
       },
     },
     orderBy: { name: "asc" },
-  });
+  }));
 
   if (cards.length === 0) return null;
 

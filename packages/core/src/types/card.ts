@@ -27,6 +27,7 @@ export type PriceRecord = {
 
 export type CardWithPrices = CardSummary & {
   prices: PriceRecord[];
+  totalPriceCount: number;
 };
 
 export type CardSortKey = "name" | "latestPrice";

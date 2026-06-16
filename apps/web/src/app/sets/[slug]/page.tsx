@@ -5,7 +5,7 @@ import { getSetStats }     from "@gci/core";
 import { getGame }         from "@gci/core";
 import { formatPrice }     from "@gci/core";
 
-export const dynamic = "force-dynamic";   // setName はDBにしか存在しないので動的
+export const revalidate = 3600; // ISR: 1時間キャッシュ
 
 // ----------------------------------------------------------------
 // Metadata

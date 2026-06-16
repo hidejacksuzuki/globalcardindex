@@ -61,7 +61,7 @@ export default async function CardHistoryPage({ params }: PageProps) {
             label="Last seen"
             value={latest ? formatDateTime(latest.observedAt) : "-"}
           />
-          <Stat label="Observations" value={String(card.prices.length)} />
+          <Stat label="Observations" value={String(card.totalPriceCount)} />
           <Stat label="Sources" value={String(distinctSources)} />
         </dl>
       </header>
@@ -69,6 +69,11 @@ export default async function CardHistoryPage({ params }: PageProps) {
       <section>
         <h2 className="mb-4 text-xs uppercase tracking-widest text-navy/50">
           Price history
+          {card.totalPriceCount > 30 && (
+            <span className="ml-2 normal-case text-navy/30">
+              (最新30件 / 全{card.totalPriceCount.toLocaleString()}件)
+            </span>
+          )}
         </h2>
         <PriceHistory prices={card.prices} />
       </section>
