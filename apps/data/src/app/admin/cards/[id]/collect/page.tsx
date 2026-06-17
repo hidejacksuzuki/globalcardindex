@@ -4,7 +4,7 @@
  * /admin/cards/[id]/collect
  *
  * Semi-automated price collection page.
- * Tabs: Mercari | ヤフオク開催中 | ヤフオク落札済み
+ * Tabs: Mercari | ヤフオク開催中 | ヤフオク落札済み | eBay Sold
  */
 
 import { useEffect, useState } from "react";
@@ -41,7 +41,30 @@ type PendingListing = {
   status:     string;
 };
 
-type TabId = "mercari_sold" | "mercari_listing" | "yahoo_auction_closed" | "yahoo_auction_active";
+type TabId = "mercari_sold" | "mercari_listing" | "yahoo_auction_closed" | "yahoo_auction_active" | "ebay_sold";
+
+type CardAlias = {
+  id:              string;
+  name:            string;
+  cardNumber:      string | null;
+  language:        string | null;
+  market:          string;
+  searchQuery:     string | null;
+  setName:         string | null;
+  negativeKeywords: string;
+};
+
+type EbayPendingListing = {
+  id:           string;
+  title:        string;
+  totalPrice:   number;
+  currency:     string;
+  priceJpy:     number | null;
+  matchScore:   number;
+  status:       string;
+  soldAt:       string | null;
+  listingUrl:   string | null;
+};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -89,11 +112,41 @@ export default function CollectPage() {
   const [msg, setMsg]             = useState("");
   const [showRejected, setShowRejected] = useState(false);
 
+  // eBay Sold tab state
+  const [aliases, setAliases]         = useState<CardAlias[]>([]);
+  const [aliasId, setAliasId]         = useState<string>("");
+  const [ebayPending, setEbayPending] = useState<EbayPendingListing[]>([]);
+
   useEffect(() => {
     fetch(`/api/v1/cards/${id}`)
       .then((r) => r.json())
       .then((d) => setCard(d.card ?? d));
   }, [id]);
+
+  // eBay Sold: load aliases when tab becomes active
+  useEffect(() => {
+    if (tab !== "ebay_sold" || !id) return;
+    fetch(`/api/admin/ebay/aliases?cardId=${id}`)
+      .then((r) => r.json())
+      .then((d: { ok: boolean; aliases?: CardAlias[] }) => {
+        if (d.ok && d.aliases) {
+          setAliases(d.aliases);
+          if (d.aliases.length > 0 && !aliasId) setAliasId(d.aliases[0]!.id);
+        }
+      });
+    fetchEbayPending();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, id]);
+
+  function fetchEbayPending() {
+    if (!id) return;
+    fetch(`/api/admin/ebay/listings?cardId=${id}&status=pending`)
+      .then((r) => r.json())
+      .then((d: { ok: boolean; listings?: EbayPendingListing[] }) => {
+        if (d.ok) setEbayPending(d.listings ?? []);
+      })
+      .catch(() => {});
+  }
 
   const fetchPending = (tabId: TabId, inclRejected: boolean) => {
     if (!id) return;
@@ -190,7 +243,15 @@ export default function CollectPage() {
     { id: "mercari_listing",       label: "Mercari 販売中"    },
     { id: "yahoo_auction_closed",  label: "ヤフオク落札済み"  },
     { id: "yahoo_auction_active",  label: "ヤフオク開催中"    },
+    { id: "ebay_sold",             label: "eBay Sold"         },
   ];
+
+  const selectedAlias = aliases.find((a) => a.id === aliasId);
+  function ebaySearchUrl(alias: CardAlias): string {
+    const q   = alias.searchQuery ?? `${alias.name}${alias.cardNumber ? " " + alias.cardNumber : ""}`;
+    const nkw = encodeURIComponent(q);
+    return `https://www.ebay.com/sch/i.html?_nkw=${nkw}&LH_Sold=1&LH_Complete=1&_ipg=50#gci:${alias.id}`;
+  }
 
   return (
     <div className="space-y-8">
@@ -219,7 +280,156 @@ export default function CollectPage() {
         ))}
       </div>
 
-      {/* Search buttons */}
+      {/* eBay Sold tab */}
+      {tab === "ebay_sold" && (
+        <section className="space-y-6">
+          {aliases.length === 0 ? (
+            <div className="rounded-lg border border-navy/10 bg-white p-6 text-sm text-navy/50">
+              このカードには CardAlias が未登録です。
+              <a href="/admin/ebay-aliases" className="ml-1 text-navy underline underline-offset-2">
+                eBay Aliases
+              </a>
+              {" "}ページで英語名・カード番号を登録してください。
+            </div>
+          ) : (
+            <>
+              {/* Alias selector + URL */}
+              <div className="rounded-lg border border-navy/10 bg-white p-5 space-y-4">
+                <p className="text-xs font-medium uppercase tracking-widest text-navy/40">eBay Sold 検索</p>
+
+                <div>
+                  <p className="mb-1 text-[10px] uppercase tracking-widest text-navy/40">CardAlias</p>
+                  <select
+                    value={aliasId}
+                    onChange={(e) => setAliasId(e.target.value)}
+                    className="w-full rounded border border-navy/15 bg-white px-3 py-1.5 text-sm text-navy focus:border-navy/40 focus:outline-none"
+                  >
+                    {aliases.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name}
+                        {a.cardNumber ? ` (${a.cardNumber})` : ""}
+                        {a.language ? ` — ${a.language}` : ""}
+                        {" "}[{a.market}]
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {selectedAlias && (
+                  <div className="space-y-3">
+                    <div className="rounded bg-navy/[0.03] px-3 py-2">
+                      <p className="text-[10px] uppercase tracking-widest text-navy/40">Search URL</p>
+                      <p className="mt-1 break-all font-mono text-[11px] text-navy/60">
+                        {ebaySearchUrl(selectedAlias)}
+                      </p>
+                    </div>
+                    <div className="flex gap-3">
+                      <a
+                        href={ebaySearchUrl(selectedAlias)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded border border-[#e53238] bg-[#e53238] px-4 py-2 text-xs font-medium text-white hover:bg-[#c12d32] transition"
+                      >
+                        eBay Sold を開く
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                      <button
+                        onClick={fetchEbayPending}
+                        className="rounded border border-navy/20 px-3 py-2 text-xs text-navy/50 hover:border-navy/40 hover:text-navy transition"
+                      >
+                        更新
+                      </button>
+                    </div>
+
+                    {/* Chrome拡張の説明 */}
+                    <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-700 space-y-1">
+                      <p className="font-medium">Chrome拡張での収集手順</p>
+                      <ol className="ml-4 list-decimal space-y-0.5 text-blue-600">
+                        <li>上のボタンでeBay Soldページを開く</li>
+                        <li>Chrome拡張アイコンをクリックし、このAliasを選択する</li>
+                        <li>「Import this page」を押すと検索結果がGCIに送信される</li>
+                        <li>matchScore ≥ 90 + 条件一致のものは自動でPrice登録される</li>
+                      </ol>
+                      <p className="mt-2 text-blue-500">
+                        Auto-import条件: matchScore ≥ 90 / カード番号一致 / 言語一致 / negKW非含 / 過去中央値±35%以内
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Pending listings */}
+              {ebayPending.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium uppercase tracking-widest text-navy/40">
+                    Pending ({ebayPending.length}件) — admin/collector/ebay で承認・却下
+                  </p>
+                  <div className="overflow-x-auto rounded-lg border border-navy/10 bg-white">
+                    <table className="min-w-full divide-y divide-navy/5 text-sm">
+                      <thead className="bg-navy/[0.02] text-left text-xs uppercase tracking-wider text-navy/40">
+                        <tr>
+                          <th className="px-4 py-2">タイトル</th>
+                          <th className="px-4 py-2 text-right">価格</th>
+                          <th className="px-4 py-2 text-right">Score</th>
+                          <th className="px-4 py-2">成約日</th>
+                          <th className="px-4 py-2">状態</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-navy/5">
+                        {ebayPending.map((l) => (
+                          <tr key={l.id} className="hover:bg-navy/[0.02]">
+                            <td className="max-w-xs truncate px-4 py-2 text-navy/80">
+                              {l.listingUrl ? (
+                                <a href={l.listingUrl} target="_blank" rel="noreferrer"
+                                  className="underline underline-offset-2 hover:text-navy">
+                                  {l.title}
+                                </a>
+                              ) : l.title}
+                            </td>
+                            <td className="px-4 py-2 text-right tabular-nums text-navy">
+                              {l.priceJpy
+                                ? `¥${l.priceJpy.toLocaleString()}`
+                                : `${l.currency} ${l.totalPrice.toFixed(2)}`}
+                            </td>
+                            <td className="px-4 py-2 text-right tabular-nums">
+                              <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                                l.matchScore >= 80 ? "bg-emerald-50 text-emerald-700" :
+                                l.matchScore >= 60 ? "bg-amber-50 text-amber-700" :
+                                                     "bg-red-50 text-red-600"
+                              }`}>
+                                {l.matchScore}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2 text-xs text-navy/50">
+                              {l.soldAt ? new Date(l.soldAt).toLocaleDateString("ja-JP") : "—"}
+                            </td>
+                            <td className="px-4 py-2">
+                              <span className="rounded bg-navy/10 px-1.5 py-0.5 text-[10px] text-navy/50">
+                                {l.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <a
+                    href="/admin/collector/ebay"
+                    className="inline-block text-xs text-navy/50 underline underline-offset-2 hover:text-navy"
+                  >
+                    eBay Collector で承認 →
+                  </a>
+                </div>
+              )}
+            </>
+          )}
+        </section>
+      )}
+
+      {/* Search buttons (non-eBay tabs) */}
+      {tab !== "ebay_sold" && (
       <section className="space-y-2">
         <p className="text-xs font-medium uppercase tracking-widest text-navy/40">検索URL</p>
         <p className="font-mono text-xs text-navy/50 break-all">{kw}</p>
@@ -240,8 +450,10 @@ export default function CollectPage() {
           </>}
         </div>
       </section>
+      )}
 
-      {/* Paste area */}
+      {/* Paste area + Import preview + Pending review (non-eBay tabs) */}
+      {tab !== "ebay_sold" && (<>
       <section className="space-y-3">
         <p className="text-xs font-medium uppercase tracking-widest text-navy/40">取り込み</p>
         {(tab === "yahoo_auction_closed" || tab === "mercari_sold") && (
@@ -378,6 +590,7 @@ export default function CollectPage() {
           </div>
         </>)}
       </section>
+      </>)}
 
       {msg && <p className="text-sm text-navy/70 border-l-2 border-navy/20 pl-3">{msg}</p>}
     </div>

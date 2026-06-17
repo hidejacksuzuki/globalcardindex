@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "GCI eBay Collector",
+  "version": "1.0.0",
+  "description": "Global Card Index — eBay Sold listings を GCI に送信する",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://*.ebay.com/*",
+    "https://*.ebay.co.jp/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16":  "icons/icon16.png",
+      "48":  "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.ebay.com/*", "https://*.ebay.co.jp/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16":  "icons/icon16.png",
+    "48":  "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
