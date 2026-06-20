@@ -33,6 +33,7 @@ model Card {
   sourceSearchUrls   SourceSearchUrl[]
   aliases            CardAlias[]
   ebayListings       EbayListing[]
+  portfolioCards     PortfolioCard[]
 
   // 管理フラグ
   isVisible        Boolean   @default(true)
@@ -430,6 +431,7 @@ model User {
   sessions       Session[]
   watchlistItems UserWatchlistItem[]
   notifPrefs     NotificationPrefs?
+  portfolioCards PortfolioCard[]
 
   @@index([email])
 }
@@ -790,4 +792,29 @@ model RawMarketListing {
   @@index([cardId, status])
   @@index([source])
   @@index([capturedAt])
+}
+
+// ============================================================
+// PortfolioCard — My Portfolio / My Collection (Phase 1)
+// ============================================================
+model PortfolioCard {
+  id          String   @id @default(cuid())
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  cardId      String
+  card        Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  quantity    Int      @default(1)
+  avgBuyPrice Float?   // 取得単価（円）。未入力可
+  memo        String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, cardId])
+  @@index([userId])
+  @@index([cardId])
+  @@index([userId, createdAt])
 }

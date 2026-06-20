@@ -10,6 +10,8 @@ import { MIN_SAMPLES_DISPLAY }   from "@gci/core";
 import { prisma }                from "@gci/db";
 import { CardViewTracker }       from "@/components/analytics/CardViewTracker";
 import { CardRequestButton }     from "@/components/cards/CardRequestButton";
+import { AddToPortfolioButton }  from "@/components/portfolio/AddToPortfolioButton";
+import { isInPortfolio }         from "@gci/core";
 import { auth }                  from "@/auth";
 
 export const dynamic = "force-dynamic";
@@ -72,6 +74,10 @@ export default async function CardSlugPage({
     ? await isUserWatching(userId, card.id).catch(() => false)
     : await isWatching(card.id).catch(() => false);
 
+  const portfolioStatus = userId
+    ? await isInPortfolio(userId, card.id).catch(() => ({ inPortfolio: false as const }))
+    : { inPortfolio: false as const };
+
   // Week 18: per-card index value
   const cardIndex = await prisma.indexValue.findFirst({
     where:   { cardId: card.id },
@@ -123,8 +129,16 @@ export default async function CardSlugPage({
           {card.rarity} · {card.condition}
         </p>
 
-        <div className="mt-4">
+        <div className="mt-4 flex items-center gap-2 flex-wrap">
           <WatchButton cardId={card.id} slug={card.slug ?? card.id} isWatched={watchedById} userId={userId ?? undefined} />
+          {userId && (
+            <AddToPortfolioButton
+              cardId={card.id}
+              cardName={card.name}
+              userId={userId}
+              initialItem={"portfolioCard" in portfolioStatus ? (portfolioStatus.portfolioCard ?? null) : null}
+            />
+          )}
         </div>
         <CardViewTracker slug={card.slug ?? card.id} />
 

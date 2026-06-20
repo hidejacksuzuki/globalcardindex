@@ -8,3 +8,4 @@ export * from "./recap";
 export * from "./seo";
 export * from "./watchlist";
 export * from "./userWatchlist";
+export * from "./portfolio";

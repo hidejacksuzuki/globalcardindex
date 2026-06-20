@@ -31,6 +31,7 @@ export async function Header() {
           <Link href="/marketboard" className="transition hover:text-navy hidden md:inline">{t.nav.marketboard}</Link>
           <Link href="/cards"       className="transition hover:text-navy">{t.nav.cards}</Link>
           <Link href="/watchlist"   className="transition hover:text-navy hidden sm:inline">{t.nav.watchlist}</Link>
+          <Link href="/portfolio"   className="transition hover:text-navy hidden sm:inline">{t.nav.portfolio}</Link>
           <Link href="/about"       className="transition hover:text-navy text-navy/50 hidden lg:inline">{t.nav.about}</Link>
           <Link
             href="/newsletter"

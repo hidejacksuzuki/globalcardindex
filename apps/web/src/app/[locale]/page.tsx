@@ -129,6 +129,7 @@ export default async function HomePage({ params }: { params: { locale: Locale } 
         <NavCard href="/daily"       label="Daily Recap"   desc={h.nav.dailyDesc}       badge={h.nav.dailyBadge}       />
         <NavCard href="/indices"     label="Index History" desc={h.nav.indicesDesc}     badge={h.nav.indicesBadge}     />
         <NavCard href="/newsletter"  label="Newsletter"    desc={h.nav.newsletterDesc}  badge={h.nav.newsletterBadge}  />
+        <NavCard href="/portfolio"   label="Portfolio"     desc={h.nav.portfolioDesc}   badge={h.nav.portfolioBadge}   />
       </section>
 
       {/* ── Footer CTA ─────────────────────────────────────────── */}
