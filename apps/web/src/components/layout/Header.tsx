@@ -4,25 +4,25 @@ import { getServerTranslations } from '@/i18n/server';
 import { LocaleSwitcher }   from './LocaleSwitcher';
 import { CurrencySwitcher } from './CurrencySwitcher';
 import { MobileMenu }       from './MobileMenu';
+import { auth }             from '@/auth';
 
 export async function Header() {
-  const t = getServerTranslations();
+  const t       = getServerTranslations();
+  const session = await auth().catch(() => null);
+  const userId  = session?.user?.id ?? null;
 
   const navLinks = [
-    { href: '/games',       label: t.nav.games,       desktop: 'hidden md:inline' },
-    { href: '/daily',       label: t.nav.daily,       desktop: 'font-medium' },
-    { href: '/trending',    label: t.nav.trending,    desktop: 'hidden lg:inline' },
-    { href: '/indices',     label: t.nav.indices,     desktop: 'hidden lg:inline' },
-    { href: '/marketboard', label: t.nav.marketboard, desktop: 'hidden md:inline' },
-    { href: '/cards',       label: t.nav.cards,       desktop: '' },
-    { href: '/watchlist',   label: t.nav.watchlist,   desktop: 'hidden sm:inline' },
-    { href: '/portfolio',   label: t.nav.portfolio,   desktop: 'hidden sm:inline' },
-    { href: '/about',       label: t.nav.about,       desktop: 'hidden lg:inline text-navy/50' },
+    { href: '/cards',       label: 'カード検索',   desktop: '' },
+    { href: '/marketboard', label: 'マーケット',   desktop: 'hidden md:inline' },
+    { href: '/trending',    label: 'ランキング',   desktop: 'hidden md:inline' },
+    { href: '/portfolio',   label: 'コレクション', desktop: 'hidden sm:inline' },
+    { href: '/indices',     label: 'インサイト',   desktop: 'hidden lg:inline' },
+    { href: '/daily',       label: 'ニュース',     desktop: 'hidden lg:inline' },
   ];
 
   return (
-    <header className="border-b border-navy/10 bg-white">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 gap-4">
+    <header className="border-b border-navy/10 bg-white sticky top-0 z-30">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3 gap-4">
         {/* Logo */}
         <Link href="/" className="shrink-0">
           <Image
@@ -30,36 +30,51 @@ export async function Header() {
             alt="Global Card Index"
             width={360}
             height={96}
-            className="h-20 w-auto"
+            className="h-16 w-auto"
             priority
           />
         </Link>
 
         {/* Desktop nav */}
-        <nav className="flex items-center gap-5 text-sm text-navy/70 flex-1 justify-end flex-wrap">
+        <nav className="flex items-center gap-5 text-sm text-navy/70 flex-1 justify-center flex-wrap">
           {navLinks.map(({ href, label, desktop }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`transition hover:text-navy ${desktop}`}
-            >
+            <Link key={href} href={href} className={`transition hover:text-navy whitespace-nowrap ${desktop}`}>
               {label}
             </Link>
           ))}
-          <Link
-            href="/newsletter"
-            className="rounded border border-gold/60 bg-gold/5 px-3 py-1 text-xs font-medium text-navy/70 transition hover:bg-gold/10 shrink-0"
-          >
-            {t.nav.newsletter}
-          </Link>
         </nav>
 
-        {/* Right side */}
+        {/* Auth + switchers */}
         <div className="flex items-center gap-2 shrink-0">
           <LocaleSwitcher />
           <CurrencySwitcher />
-          {/* Mobile hamburger */}
-          <MobileMenu links={navLinks} newsletterLabel={t.nav.newsletter} />
+
+          {userId ? (
+            <Link
+              href="/account"
+              className="hidden sm:inline-flex items-center gap-1.5 border border-navy/20 px-3 py-1.5 text-xs text-navy/60 hover:border-navy hover:text-navy transition"
+            >
+              マイページ
+            </Link>
+          ) : (
+            <div className="hidden sm:flex items-center gap-2">
+              <Link
+                href="/login"
+                className="border border-navy/20 px-3 py-1.5 text-xs text-navy/60 hover:border-navy hover:text-navy transition"
+              >
+                ログイン
+              </Link>
+              <Link
+                href="/login"
+                className="border border-navy bg-navy px-3 py-1.5 text-xs font-semibold text-white hover:bg-navy/80 transition"
+              >
+                新規登録
+              </Link>
+            </div>
+          )}
+
+          {/* Mobile */}
+          <MobileMenu links={navLinks} newsletterLabel={t.nav.newsletter} userId={userId} />
         </div>
       </div>
     </header>
