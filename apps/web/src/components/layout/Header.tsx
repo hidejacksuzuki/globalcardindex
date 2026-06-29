@@ -3,9 +3,22 @@ import Image from 'next/image';
 import { getServerTranslations } from '@/i18n/server';
 import { LocaleSwitcher }   from './LocaleSwitcher';
 import { CurrencySwitcher } from './CurrencySwitcher';
+import { MobileMenu }       from './MobileMenu';
 
 export async function Header() {
   const t = getServerTranslations();
+
+  const navLinks = [
+    { href: '/games',       label: t.nav.games,       desktop: 'hidden md:inline' },
+    { href: '/daily',       label: t.nav.daily,       desktop: 'font-medium' },
+    { href: '/trending',    label: t.nav.trending,    desktop: 'hidden lg:inline' },
+    { href: '/indices',     label: t.nav.indices,     desktop: 'hidden lg:inline' },
+    { href: '/marketboard', label: t.nav.marketboard, desktop: 'hidden md:inline' },
+    { href: '/cards',       label: t.nav.cards,       desktop: '' },
+    { href: '/watchlist',   label: t.nav.watchlist,   desktop: 'hidden sm:inline' },
+    { href: '/portfolio',   label: t.nav.portfolio,   desktop: 'hidden sm:inline' },
+    { href: '/about',       label: t.nav.about,       desktop: 'hidden lg:inline text-navy/50' },
+  ];
 
   return (
     <header className="border-b border-navy/10 bg-white">
@@ -22,17 +35,17 @@ export async function Header() {
           />
         </Link>
 
-        {/* Main nav */}
+        {/* Desktop nav */}
         <nav className="flex items-center gap-5 text-sm text-navy/70 flex-1 justify-end flex-wrap">
-          <Link href="/games"       className="transition hover:text-navy hidden md:inline">{t.nav.games}</Link>
-          <Link href="/daily"       className="transition hover:text-navy font-medium">{t.nav.daily}</Link>
-          <Link href="/trending"    className="transition hover:text-navy hidden lg:inline">{t.nav.trending}</Link>
-          <Link href="/indices"     className="transition hover:text-navy hidden lg:inline">{t.nav.indices}</Link>
-          <Link href="/marketboard" className="transition hover:text-navy hidden md:inline">{t.nav.marketboard}</Link>
-          <Link href="/cards"       className="transition hover:text-navy">{t.nav.cards}</Link>
-          <Link href="/watchlist"   className="transition hover:text-navy hidden sm:inline">{t.nav.watchlist}</Link>
-          <Link href="/portfolio"   className="transition hover:text-navy hidden sm:inline">{t.nav.portfolio}</Link>
-          <Link href="/about"       className="transition hover:text-navy text-navy/50 hidden lg:inline">{t.nav.about}</Link>
+          {navLinks.map(({ href, label, desktop }) => (
+            <Link
+              key={href}
+              href={href}
+              className={`transition hover:text-navy ${desktop}`}
+            >
+              {label}
+            </Link>
+          ))}
           <Link
             href="/newsletter"
             className="rounded border border-gold/60 bg-gold/5 px-3 py-1 text-xs font-medium text-navy/70 transition hover:bg-gold/10 shrink-0"
@@ -41,10 +54,12 @@ export async function Header() {
           </Link>
         </nav>
 
-        {/* Locale + currency switchers */}
+        {/* Right side */}
         <div className="flex items-center gap-2 shrink-0">
           <LocaleSwitcher />
           <CurrencySwitcher />
+          {/* Mobile hamburger */}
+          <MobileMenu links={navLinks} newsletterLabel={t.nav.newsletter} />
         </div>
       </div>
     </header>

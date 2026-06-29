@@ -131,14 +131,6 @@ export default async function CardSlugPage({
 
         <div className="mt-4 flex items-center gap-2 flex-wrap">
           <WatchButton cardId={card.id} slug={card.slug ?? card.id} isWatched={watchedById} userId={userId ?? undefined} />
-          {userId && (
-            <AddToPortfolioButton
-              cardId={card.id}
-              cardName={card.name}
-              userId={userId}
-              initialItem={"portfolioCard" in portfolioStatus ? (portfolioStatus.portfolioCard ?? null) : null}
-            />
-          )}
         </div>
         <CardViewTracker slug={card.slug ?? card.id} />
 
@@ -190,6 +182,26 @@ export default async function CardSlugPage({
             )}
           </div>
         )}
+
+        {/* ── Portfolio CTA ───────────────────────── */}
+        <div className="mt-6 border-t border-navy/5 pt-6">
+          {userId ? (
+            <AddToPortfolioButton
+              cardId={card.id}
+              cardName={card.name}
+              userId={userId}
+              initialItem={"portfolioCard" in portfolioStatus ? (portfolioStatus.portfolioCard ?? null) : null}
+            />
+          ) : (
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-1.5 border border-navy/20 px-3 py-1.5 text-xs uppercase tracking-widest text-navy/50 hover:border-navy hover:text-navy transition"
+            >
+              <span className="text-base leading-none">+</span>
+              <span>ログインしてPortfolioに追加</span>
+            </Link>
+          )}
+        </div>
       </header>
 
       {/* Week 18: Per-card index panel */}
