@@ -156,29 +156,45 @@ export default async function CardSlugPage({
           <Stat label="観測件数" value={card.priceCount.toLocaleString()} />
         </dl>
 
-        {(card.minPrice !== null || card.maxPrice !== null) && card.currency && (
-          <div className="mt-6 flex gap-6 border-t border-navy/5 pt-6 text-sm">
-            {card.minPrice !== null && (
-              <div>
-                <span className="text-xs uppercase tracking-widest text-navy/40">Min</span>
-                <span className="ml-2 tabular-nums text-navy/60">
-                  {formatPrice(card.minPrice, card.currency)}
-                </span>
-              </div>
-            )}
-            {card.maxPrice !== null && (
-              <div>
-                <span className="text-xs uppercase tracking-widest text-navy/40">Max</span>
-                <span className="ml-2 tabular-nums text-navy/60">
-                  {formatPrice(card.maxPrice, card.currency)}
-                </span>
-              </div>
-            )}
-          </div>
-        )}
       </header>
 
-      {/* Week 18: Per-card index panel */}
+      {/* 推定相場 */}
+      {card.priceCount > 0 && card.currency && (
+        <section className="border border-navy/10 bg-white p-6">
+          <h2 className="text-xs uppercase tracking-widest text-navy/50 mb-4">推定相場</h2>
+          <dl className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+            <div>
+              <dt className="text-xs uppercase tracking-widest text-navy/40">最安値</dt>
+              <dd className="mt-1 text-lg tabular-nums text-navy">
+                {card.minPrice !== null ? formatPrice(card.minPrice, card.currency) : "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-widest text-navy/40">中央値</dt>
+              <dd className="mt-1 text-xl font-semibold tabular-nums text-navy">
+                {card.medianPrice !== null ? formatPrice(card.medianPrice, card.currency) : "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-widest text-navy/40">最高値</dt>
+              <dd className="mt-1 text-lg tabular-nums text-navy">
+                {card.maxPrice !== null ? formatPrice(card.maxPrice, card.currency) : "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-widest text-navy/40">サンプル数</dt>
+              <dd className="mt-1 text-lg tabular-nums text-navy/60">
+                {card.priceCount.toLocaleString()} 件
+              </dd>
+            </div>
+          </dl>
+          <p className="mt-4 text-[11px] text-navy/40 border-t border-navy/5 pt-3">
+            ※ 直近60件の信頼スコア上位データから算出。外れ値・古いデータを除外済み。
+          </p>
+        </section>
+      )}
+
+      {/* Card Index */}
       {showIndex && cardIndex && (
         <section className="border border-navy/10 bg-white p-6">
           <div className="flex items-center gap-3 mb-4">

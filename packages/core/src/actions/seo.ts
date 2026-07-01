@@ -193,6 +193,7 @@ export type CardSeoDetail = {
   change30d:   number | null;
   priceCount:  number;
   minPrice:    number | null;
+  medianPrice: number | null;
   maxPrice:    number | null;
 };
 
@@ -229,8 +230,15 @@ export async function getCardBySlug(slug: string): Promise<CardSeoDetail | null>
     ? ((latest.price - old30d.price) / old30d.price) * 100 : null;
 
   const prices = card.prices.map((p) => p.price);
-  const minPrice = prices.length > 0 ? Math.min(...prices) : null;
-  const maxPrice = prices.length > 0 ? Math.max(...prices) : null;
+  const minPrice    = prices.length > 0 ? Math.min(...prices) : null;
+  const maxPrice    = prices.length > 0 ? Math.max(...prices) : null;
+  const sorted      = [...prices].sort((a, b) => a - b);
+  const mid         = Math.floor(sorted.length / 2);
+  const medianPrice = sorted.length > 0
+    ? sorted.length % 2 === 1
+      ? sorted[mid]
+      : (sorted[mid - 1] + sorted[mid]) / 2
+    : null;
 
   return {
     id:          card.id,
@@ -246,6 +254,7 @@ export async function getCardBySlug(slug: string): Promise<CardSeoDetail | null>
     change30d,
     priceCount:  card.prices.length,
     minPrice,
+    medianPrice,
     maxPrice,
   };
 }
