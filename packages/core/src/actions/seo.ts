@@ -296,6 +296,97 @@ export async function getCardPriceHistory(
 }
 
 // ----------------------------------------------------------------
+// getCardSourceStats — ソース別相場
+// PriceSnapshot 優先、なければ Price テーブルから集計
+// ----------------------------------------------------------------
+
+export type CardSourceStat = {
+  source:      string;          // raw key: "mercari" | "yahuoku" | "ebay" …
+  currency:    string;
+  minPrice:    number | null;
+  medianPrice: number | null;
+  avgPrice:    number | null;
+  maxPrice:    number | null;
+  sampleCount: number;
+  capturedAt:  string;          // ISO 8601
+};
+
+export async function getCardSourceStats(cardId: string): Promise<CardSourceStat[]> {
+  // 1. PriceSnapshot 優先（承認フロー経由で既に集計済み）
+  const snapshots = await prisma.priceSnapshot.findMany({
+    where:   { cardId },
+    orderBy: { capturedAt: "desc" },
+  });
+
+  if (snapshots.length > 0) {
+    const map = new Map<string, typeof snapshots[0]>();
+    for (const s of snapshots) {
+      if (!map.has(s.source)) map.set(s.source, s);
+    }
+    return [...map.values()].map((s) => ({
+      source:      s.source,
+      currency:    "JPY",
+      minPrice:    s.minPrice,
+      medianPrice: s.medianPrice,
+      avgPrice:    s.avgPrice,
+      maxPrice:    s.maxPrice,
+      sampleCount: s.sampleCount,
+      capturedAt:  s.capturedAt.toISOString(),
+    }));
+  }
+
+  // 2. フォールバック: Price テーブルから sourceName ごとに集計
+  const rows = await prisma.price.findMany({
+    where: {
+      cardId,
+      isOutlier:  false,
+      isStale:    false,
+      trustScore: { gte: TRUST_THRESHOLD },
+    },
+    orderBy: { capturedAt: "desc" },
+    select: {
+      price:      true,
+      currency:   true,
+      sourceName: true,
+      capturedAt: true,
+    },
+    take: 500,
+  });
+
+  if (rows.length === 0) return [];
+
+  // sourceName でグループ化
+  const groups = new Map<string, { prices: number[]; currency: string; latest: Date }>();
+  for (const r of rows) {
+    const key   = r.sourceName;
+    const entry = groups.get(key) ?? { prices: [], currency: r.currency, latest: r.capturedAt };
+    entry.prices.push(r.price);
+    if (r.capturedAt > entry.latest) entry.latest = r.capturedAt;
+    groups.set(key, entry);
+  }
+
+  return [...groups.entries()]
+    .map(([source, { prices: ps, currency, latest }]) => {
+      const sorted = [...ps].sort((a, b) => a - b);
+      const mid    = Math.floor(sorted.length / 2);
+      const median = sorted.length % 2 === 1
+        ? sorted[mid]
+        : (sorted[mid - 1] + sorted[mid]) / 2;
+      return {
+        source,
+        currency,
+        minPrice:    sorted[0],
+        medianPrice: median,
+        avgPrice:    ps.reduce((a, b) => a + b, 0) / ps.length,
+        maxPrice:    sorted[sorted.length - 1],
+        sampleCount: ps.length,
+        capturedAt:  latest.toISOString(),
+      };
+    })
+    .sort((a, b) => b.sampleCount - a.sampleCount);
+}
+
+// ----------------------------------------------------------------
 // getAllSetNames — sitemap 用
 // ----------------------------------------------------------------
 
