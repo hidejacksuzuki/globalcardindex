@@ -1,7 +1,7 @@
 import type { Metadata }        from "next";
 import { notFound }              from "next/navigation";
 import Link                      from "next/link";
-import { getCardBySlug }         from "@gci/core";
+import { getCardBySlug, getCardPriceHistory } from "@gci/core";
 import { getGame }               from "@gci/core";
 import { WatchButton }           from "@/components/watchlist/WatchButton";
 import { isWatching, isUserWatching } from "@gci/core";
@@ -11,6 +11,7 @@ import { prisma }                from "@gci/db";
 import { CardViewTracker }       from "@/components/analytics/CardViewTracker";
 import { CardRequestButton }     from "@/components/cards/CardRequestButton";
 import { AddToPortfolioButton }  from "@/components/portfolio/AddToPortfolioButton";
+import { PriceChart }            from "@/components/cards/PriceChart";
 import { isInPortfolio }         from "@gci/core";
 import { auth }                  from "@/auth";
 
@@ -78,19 +79,22 @@ export default async function CardSlugPage({
     ? await isInPortfolio(userId, card.id).catch(() => ({ inPortfolio: false as const }))
     : { inPortfolio: false as const };
 
-  // Week 18: per-card index value
-  const cardIndex = await prisma.indexValue.findFirst({
-    where:   { cardId: card.id },
-    orderBy: { calculatedAt: "desc" },
-    select: {
-      value:        true,
-      changeRate:   true,
-      sampleCount:  true,
-      outlierCount: true,
-      confidence:   true,
-      calculatedAt: true,
-    },
-  }).catch(() => null);
+  // 価格推移チャート用データ + per-card index value（並列取得）
+  const [priceHistory, cardIndex] = await Promise.all([
+    getCardPriceHistory(card.id, 90).catch(() => []),
+    prisma.indexValue.findFirst({
+      where:   { cardId: card.id },
+      orderBy: { calculatedAt: "desc" },
+      select: {
+        value:        true,
+        changeRate:   true,
+        sampleCount:  true,
+        outlierCount: true,
+        confidence:   true,
+        calculatedAt: true,
+      },
+    }).catch(() => null),
+  ]);
 
   // Show index only when we have sufficient data
   const showIndex     = cardIndex !== null && (cardIndex.sampleCount ?? 0) >= MIN_SAMPLES_DISPLAY;
@@ -219,6 +223,22 @@ export default async function CardSlugPage({
         </section>
       )}
 
+      {/* 価格推移チャート */}
+      {priceHistory.length >= 2 && (
+        <section className="border border-navy/10 bg-white p-6">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-xs uppercase tracking-widest text-navy/50">価格推移</h2>
+            <Link
+              href={`/cards/${card.id}/history`}
+              className="text-[11px] text-navy/40 hover:text-navy transition underline underline-offset-2"
+            >
+              全履歴を見る →
+            </Link>
+          </div>
+          <PriceChart points={priceHistory} />
+        </section>
+      )}
+
       {/* Card Index — 補助情報 */}
       {showIndex && cardIndex && (
         <section className="border border-navy/10 bg-white p-6">
@@ -275,15 +295,6 @@ export default async function CardSlugPage({
       )}
 
       {/* 内部リンク: 価格履歴ページへ */}
-      <div className="text-right text-xs">
-        <Link
-          href={`/cards/${card.id}/history`}
-          className="text-navy/40 hover:text-navy transition underline underline-offset-2"
-        >
-          価格履歴グラフを見る →
-        </Link>
-      </div>
-
       {/* Retention CTA */}
       <div className="grid gap-3 sm:grid-cols-2">
         {/* Newsletter nudge */}

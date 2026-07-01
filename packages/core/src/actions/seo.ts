@@ -260,6 +260,42 @@ export async function getCardBySlug(slug: string): Promise<CardSeoDetail | null>
 }
 
 // ----------------------------------------------------------------
+// getCardPriceHistory — 価格推移チャート用 (90日分を一括取得)
+// ----------------------------------------------------------------
+
+export type PricePoint = {
+  date:     string;   // ISO 8601
+  price:    number;
+  currency: string;
+};
+
+export async function getCardPriceHistory(
+  cardId: string,
+  days:   number = 90,
+): Promise<PricePoint[]> {
+  const since = new Date(Date.now() - days * 86_400_000);
+
+  const rows = await prisma.price.findMany({
+    where: {
+      cardId,
+      observedAt: { gte: since },
+      isOutlier:  false,
+      isStale:    false,
+      trustScore: { gte: TRUST_THRESHOLD },
+    },
+    orderBy: { observedAt: "asc" },
+    select:  { price: true, currency: true, observedAt: true },
+    take:    500,
+  });
+
+  return rows.map((r) => ({
+    date:     r.observedAt.toISOString(),
+    price:    r.price,
+    currency: r.currency,
+  }));
+}
+
+// ----------------------------------------------------------------
 // getAllSetNames — sitemap 用
 // ----------------------------------------------------------------
 
