@@ -237,7 +237,14 @@ export async function sendMagicLinkEmail(params: {
     text,
   };
 
-  await sendEmail(payload);
+  // Auth.js は sendVerificationRequest が throw しない限り「送信成功」とみなし
+  // /login/verify（メールを確認してください画面）へ進めてしまう。
+  // 失敗を握りつぶすと「メールが来ない」症状の原因が闇に消えるため、必ず throw する。
+  const result = await sendEmail(payload);
+  if (result.error) {
+    console.error(`[sendMagicLinkEmail] failed for ${to}: ${result.error}`);
+    throw new Error(`Magic link email failed: ${result.error}`);
+  }
 }
 
 // ── 確認メール（ダブルオプトイン） ──────────────────────────────
