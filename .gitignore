@@ -13,3 +13,5 @@ next-env.d.ts
 # Prisma native binary symlinks (local-only, generated at install time)
 apps/web/.prisma/
 apps/data/.prisma/
+.env*
+*.tsbuildinfo
