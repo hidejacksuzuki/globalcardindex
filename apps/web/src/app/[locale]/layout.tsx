@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound }        from 'next/navigation';
 import { Header }          from '@/components/layout/Header';
 import { Disclaimer }      from '@/components/common/Disclaimer';
+import { BetaFeedbackWidget } from '@/components/feedback/BetaFeedbackWidget';
 import { PlausibleAnalytics } from '@/components/analytics/PlausibleAnalytics';
 import { I18nProvider }    from '@/i18n/context';
 import { CurrencyProvider } from '@/lib/currency';
@@ -99,6 +100,8 @@ export default function LocaleLayout({
             <Disclaimer variant="footer" />
           </div>
         </footer>
+
+        <BetaFeedbackWidget />
       </CurrencyProvider>
     </I18nProvider>
   );

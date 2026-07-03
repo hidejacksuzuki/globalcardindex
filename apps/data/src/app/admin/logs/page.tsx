@@ -68,6 +68,32 @@ async function getCronData() {
   return { summaries, recentLogs };
 }
 
+// ── Recalc detail: failure rate / stale card count / partial failures ─────────
+
+async function getRecalcHealth() {
+  const recentRecalcLogs = await prisma.recalcLog.findMany({
+    orderBy: { createdAt: "desc" },
+    take:    20,
+    select:  {
+      id: true, status: true, durationMs: true, createdAt: true,
+      cardsProcessed: true, cardsUpdated: true, cardsSkipped: true, cardsFailed: true,
+      failedBreakdown: true, staleFlagged: true, errorMessage: true,
+    },
+  });
+
+  const total        = recentRecalcLogs.length;
+  const errorRuns     = recentRecalcLogs.filter((r) => r.status === "error").length;
+  const failureRate   = total > 0 ? (errorRuns / total) * 100 : null;
+  const avgDurationMs = total > 0
+    ? recentRecalcLogs.reduce((s, r) => s + (r.durationMs ?? 0), 0) / total
+    : null;
+  const latest        = recentRecalcLogs[0] ?? null;
+  const staleCardCount = latest?.staleFlagged ?? null;
+  const totalCardsFailedRecent = recentRecalcLogs.reduce((s, r) => s + (r.cardsFailed ?? 0), 0);
+
+  return { recentRecalcLogs, total, errorRuns, failureRate, avgDurationMs, staleCardCount, totalCardsFailedRecent };
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function fmtAge(min: number | null): string {
@@ -142,6 +168,7 @@ function StatusDot({ status }: { status: string }) {
 
 export default async function AdminLogsPage() {
   const { summaries, recentLogs } = await getCronData();
+  const recalcHealth              = await getRecalcHealth();
 
   const errorCount = summaries.filter((s) => s.health === "error").length;
   const staleCount = summaries.filter((s) => s.health === "stale").length;
@@ -174,6 +201,101 @@ export default async function AdminLogsPage() {
             <div className={`text-2xl font-bold ${errorCount > 0 ? "text-red-700" : "text-slate-400"}`}>{errorCount}</div>
             <div className={`mt-0.5 text-xs ${errorCount > 0 ? "text-red-600" : "text-slate-400"}`}>Errors</div>
           </div>
+        </div>
+      </section>
+
+      {/* ── Recalc detail: failure rate / stale cards / partial failures ── */}
+      <section>
+        <h2 className="mb-4 text-xs uppercase tracking-widest text-navy/40">
+          Recalc Stability（直近{recalcHealth.total}回）
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          <div className={`rounded-lg border p-4 text-center ${
+            recalcHealth.failureRate !== null && recalcHealth.failureRate > 0
+              ? "border-red-200 bg-red-50" : "border-slate-200 bg-slate-50"
+          }`}>
+            <div className={`text-2xl font-bold ${
+              recalcHealth.failureRate !== null && recalcHealth.failureRate > 0 ? "text-red-700" : "text-slate-400"
+            }`}>
+              {recalcHealth.failureRate !== null ? `${recalcHealth.failureRate.toFixed(1)}%` : "—"}
+            </div>
+            <div className="mt-0.5 text-xs text-navy/40">Failure Rate</div>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center">
+            <div className="text-2xl font-bold text-slate-600">{fmtDuration(recalcHealth.avgDurationMs ?? null)}</div>
+            <div className="mt-0.5 text-xs text-navy/40">Avg Duration</div>
+          </div>
+          <div className={`rounded-lg border p-4 text-center ${
+            (recalcHealth.staleCardCount ?? 0) > 0 ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-slate-50"
+          }`}>
+            <div className={`text-2xl font-bold ${(recalcHealth.staleCardCount ?? 0) > 0 ? "text-amber-700" : "text-slate-400"}`}>
+              {recalcHealth.staleCardCount ?? "—"}
+            </div>
+            <div className="mt-0.5 text-xs text-navy/40">Stale Cards（最新）</div>
+          </div>
+          <div className={`rounded-lg border p-4 text-center ${
+            recalcHealth.totalCardsFailedRecent > 0 ? "border-red-200 bg-red-50" : "border-slate-200 bg-slate-50"
+          }`}>
+            <div className={`text-2xl font-bold ${recalcHealth.totalCardsFailedRecent > 0 ? "text-red-700" : "text-slate-400"}`}>
+              {recalcHealth.totalCardsFailedRecent}
+            </div>
+            <div className="mt-0.5 text-xs text-navy/40">Card 部分失敗（累計）</div>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto rounded-lg border border-navy/10 bg-white">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-navy/10 bg-slate-50 text-left text-xs text-navy/40">
+                <th className="px-4 py-3 font-medium">Time (JST)</th>
+                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Duration</th>
+                <th className="px-4 py-3 font-medium">Processed</th>
+                <th className="px-4 py-3 font-medium">Updated</th>
+                <th className="px-4 py-3 font-medium">Skipped</th>
+                <th className="px-4 py-3 font-medium">Failed</th>
+                <th className="px-4 py-3 font-medium">Stale</th>
+                <th className="px-4 py-3 font-medium">Error</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recalcHealth.recentRecalcLogs.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-4 py-8 text-center text-sm text-navy/30">
+                    まだ recalc ログがありません。
+                  </td>
+                </tr>
+              ) : (
+                recalcHealth.recentRecalcLogs.map((log, i) => (
+                  <tr
+                    key={log.id}
+                    className={`border-b border-navy/5 text-xs ${i % 2 === 0 ? "bg-white" : "bg-slate-50/40"} ${
+                      log.status === "error" || (log.cardsFailed ?? 0) > 0 ? "bg-red-50/20" : ""
+                    }`}
+                  >
+                    <td className="px-4 py-2.5 text-navy/60 whitespace-nowrap">{fmtDate(log.createdAt)}</td>
+                    <td className="px-4 py-2.5">
+                      <span className="flex items-center gap-1">
+                        <StatusDot status={log.status} />
+                        <span className={log.status === "error" ? "text-red-700 font-medium" : "text-navy/60"}>
+                          {log.status}
+                        </span>
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 text-navy/60">{fmtDuration(log.durationMs)}</td>
+                    <td className="px-4 py-2.5 text-navy/60 tabular-nums">{log.cardsProcessed ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-navy/60 tabular-nums">{log.cardsUpdated ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-navy/60 tabular-nums">{log.cardsSkipped ?? "—"}</td>
+                    <td className={`px-4 py-2.5 tabular-nums ${(log.cardsFailed ?? 0) > 0 ? "text-red-600 font-semibold" : "text-navy/60"}`}>
+                      {log.cardsFailed ?? "—"}
+                    </td>
+                    <td className="px-4 py-2.5 text-navy/60 tabular-nums">{log.staleFlagged ?? "—"}</td>
+                    <td className="px-4 py-2.5 max-w-xs truncate text-red-600">{log.errorMessage ?? ""}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </section>
 

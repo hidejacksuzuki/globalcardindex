@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { recalcIndex, type RecalcResult, authorizeCron, writeCronLog } from "@gci/core";
 import type { ApiResponse } from "@gci/core";
 
-export const dynamic = "force-dynamic";
+export const dynamic    = "force-dynamic";
+// カード数増加時の timeout 対策（Vercel Pro プラン上限に合わせる）
+export const maxDuration = 300;
 
 /**
  * Cron entry point for `recalcIndex`.
@@ -38,6 +40,7 @@ async function handle(
             cardsUpdated:  result.cards.updated,
             cardsSkipped:  result.cards.skipped,
             cardsNoData:   result.cards.noData,
+            cardsFailed:   result.cards.failed,
           }
         : { reason: result.reason },
     });

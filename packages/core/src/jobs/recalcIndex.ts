@@ -25,7 +25,7 @@ export type RecalcResult =
 // ----------------------------------------------------------------
 // Per-card breakdown types
 // ----------------------------------------------------------------
-export type CardRecalcStatus = "updated" | "skipped" | "no_data";
+export type CardRecalcStatus = "updated" | "skipped" | "no_data" | "failed";
 
 export type CardRecalcEntry = {
   cardId:       string;
@@ -37,6 +37,7 @@ export type CardRecalcEntry = {
   value:        number | null;
   changeRate:   number | null;
   confidence:   string | null;
+  error?:       string;
 };
 
 export type CardRecalcSummary = {
@@ -44,8 +45,42 @@ export type CardRecalcSummary = {
   updated:   number;
   skipped:   number;
   noData:    number;
+  failed:    number;
   entries:   CardRecalcEntry[];
 };
+
+// ----------------------------------------------------------------
+// Concurrency + retry helpers
+// ----------------------------------------------------------------
+
+const CARD_CONCURRENCY  = 5; // 同時実行数（timeout対策のためのバッチ処理）
+const CARD_MAX_RETRIES  = 1; // 1回まで自動リトライ
+
+async function withRetry<T>(fn: () => Promise<T>, retries: number): Promise<T> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr;
+}
+
+async function runInBatches<T, R>(
+  items:       T[],
+  concurrency: number,
+  fn:          (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = [];
+  for (let i = 0; i < items.length; i += concurrency) {
+    const batch = items.slice(i, i + concurrency);
+    const batchResults = await Promise.all(batch.map(fn));
+    results.push(...batchResults);
+  }
+  return results;
+}
 
 // ----------------------------------------------------------------
 // recalcCardIndex — recalculate index for a single card
@@ -137,79 +172,100 @@ export async function recalcIndex(
       orderBy: { name: "asc" },
     });
 
-    const cardEntries: CardRecalcEntry[] = [];
+    // 1カードの失敗が全体を止めないよう、各カードを独立した try/catch + リトライで処理。
+    // バッチ処理 (CARD_CONCURRENCY 同時実行) で timeout リスクを軽減。
+    async function processCard(card: { id: string; name: string; condition: string }): Promise<CardRecalcEntry> {
+      try {
+        return await withRetry(async () => {
+          const cardResult = await calculateCardIndex(card.id);
 
-    for (const card of cards) {
-      const cardResult = await calculateCardIndex(card.id);
+          if (!cardResult) {
+            return {
+              cardId:       card.id,
+              name:         card.name,
+              condition:    card.condition,
+              status:       "no_data" as const,
+              sampleCount:  0,
+              outlierCount: 0,
+              value:        null,
+              changeRate:   null,
+              confidence:   null,
+            };
+          }
 
-      if (!cardResult) {
-        cardEntries.push({
+          // Check if the value meaningfully changed before writing a new row
+          const previous = await prisma.indexValue.findFirst({
+            where:   { cardId: card.id },
+            orderBy: { calculatedAt: "desc" },
+            select:  { value: true },
+          });
+
+          const changed =
+            !previous ||
+            Math.abs((cardResult.value - previous.value) / Math.max(previous.value, 1)) > 0.001;
+
+          if (changed) {
+            await prisma.indexValue.create({
+              data: {
+                cardId:       card.id,
+                value:        cardResult.value,
+                changeRate:   cardResult.changeRate,
+                sampleCount:  cardResult.sampleCount,
+                outlierCount: cardResult.outlierCount,
+                confidence:   cardResult.confidence,
+              },
+            });
+            return {
+              cardId:       card.id,
+              name:         card.name,
+              condition:    card.condition,
+              status:       "updated" as const,
+              sampleCount:  cardResult.sampleCount,
+              outlierCount: cardResult.outlierCount,
+              value:        cardResult.value,
+              changeRate:   cardResult.changeRate,
+              confidence:   cardResult.confidence,
+            };
+          }
+
+          return {
+            cardId:       card.id,
+            name:         card.name,
+            condition:    card.condition,
+            status:       "skipped" as const,
+            sampleCount:  cardResult.sampleCount,
+            outlierCount: cardResult.outlierCount,
+            value:        cardResult.value,
+            changeRate:   cardResult.changeRate,
+            confidence:   cardResult.confidence,
+          };
+        }, CARD_MAX_RETRIES);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`[recalcIndex] card ${card.id} (${card.name}) failed after retries:`, message);
+        return {
           cardId:       card.id,
           name:         card.name,
           condition:    card.condition,
-          status:       "no_data",
+          status:       "failed",
           sampleCount:  0,
           outlierCount: 0,
           value:        null,
           changeRate:   null,
           confidence:   null,
-        });
-        continue;
-      }
-
-      // Check if the value meaningfully changed before writing a new row
-      const previous = await prisma.indexValue.findFirst({
-        where:   { cardId: card.id },
-        orderBy: { calculatedAt: "desc" },
-        select:  { value: true },
-      });
-
-      const changed =
-        !previous ||
-        Math.abs((cardResult.value - previous.value) / Math.max(previous.value, 1)) > 0.001;
-
-      if (changed) {
-        await prisma.indexValue.create({
-          data: {
-            cardId:       card.id,
-            value:        cardResult.value,
-            changeRate:   cardResult.changeRate,
-            sampleCount:  cardResult.sampleCount,
-            outlierCount: cardResult.outlierCount,
-            confidence:   cardResult.confidence,
-          },
-        });
-        cardEntries.push({
-          cardId:       card.id,
-          name:         card.name,
-          condition:    card.condition,
-          status:       "updated",
-          sampleCount:  cardResult.sampleCount,
-          outlierCount: cardResult.outlierCount,
-          value:        cardResult.value,
-          changeRate:   cardResult.changeRate,
-          confidence:   cardResult.confidence,
-        });
-      } else {
-        cardEntries.push({
-          cardId:       card.id,
-          name:         card.name,
-          condition:    card.condition,
-          status:       "skipped",
-          sampleCount:  cardResult.sampleCount,
-          outlierCount: cardResult.outlierCount,
-          value:        cardResult.value,
-          changeRate:   cardResult.changeRate,
-          confidence:   cardResult.confidence,
-        });
+          error:        message,
+        };
       }
     }
+
+    const cardEntries = await runInBatches(cards, CARD_CONCURRENCY, processCard);
 
     const cardSummary: CardRecalcSummary = {
       processed: cardEntries.length,
       updated:   cardEntries.filter((e) => e.status === "updated").length,
       skipped:   cardEntries.filter((e) => e.status === "skipped").length,
       noData:    cardEntries.filter((e) => e.status === "no_data").length,
+      failed:    cardEntries.filter((e) => e.status === "failed").length,
       entries:   cardEntries,
     };
 
@@ -241,6 +297,7 @@ export async function recalcIndex(
         cardsProcessed:  cardSummary.processed,
         cardsUpdated:    cardSummary.updated,
         cardsSkipped:    cardSummary.skipped,
+        cardsFailed:     cardSummary.failed,
         // Store only top-level entry data (truncate to 100 for log size)
         cardBreakdown:   cardSummary.entries.slice(0, 100).map((e) => ({
           cardId:      e.cardId,
@@ -250,7 +307,17 @@ export async function recalcIndex(
           sampleCount: e.sampleCount,
           value:       e.value,
           confidence:  e.confidence,
+          ...(e.error ? { error: e.error } : {}),
         })),
+        // 失敗カードのみ抜粋（デバッグ用途、最大30件）
+        ...(cardSummary.failed > 0
+          ? {
+              failedBreakdown: cardSummary.entries
+                .filter((e) => e.status === "failed")
+                .slice(0, 30)
+                .map((e) => ({ cardId: e.cardId, name: e.name, error: e.error })),
+            }
+          : {}),
       },
     });
 

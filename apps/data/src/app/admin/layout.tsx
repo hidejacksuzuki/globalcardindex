@@ -23,6 +23,7 @@ const NAV_ITEMS = [
   { href: "/admin/ebay-aliases",   label: "eBay Alias" },
   { href: "/admin/collector/ebay", label: "eBay Collect" },
   { href: "/admin/portfolio",      label: "Portfolio" },
+  { href: "/admin/feedback",       label: "Feedback" },
 ];
 
 export default function AdminLayout({
