@@ -105,7 +105,12 @@ check_page "Newsletter signup"        "$BASE_URL/newsletter"
 check_page "Terms"                    "$BASE_URL/terms"
 check_page "About"                    "$BASE_URL/about"
 check_page "Beta invite"              "$BASE_URL/beta"
-check_page "Login page (→ /ja/login locale redirect)" "$BASE_URL/login" "307"
+# /login は locale cookie の有無で 200（rewrite）にも 307（redirect）にもなる
+login_status=$(http_status "$BASE_URL/login")
+case "$login_status" in
+  200|307) pass "Login page ($login_status — locale処理により両方正)" ;;
+  *)       fail "Login page — expected 200/307, got $login_status" ;;
+esac
 check_page "Verify page"              "$BASE_URL/login/verify"
 check_page "Watchlist"                "$BASE_URL/watchlist"
 
