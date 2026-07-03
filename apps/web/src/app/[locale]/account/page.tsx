@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 
 export default async function AccountPage() {
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) redirect("/login?callbackUrl=/account");
 
   const userId = session.user.id;
   const email  = session.user.email ?? "";

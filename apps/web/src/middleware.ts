@@ -13,7 +13,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/auth';
 import { locales, defaultLocale, isValidLocale, type Locale } from '@/i18n/config';
 import { LOCALE_COOKIE } from '@/i18n/config';
 
@@ -23,6 +22,22 @@ const BYPASS_PREFIXES = ['/api/', '/_next/', '/favicon', '/robots', '/sitemap', 
 
 function shouldBypass(pathname: string): boolean {
   return BYPASS_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
+/**
+ * セッションクッキーの存在チェック（middleware 用の軽量ガード）。
+ *
+ * ここで auth() を呼んではいけない: database セッション戦略では auth() が
+ * Prisma で Session テーブルを引くが、Edge middleware から Prisma は使えず
+ * 常に null になる。その結果 /login（Node で auth() 成功）との間で
+ * 無限リダイレクトループが発生する（2026-07-03 本番で実際に発生）。
+ * クッキーの真正性検証は各ページ側の auth()（Node ランタイム）が行う。
+ */
+function hasSessionCookie(req: NextRequest): boolean {
+  return Boolean(
+    req.cookies.get('__Secure-authjs.session-token')?.value ??
+    req.cookies.get('authjs.session-token')?.value,
+  );
 }
 
 function getLocaleFromPath(pathname: string): { locale: Locale; rest: string } | null {
@@ -75,10 +90,10 @@ export async function middleware(req: NextRequest) {
   }
 
   // 2. Auth guard — check effective (un-prefixed) path
+  //    クッキー存在のみの軽量チェック。真の検証は各ページの auth() が行う。
   const effectivePath = fromPath ? fromPath.rest : pathname;
   if (['/account'].some((p) => effectivePath.startsWith(p))) {
-    const session = await auth();
-    if (!session) {
+    if (!hasSessionCookie(req)) {
       const prefix   = locale === defaultLocale ? '' : `/${locale}`;
       const loginUrl = new URL(`${prefix}/login`, req.url);
       loginUrl.searchParams.set('callbackUrl', pathname);
