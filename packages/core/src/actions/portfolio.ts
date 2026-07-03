@@ -4,6 +4,8 @@ import { prisma } from "@gci/db";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+export type PortfolioGrade = "RAW" | "PSA10" | "PSA_OTHER" | "OTHER_GRADED";
+
 export type PortfolioItem = {
   id:                 string;
   cardId:             string;
@@ -16,6 +18,7 @@ export type PortfolioItem = {
   quantity:           number;
   avgBuyPrice:        number | null;
   memo:               string | null;
+  grade:              PortfolioGrade;
   currentPrice:       number | null;
   currency:           string | null;
   evaluatedValue:     number | null;
@@ -41,6 +44,7 @@ export type PortfolioStatus = {
     quantity:     number;
     avgBuyPrice:  number | null;
     memo:         string | null;
+    grade:        PortfolioGrade;
   };
 };
 
@@ -91,6 +95,7 @@ export async function getPortfolio(userId: string): Promise<PortfolioItem[]> {
       quantity:          row.quantity,
       avgBuyPrice:       row.avgBuyPrice,
       memo:              row.memo,
+      grade:             (row.grade as PortfolioGrade) ?? "RAW",
       currentPrice,
       currency,
       evaluatedValue,
@@ -122,36 +127,40 @@ export async function getPortfolioSummary(userId: string): Promise<PortfolioSumm
 export async function isInPortfolio(userId: string, cardId: string): Promise<PortfolioStatus> {
   const row = await prisma.portfolioCard.findUnique({
     where:  { userId_cardId: { userId, cardId } },
-    select: { id: true, quantity: true, avgBuyPrice: true, memo: true },
+    select: { id: true, quantity: true, avgBuyPrice: true, memo: true, grade: true },
   });
   if (!row) return { inPortfolio: false };
-  return { inPortfolio: true, portfolioCard: row };
+  return {
+    inPortfolio:  true,
+    portfolioCard: { ...row, grade: (row.grade as PortfolioGrade) ?? "RAW" },
+  };
 }
 
 // ── Mutations ─────────────────────────────────────────────────────────────────
 
 export async function addToPortfolio(
   userId: string,
-  data: { cardId: string; quantity: number; avgBuyPrice?: number | null; memo?: string | null },
+  data: { cardId: string; quantity: number; avgBuyPrice?: number | null; memo?: string | null; grade?: PortfolioGrade | null },
 ) {
   return prisma.portfolioCard.upsert({
     where:  { userId_cardId: { userId, cardId: data.cardId } },
-    update: { quantity: data.quantity, avgBuyPrice: data.avgBuyPrice ?? null, memo: data.memo ?? null },
-    create: { userId, cardId: data.cardId, quantity: data.quantity, avgBuyPrice: data.avgBuyPrice ?? null, memo: data.memo ?? null },
+    update: { quantity: data.quantity, avgBuyPrice: data.avgBuyPrice ?? null, memo: data.memo ?? null, grade: data.grade ?? "RAW" },
+    create: { userId, cardId: data.cardId, quantity: data.quantity, avgBuyPrice: data.avgBuyPrice ?? null, memo: data.memo ?? null, grade: data.grade ?? "RAW" },
   });
 }
 
 export async function updatePortfolio(
   userId: string,
   id: string,
-  data: { quantity?: number; avgBuyPrice?: number | null; memo?: string | null },
+  data: { quantity?: number; avgBuyPrice?: number | null; memo?: string | null; grade?: PortfolioGrade | null },
 ) {
   return prisma.portfolioCard.update({
     where: { id, userId },
     data:  {
-      ...(data.quantity     !== undefined ? { quantity:     data.quantity }     : {}),
-      ...(data.avgBuyPrice  !== undefined ? { avgBuyPrice:  data.avgBuyPrice }  : {}),
-      ...(data.memo         !== undefined ? { memo:         data.memo }         : {}),
+      ...(data.quantity     !== undefined ? { quantity:     data.quantity }        : {}),
+      ...(data.avgBuyPrice  !== undefined ? { avgBuyPrice:  data.avgBuyPrice }     : {}),
+      ...(data.memo         !== undefined ? { memo:         data.memo }            : {}),
+      ...(data.grade        !== undefined ? { grade:        data.grade ?? "RAW" }  : {}),
     },
   });
 }

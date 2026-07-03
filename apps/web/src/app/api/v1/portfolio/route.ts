@@ -24,15 +24,20 @@ export async function POST(req: NextRequest) {
   if (!userId) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
 
   try {
-    const body = await req.json() as { cardId?: string; quantity?: number; avgBuyPrice?: number | null; memo?: string | null };
+    const body = await req.json() as { cardId?: string; quantity?: number; avgBuyPrice?: number | null; memo?: string | null; grade?: string | null };
     if (!body.cardId) return NextResponse.json({ ok: false, error: "cardId required" }, { status: 400 });
 
+    const VALID_GRADES = ["RAW", "PSA10", "PSA_OTHER", "OTHER_GRADED"] as const;
+    const grade = VALID_GRADES.includes(body.grade as typeof VALID_GRADES[number])
+      ? (body.grade as typeof VALID_GRADES[number])
+      : "RAW";
     const quantity = Math.max(1, Math.floor(body.quantity ?? 1));
     const item = await addToPortfolio(userId, {
       cardId:      body.cardId,
       quantity,
       avgBuyPrice: body.avgBuyPrice ?? null,
       memo:        body.memo ?? null,
+      grade,
     });
     return NextResponse.json({ ok: true, item });
   } catch (e) {

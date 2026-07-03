@@ -172,13 +172,17 @@ model RecalcLog {
   staleUnflagged Int?
 
   // Week 18: per-card recalc summary (JSON array of per-card stats)
-  // [{ cardId, name, condition, status: "updated"|"skipped"|"no_data", sampleCount, outlierCount, value }]
+  // [{ cardId, name, condition, status: "updated"|"skipped"|"no_data"|"failed", sampleCount, outlierCount, value }]
   cardBreakdown  Json?
 
   // Week 18: aggregate per-card stats
   cardsProcessed Int?
   cardsUpdated   Int?
   cardsSkipped   Int?
+
+  // Beta polish: 1カード単位の失敗を全体停止させない設計。失敗件数と抜粋を記録。
+  cardsFailed      Int?
+  failedBreakdown  Json?  // [{ cardId, name, error }] — 最大30件
 
   // error 時
   errorMessage String?
@@ -809,6 +813,7 @@ model PortfolioCard {
   quantity    Int      @default(1)
   avgBuyPrice Float?   // 取得単価（円）。未入力可
   memo        String?
+  grade       String   @default("RAW") // RAW | PSA10 | PSA_OTHER | OTHER_GRADED
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -817,4 +822,26 @@ model PortfolioCard {
   @@index([userId])
   @@index([cardId])
   @@index([userId, createdAt])
+}
+
+// ============================================================
+// BetaFeedback — β公開時のフィードバック収集
+// userId は参照のみ（外部キー制約なし）。User 削除時もフィードバックは保持する。
+// ============================================================
+model BetaFeedback {
+  id          String   @id @default(cuid())
+
+  userId      String?  // ログイン中の送信のみ設定。個人情報は保存しない。
+  type        String   // "bug" | "request_card" | "feature_request" | "other"
+  message     String
+  cardName    String?
+  currentPath String?
+
+  status      String   @default("open") // "open" | "reviewed" | "closed"
+
+  createdAt   DateTime @default(now())
+
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
 }

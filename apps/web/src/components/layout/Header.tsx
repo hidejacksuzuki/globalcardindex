@@ -15,7 +15,7 @@ export async function Header() {
     { href: '/cards',       label: 'カード検索',   desktop: '' },
     { href: '/marketboard', label: 'マーケット',   desktop: 'hidden md:inline' },
     { href: '/trending',    label: 'ランキング',   desktop: 'hidden md:inline' },
-    { href: '/portfolio',   label: 'コレクション', desktop: 'hidden sm:inline' },
+    { href: '/portfolio',   label: 'Portfolio',    desktop: 'hidden sm:inline' },
     { href: '/indices',     label: 'インサイト',   desktop: 'hidden lg:inline' },
     { href: '/daily',       label: 'ニュース',     desktop: 'hidden lg:inline' },
   ];

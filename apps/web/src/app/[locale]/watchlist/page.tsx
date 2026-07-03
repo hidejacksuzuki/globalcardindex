@@ -7,10 +7,12 @@ import {
   formatPrice,
   formatDateTime,
 } from '@gci/core';
-import { WatchButton }    from '@/components/watchlist/WatchButton';
-import { auth }           from '@/auth';
-import { getTranslations } from '@/i18n';
-import type { Locale }    from '@/i18n/config';
+import { WatchButton }          from '@/components/watchlist/WatchButton';
+import { QuickPortfolioButton } from '@/components/portfolio/QuickPortfolioButton';
+import { auth }                 from '@/auth';
+import { getTranslations }      from '@/i18n';
+import type { Locale }          from '@/i18n/config';
+import { prisma }               from '@gci/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +22,14 @@ export default async function WatchlistPage({ params }: { params: { locale: Loca
   const session = await auth();
   const userId  = session?.user?.id ?? null;
   const cards   = await getWatchlistCards();
+
+  // Portfolioに登録済みのカードIDセットをサーバー側で取得
+  const portfolioCardIds: Set<string> = userId
+    ? await prisma.portfolioCard.findMany({
+        where:  { userId },
+        select: { cardId: true },
+      }).then((rows) => new Set(rows.map((r) => r.cardId))).catch(() => new Set())
+    : new Set();
 
   return (
     <div className="space-y-8">
@@ -60,6 +70,7 @@ export default async function WatchlistPage({ params }: { params: { locale: Loca
                     <th className="px-4 py-3 text-right">7d</th>
                     <th className="px-4 py-3">Signals</th>
                     <th className="px-4 py-3">{isEn ? 'Added' : '追加日'}</th>
+                    <th className="px-4 py-3">Portfolio</th>
                     <th className="px-4 py-3"></th>
                   </tr>
                 </thead>
@@ -91,6 +102,16 @@ export default async function WatchlistPage({ params }: { params: { locale: Loca
                       </td>
                       <td className="px-4 py-3 text-xs text-navy/40 tabular-nums">
                         {formatDateTime(card.addedAt)}
+                      </td>
+                      <td className="px-4 py-3">
+                        {userId ? (
+                          <QuickPortfolioButton
+                            cardId={card.cardId}
+                            inPortfolio={portfolioCardIds.has(card.cardId)}
+                          />
+                        ) : (
+                          <span className="text-[10px] text-navy/25">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <WatchButton cardId={card.cardId} isWatched={true} userId={userId ?? undefined} />

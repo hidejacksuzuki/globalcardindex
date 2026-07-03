@@ -60,11 +60,10 @@ export function PortfolioClient({ items: initialItems }: Props) {
   if (items.length === 0) {
     return (
       <div className="border border-navy/10 bg-white p-12 text-center space-y-4">
-        <p className="text-4xl">📦</p>
         <div>
-          <p className="text-sm font-medium text-navy">ポートフォリオが空です</p>
-          <p className="mt-1 text-xs text-navy/40 leading-relaxed">
-            カード詳細ページの「+ Portfolioに追加」ボタンから登録できます。
+          <p className="text-sm font-medium text-navy">Portfolioにカードがありません</p>
+          <p className="mt-2 text-xs text-navy/40 leading-relaxed">
+            カード詳細ページの「+ Portfolioに追加」から登録できます。
           </p>
         </div>
         <Link
@@ -102,10 +101,10 @@ export function PortfolioClient({ items: initialItems }: Props) {
 
       {/* ── Table ──────────────────────────────────────────────── */}
       <div className="border border-navy/10 bg-white overflow-x-auto">
-        <table className="w-full text-sm min-w-[640px]">
+        <table className="w-full text-sm min-w-[760px]">
           <thead>
             <tr className="border-b border-navy/5 bg-navy/[0.02]">
-              {["カード", "枚数", "取得単価", "現在値", "評価額", "含み損益", ""].map((h, i) => (
+              {["カード", "グレード", "枚数", "取得単価", "現在値", "評価額", "含み損益", ""].map((h, i) => (
                 <th
                   key={i}
                   className="px-4 py-2.5 text-left text-[10px] uppercase tracking-widest text-navy/40 font-normal whitespace-nowrap"
@@ -138,6 +137,9 @@ export function PortfolioClient({ items: initialItems }: Props) {
                         {item.memo ? ` · ${item.memo}` : ""}
                       </span>
                     </div>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <GradeBadge grade={item.grade} />
                   </td>
                   <td className="px-4 py-3 tabular-nums text-navy/70 whitespace-nowrap">{item.quantity}</td>
                   <td className="px-4 py-3 tabular-nums text-navy/50 whitespace-nowrap">
@@ -196,5 +198,30 @@ export function PortfolioClient({ items: initialItems }: Props) {
       {/* ── Toast ────────────────────────────────────────────────── */}
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
     </>
+  );
+}
+
+type PortfolioGrade = "RAW" | "PSA10" | "PSA_OTHER" | "OTHER_GRADED";
+
+const GRADE_LABEL: Record<PortfolioGrade, string> = {
+  RAW:           "Raw",
+  PSA10:         "PSA 10",
+  PSA_OTHER:     "PSA",
+  OTHER_GRADED:  "Other Graded",
+};
+
+const GRADE_STYLE: Record<PortfolioGrade, string> = {
+  RAW:           "bg-navy/5 text-navy/50 border-navy/10",
+  PSA10:         "bg-gold-100 text-gold-800 border-gold-300 font-semibold",
+  PSA_OTHER:     "bg-blue-50 text-blue-700 border-blue-200",
+  OTHER_GRADED:  "bg-purple-50 text-purple-700 border-purple-200",
+};
+
+function GradeBadge({ grade }: { grade?: PortfolioGrade | null }) {
+  const g = (grade ?? "RAW") as PortfolioGrade;
+  return (
+    <span className={`inline-block border rounded px-2 py-0.5 text-[10px] uppercase tracking-widest whitespace-nowrap ${GRADE_STYLE[g]}`}>
+      {GRADE_LABEL[g]}
+    </span>
   );
 }

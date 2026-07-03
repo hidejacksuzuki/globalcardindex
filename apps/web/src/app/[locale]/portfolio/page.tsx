@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default async function PortfolioPage() {
   const session = await auth();
   const userId  = session?.user?.id;
-  if (!userId) redirect("/login");
+  if (!userId) redirect("/login?callbackUrl=/portfolio");
 
   const items = await getPortfolio(userId).catch(() => []);
 

@@ -5,11 +5,14 @@ import Link                         from "next/link";
 import { AddPortfolioModal }        from "./AddPortfolioModal";
 import { Toast }                    from "@/components/ui/Toast";
 
+type PortfolioGrade = "RAW" | "PSA10" | "PSA_OTHER" | "OTHER_GRADED";
+
 type PortfolioCard = {
   id:          string;
   quantity:    number;
   avgBuyPrice: number | null;
   memo:        string | null;
+  grade?:      PortfolioGrade | null;
 };
 
 type Props = {

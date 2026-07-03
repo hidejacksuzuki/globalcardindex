@@ -179,7 +179,7 @@ export default async function CardSlugPage({
             />
           ) : (
             <Link
-              href="/login"
+              href={`/login?callbackUrl=/cards/${card.slug ?? card.id}`}
               className="inline-flex items-center gap-1.5 border border-navy/20 px-3 py-1.5 text-xs uppercase tracking-widest text-navy/50 hover:border-navy hover:text-navy transition"
             >
               <span className="text-base leading-none">+</span>

@@ -2,6 +2,15 @@
 
 import { useState, useTransition, useEffect, useRef } from "react";
 
+type PortfolioGrade = "RAW" | "PSA10" | "PSA_OTHER" | "OTHER_GRADED";
+
+const GRADE_OPTIONS: { value: PortfolioGrade; label: string }[] = [
+  { value: "RAW",          label: "Raw（未グレード）"   },
+  { value: "PSA10",        label: "PSA 10"             },
+  { value: "PSA_OTHER",    label: "PSA（10以外）"       },
+  { value: "OTHER_GRADED", label: "Other Graded（他社）" },
+];
+
 type Props = {
   cardId:        string;
   cardName:      string;
@@ -10,6 +19,7 @@ type Props = {
     quantity:     number;
     avgBuyPrice:  number | null;
     memo:         string | null;
+    grade?:       PortfolioGrade | null;
   } | null;
   onClose:  () => void;
   onSaved:  () => void;
@@ -21,6 +31,7 @@ export function AddPortfolioModal({ cardId, cardName, existingItem, onClose, onS
     existingItem?.avgBuyPrice != null ? String(existingItem.avgBuyPrice) : ""
   );
   const [memo,        setMemo]        = useState(existingItem?.memo ?? "");
+  const [grade,       setGrade]       = useState<PortfolioGrade>(existingItem?.grade ?? "RAW");
   const [error,       setError]       = useState<string | null>(null);
   const [isPending,   startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -47,14 +58,14 @@ export function AddPortfolioModal({ cardId, cardName, existingItem, onClose, onS
           const res = await fetch(`/api/v1/portfolio/${existingItem.id}`, {
             method:  "PATCH",
             headers: { "Content-Type": "application/json" },
-            body:    JSON.stringify({ quantity: qty, avgBuyPrice: price, memo: memo.trim() || null }),
+            body:    JSON.stringify({ quantity: qty, avgBuyPrice: price, memo: memo.trim() || null, grade }),
           });
           if (!res.ok) throw new Error((await res.json() as { error?: string }).error ?? "Failed");
         } else {
           const res = await fetch("/api/v1/portfolio", {
             method:  "POST",
             headers: { "Content-Type": "application/json" },
-            body:    JSON.stringify({ cardId, quantity: qty, avgBuyPrice: price, memo: memo.trim() || null }),
+            body:    JSON.stringify({ cardId, quantity: qty, avgBuyPrice: price, memo: memo.trim() || null, grade }),
           });
           if (!res.ok) throw new Error((await res.json() as { error?: string }).error ?? "Failed");
         }
@@ -143,6 +154,22 @@ export function AddPortfolioModal({ cardId, cardName, existingItem, onClose, onS
             </div>
           </div>
 
+          {/* グレード */}
+          <div>
+            <label className="block text-[10px] uppercase tracking-widest text-navy/50 mb-1.5">
+              グレード <span className="text-navy/30 normal-case tracking-normal">(後で変更可)</span>
+            </label>
+            <select
+              value={grade}
+              onChange={(e) => setGrade(e.target.value as PortfolioGrade)}
+              className="w-full border border-navy/15 px-3 py-2 text-sm text-navy outline-none focus:border-navy/50 transition bg-white"
+            >
+              {GRADE_OPTIONS.map(({ value, label }) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+          </div>
+
           {/* メモ */}
           <div>
             <label className="block text-[10px] uppercase tracking-widest text-navy/50 mb-1.5">
@@ -153,7 +180,7 @@ export function AddPortfolioModal({ cardId, cardName, existingItem, onClose, onS
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
               maxLength={200}
-              placeholder="例: PSA10、初版、海外版"
+              placeholder="例: 初版、海外版"
               className="w-full border border-navy/15 px-3 py-2 text-sm text-navy outline-none focus:border-navy/50 transition placeholder-navy/20"
             />
           </div>
