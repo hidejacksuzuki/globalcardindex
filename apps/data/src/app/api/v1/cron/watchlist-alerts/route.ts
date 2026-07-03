@@ -185,7 +185,7 @@ async function handle(req: NextRequest) {
   const testEmail = sp.get("test")?.trim().toLowerCase() ?? null;
   const start     = Date.now();
   const today     = new Date().toLocaleDateString("sv-SE");
-  const baseUrl   = process.env.NEXT_PUBLIC_BASE_URL ?? "https://globalcardindex.com";
+  const baseUrl   = process.env.NEXT_PUBLIC_BASE_URL || "https://globalcardindex.com";
 
   const alertCardMap = await getAlertCardMap();
 

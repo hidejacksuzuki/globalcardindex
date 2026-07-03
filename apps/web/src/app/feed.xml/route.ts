@@ -21,7 +21,7 @@ import { getGame }                 from "@gci/core";
 export const dynamic   = "force-dynamic";
 export const revalidate = 3600;  // 1h キャッシュ
 
-const BASE_URL  = process.env.NEXT_PUBLIC_BASE_URL ?? "https://gci-index.com";
+const BASE_URL  = process.env.NEXT_PUBLIC_BASE_URL || "https://gci-index.com";
 const FEED_URL  = `${BASE_URL}/feed.xml`;
 const MAX_ITEMS = 30;
 

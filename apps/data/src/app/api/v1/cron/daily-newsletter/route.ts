@@ -96,7 +96,7 @@ async function handle(req: NextRequest) {
       );
     }
 
-    const baseUrl  = process.env.NEXT_PUBLIC_BASE_URL ?? "https://globalcardindex.com";
+    const baseUrl  = process.env.NEXT_PUBLIC_BASE_URL || "https://globalcardindex.com";
     const unsubUrl = `${baseUrl}/newsletter/unsubscribe/${TEST_UNSUB_PLACEHOLDER}`;
 
     const emailPayload = buildDailyNewsletterEmail({
@@ -164,7 +164,7 @@ async function handle(req: NextRequest) {
       getActiveSubscribers(),
       getSubscriberStats(),
     ]);
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://globalcardindex.com";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://globalcardindex.com";
 
     const emailPayload = subscribers.length > 0
       ? buildDailyNewsletterEmail({

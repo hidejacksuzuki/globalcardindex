@@ -17,7 +17,7 @@ import Resend                  from "next-auth/providers/resend";
 import { PrismaAdapter }       from "@auth/prisma-adapter";
 import { prisma }              from "@gci/db";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://gci-index.com";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://gci-index.com";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),

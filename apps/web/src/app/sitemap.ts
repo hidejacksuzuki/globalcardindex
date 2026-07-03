@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { getGameSlugs, getAllSetNames, getAllCardSlugs, getRecentRecapDates } from '@gci/core';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://gci-index.com';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://gci-index.com';
 const LOCALES  = ['ja', 'en'] as const;
 
 /** Build a URL with locale prefix (ja has no prefix, en gets /en/). */

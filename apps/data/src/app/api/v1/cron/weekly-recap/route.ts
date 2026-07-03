@@ -145,7 +145,7 @@ async function postWeeklyDiscord(data: WeeklyRecapData): Promise<void> {
   const webhook = process.env.DISCORD_WEBHOOK_ALERTS;
   if (!webhook) return;
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://globalcardindex.com";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://globalcardindex.com";
 
   const gainersText = data.topGainers.length > 0
     ? data.topGainers.map((c) => `**▲${c.changeRate.toFixed(1)}%** ${c.name}`).join("\n")
@@ -244,7 +244,7 @@ async function handle(req: NextRequest) {
     );
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://globalcardindex.com";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://globalcardindex.com";
 
   // Test send
   if (testEmail) {
