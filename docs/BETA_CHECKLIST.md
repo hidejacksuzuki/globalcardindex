@@ -13,8 +13,8 @@
 - [x] シークレットローテーション完了（POSTGRES_PASSWORD / JWT / SECRET_KEY）
 - [x] メールログイン基盤（Resend ドメイン検証・マジックリンク送受信・サインイン成功 2026-07-04）
 - [x] `NEXT_PUBLIC_BASE_URL` — 空でもコード側フォールバックで安全（`||` 修正済み）
-- [ ] recalc cron が直近24時間エラーなし（/admin/logs の Recalc Stability）
-- [ ] fetch cron が直近24時間で価格を収集できている
+- [x] recalc cron が直近24時間エラーなし（24/24回 OK・980カード処理・部分失敗0 — 2026-07-05 確認）
+- [x] fetch cron が直近24時間で価格を収集できている（144/144回 OK・新規76件 — 2026-07-05 確認）
 
 ## B. ユーザー動線（ブラウザで手動確認）
 
@@ -26,7 +26,7 @@
 - [x] Watchlist の Quick Add ボタン → Portfolio 転換
 - [x] β Feedback ボタン → 送信 → /admin/feedback に届く（ステータス変更も可）
 - [ ] モバイル幅（375px）でヘッダー・テーブル・モーダルが崩れない
-- [ ] EN ロケール（/en/...）で主要ページが表示される
+- [x] EN ロケール（/en/...）で主要ページが表示される（/en, /en/cards, /en/marketboard, /en/login すべて200 — 2026-07-05 確認）
 
 ## C. 運営準備
 
