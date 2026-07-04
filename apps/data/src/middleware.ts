@@ -48,8 +48,9 @@ function unauthorized(): NextResponse {
 }
 
 export function middleware(req: NextRequest) {
-  // /admin/* のみ対象
-  if (!req.nextUrl.pathname.startsWith("/admin")) {
+  // /admin/*（画面）と /api/v1/admin/*（管理API）を対象
+  const { pathname } = req.nextUrl;
+  if (!pathname.startsWith("/admin") && !pathname.startsWith("/api/v1/admin")) {
     return NextResponse.next();
   }
 
@@ -104,5 +105,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: "/admin/:path*",
+  matcher: ["/admin/:path*", "/api/v1/admin/:path*"],
 };
