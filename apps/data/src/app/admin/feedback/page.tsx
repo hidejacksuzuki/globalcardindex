@@ -4,6 +4,7 @@ import {
   type BetaFeedbackStatus,
 } from "@gci/core";
 import { FeedbackStatusSelect } from "@/components/feedback/FeedbackStatusSelect";
+import { FeedbackDeleteButton } from "@/components/feedback/FeedbackDeleteButton";
 
 export const dynamic = "force-dynamic";
 
@@ -98,7 +99,7 @@ export default async function AdminFeedbackPage({
         <table className="w-full text-sm min-w-[900px]">
           <thead>
             <tr className="border-b border-navy/5 bg-navy/[0.02]">
-              {["種類", "内容", "カード名", "送信ページ", "ユーザー", "ステータス", "受信日時"].map((h) => (
+              {["種類", "内容", "カード名", "送信ページ", "ユーザー", "ステータス", "受信日時", "操作"].map((h) => (
                 <th key={h} className="px-4 py-2.5 text-left text-[10px] uppercase tracking-widest text-navy/40 font-normal whitespace-nowrap">
                   {h}
                 </th>
@@ -108,7 +109,7 @@ export default async function AdminFeedbackPage({
           <tbody className="divide-y divide-navy/5">
             {items.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-sm text-navy/30">
+                <td colSpan={8} className="px-4 py-8 text-center text-sm text-navy/30">
                   該当するフィードバックがありません。
                 </td>
               </tr>
@@ -132,6 +133,9 @@ export default async function AdminFeedbackPage({
                     <FeedbackStatusSelect id={item.id} status={item.status} />
                   </td>
                   <td className="px-4 py-3 text-xs text-navy/40 whitespace-nowrap">{fmtDate(item.createdAt)}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-right">
+                    <FeedbackDeleteButton id={item.id} preview={item.message.slice(0, 30)} />
+                  </td>
                 </tr>
               ))
             )}

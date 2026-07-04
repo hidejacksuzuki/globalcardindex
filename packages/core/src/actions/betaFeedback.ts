@@ -133,3 +133,13 @@ export async function updateBetaFeedbackStatus(
   await prisma.betaFeedback.update({ where: { id }, data: { status } });
   return { ok: true };
 }
+
+export async function deleteBetaFeedback(id: string): Promise<{ ok: true }> {
+  try {
+    await prisma.betaFeedback.delete({ where: { id } });
+  } catch (e) {
+    // P2025 = 既に存在しない → 冪等に成功扱い
+    if ((e as { code?: string })?.code !== "P2025") throw e;
+  }
+  return { ok: true };
+}
