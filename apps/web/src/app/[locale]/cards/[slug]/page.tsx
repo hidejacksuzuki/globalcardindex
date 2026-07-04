@@ -1,7 +1,7 @@
 import type { Metadata }        from "next";
 import { notFound }              from "next/navigation";
 import Link                      from "next/link";
-import { getCardBySlug, getCardPriceHistory, getCardSourceStats } from "@gci/core";
+import { getCardBySlug, getCardPriceHistory } from "@gci/core";
 import { getGame }               from "@gci/core";
 import { WatchButton }           from "@/components/watchlist/WatchButton";
 import { isWatching, isUserWatching } from "@gci/core";
@@ -12,7 +12,6 @@ import { CardViewTracker }       from "@/components/analytics/CardViewTracker";
 import { CardRequestButton }     from "@/components/cards/CardRequestButton";
 import { AddToPortfolioButton }  from "@/components/portfolio/AddToPortfolioButton";
 import { PriceChart }            from "@/components/cards/PriceChart";
-import { SourceStats }           from "@/components/cards/SourceStats";
 import { isInPortfolio }         from "@gci/core";
 import { auth }                  from "@/auth";
 
@@ -80,10 +79,9 @@ export default async function CardSlugPage({
     ? await isInPortfolio(userId, card.id).catch(() => ({ inPortfolio: false as const }))
     : { inPortfolio: false as const };
 
-  // 価格推移・ソース別相場・per-card index value（並列取得）
-  const [priceHistory, sourceStats, cardIndex] = await Promise.all([
+  // 価格推移・per-card index value（並列取得）
+  const [priceHistory, cardIndex] = await Promise.all([
     getCardPriceHistory(card.id, 90).catch(() => []),
-    getCardSourceStats(card.id).catch(() => []),
     prisma.indexValue.findFirst({
       where:   { cardId: card.id },
       orderBy: { calculatedAt: "desc" },
@@ -238,14 +236,6 @@ export default async function CardSlugPage({
             </Link>
           </div>
           <PriceChart points={priceHistory} />
-        </section>
-      )}
-
-      {/* ソース別相場 */}
-      {sourceStats.length > 0 && (
-        <section className="border border-navy/10 bg-white p-6">
-          <h2 className="text-xs uppercase tracking-widest text-navy/50 mb-4">ソース別相場</h2>
-          <SourceStats stats={sourceStats} />
         </section>
       )}
 
