@@ -57,6 +57,31 @@ export async function submitBetaFeedback(data: {
     },
   });
 
+  // カードリクエスト型は /admin/card-requests のトリアージにも自動で載せる。
+  // ここが失敗してもフィードバック本体の保存は成功扱いにする（非ブロッキング）。
+  if (data.type === "request_card") {
+    try {
+      let requestedBy: string | null = null;
+      if (data.userId) {
+        const u = await prisma.user.findUnique({
+          where:  { id: data.userId },
+          select: { email: true },
+        });
+        requestedBy = u?.email ?? null;
+      }
+      const name = (data.cardName?.trim() || message.slice(0, 80)).slice(0, 120);
+      await prisma.cardRequest.create({
+        data: {
+          name,
+          requestedBy,
+          note: `β Feedback 経由 (feedback id: ${created.id})\n${message}`.slice(0, 1000),
+        },
+      });
+    } catch (e) {
+      console.error("[submitBetaFeedback] CardRequest への転記に失敗:", e);
+    }
+  }
+
   return { ok: true, id: created.id };
 }
 
