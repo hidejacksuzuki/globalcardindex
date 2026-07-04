@@ -7,14 +7,14 @@ export async function generateMetadata({ params }: { params: { locale: Locale } 
   const locale = params.locale;
   if (locale === 'en') {
     return {
-      title:       'About GCI — Trading Card Market Index Infrastructure',
-      description: 'Global Card Index (GCI) is trading card market index infrastructure. Like the Nikkei for stocks — a trusted benchmark for the TCG market.',
+      title:       'About GCI — Trading Card Prices, Trends & Market Index',
+      description: 'Global Card Index (GCI) aggregates real sale data from major marketplaces to provide card price estimates, price trends, portfolio tracking, and a market-wide index.',
       robots:      { index: true, follow: true },
     };
   }
   return {
-    title:       'GCIとは — カード市場指数インフラ',
-    description: 'Global Card Index（GCI）はトレーディングカード市場の指数インフラです。',
+    title:       'GCIとは — トレカ相場と市場指数のプラットフォーム',
+    description: 'Global Card Index（GCI）は複数マーケットの実売データを集約し、カードごとの推定相場・価格推移・保有カード管理、そして市場全体の指数を提供するプラットフォームです。',
     robots:      { index: true, follow: true },
   };
 }
@@ -40,9 +40,9 @@ export default function AboutPage({ params }: { params: { locale: Locale } }) {
         <h1 className="text-3xl font-semibold leading-tight text-navy">{a.heroTitle}</h1>
         <p className="text-base text-navy/60 leading-relaxed">
           {isEn ? (
-            <>GCI is not a trading card <strong className="font-semibold text-navy">price lookup site</strong>. It&apos;s <strong className="font-semibold text-navy">index infrastructure</strong> that reflects the entire market.</>
+            <>GCI is a <strong className="font-semibold text-navy">market data platform</strong> for trading cards. We aggregate and clean real sale data from multiple marketplaces, so you can check <strong className="font-semibold text-navy">estimated prices, trends, and your own portfolio</strong> — plus the pulse of the whole market — in one place.</>
           ) : (
-            <>GCI はトレーディングカードの「価格サイト」ではありません。<br />市場全体を映す<strong className="font-semibold text-navy">指数インフラ</strong>です。</>
+            <>GCI はトレーディングカードの<strong className="font-semibold text-navy">相場データプラットフォーム</strong>です。<br />複数マーケットに点在する実売データを集約・クリーニングし、カードごとの<strong className="font-semibold text-navy">推定相場・価格推移・保有カードの評価額</strong>、そして市場全体の動きを一箇所で確認できます。</>
           )}
         </p>
       </header>
@@ -51,17 +51,17 @@ export default function AboutPage({ params }: { params: { locale: Locale } }) {
       <Section title={a.s1Title}>
         {isEn ? (
           <>
-            <p>The stock market has the S&amp;P 500. Forex has USD/JPY. But trading cards?</p>
-            <p>Today, to understand card prices you have to search individual external marketplaces or check specific shop buy prices. That&apos;s &ldquo;point&rdquo; data — there&apos;s no &ldquo;line&rdquo; showing the overall market trend.</p>
-            <p>The result: <strong className="font-medium text-navy">no one can objectively say whether the market is rising or falling</strong>. That&apos;s the fundamental opacity of the TCG market.</p>
-            <Callout>GCI exists to resolve that opacity — measuring the overall temperature of the market, not individual prices.</Callout>
+            <p>To figure out what a card is really worth today, you have to hop between marketplaces and compare listings one by one — with bait listings and outliers mixed in, it&apos;s hard to tell which price is the real market rate.</p>
+            <p>GCI aggregates real sale data from multiple marketplaces, removes outliers, and presents it as a single <strong className="font-medium text-navy">estimated market price (low / median / high)</strong> with a price trend chart for each card.</p>
+            <p>On top of that, we condense the entire market into one index (GCI), so you can also see <strong className="font-medium text-navy">whether the market as a whole is heating up or cooling down</strong>.</p>
+            <Callout>Per-card prices and the temperature of the whole market — both in one place.</Callout>
           </>
         ) : (
           <>
-            <p>株式市場には日経平均がある。為替市場には USD/JPY がある。では、トレーディングカード市場には？</p>
-            <p>現状、カード相場を知るには個別に外部マーケットを検索するか、特定ショップの買取価格を参照するしかありません。それらは「点」の情報であり、市場全体の動向を示す「線」がありません。</p>
-            <p>結果として、<strong className="font-medium text-navy">「今、市場は上昇しているのか、下落しているのか」</strong>を客観的に判断できる人間が存在しない。これがカード市場の根本的な不透明性です。</p>
-            <Callout>GCI はその不透明性を解消するためのインフラです。個別価格ではなく、市場全体の体温を測ることを目的としています。</Callout>
+            <p>「このカード、今いくらが相場なのか」を知るには、複数のマーケットを行き来して出品を1件ずつ見比べるしかありません。釣り出品や外れ値も混ざっていて、どれが本当の相場なのか分からない——それが現状です。</p>
+            <p>GCI は複数マーケットの実売データを集約し、外れ値を取り除いたうえで、カードごとに<strong className="font-medium text-navy">推定相場（最安値・中央値・最高値）と価格推移</strong>として提示します。</p>
+            <p>さらに市場全体の動きを一本の指数（GCI）に集約し、<strong className="font-medium text-navy">「今、市場全体は熱いのか冷えているのか」</strong>も見えるようにしています。</p>
+            <Callout>個別カードの相場と、市場全体の体温。その両方を1つの場所で。</Callout>
           </>
         )}
       </Section>
@@ -70,13 +70,13 @@ export default function AboutPage({ params }: { params: { locale: Locale } }) {
       <Section title={a.s2Title}>
         {isEn ? (
           <>
-            <p>GCI calculates indices through a 4-stage pipeline.</p>
+            <p>GCI turns raw listings into market data through a 4-stage pipeline.</p>
             <ol className="mt-4 space-y-5">
               {[
-                { n: '1', title: 'Collection',     body: 'We collect transaction data from multiple secondary markets, referencing both active listings and sold listings, prioritizing actual completed transactions.' },
-                { n: '2', title: 'Filtering',      body: 'PSA-graded cards, lot sales, counterfeits, and unknown-condition listings are automatically excluded. Remaining data is cleaned with IQR outlier detection to remove anomalies that distort the market.' },
-                { n: '3', title: 'Index Calculation', body: 'A TrustScore-weighted average (source reliability, listing type, condition) is calculated on the clean data, expressed as an index with base value 1000.' },
-                { n: '4', title: 'Confidence Scoring', body: 'HIGH / MED / LOW confidence is derived from sample count and outlier ratio, published alongside the index value. Indices with insufficient data are hidden and marked as reference values.' },
+                { n: '1', title: 'Collection',     body: 'We collect transaction data from multiple secondary markets, referencing both active and sold listings, prioritizing actual completed transactions.' },
+                { n: '2', title: 'Filtering',      body: 'Lot sales, suspected counterfeits, and unknown-condition listings are automatically excluded. Graded cards (PSA etc.) are tracked separately by condition. IQR outlier detection then removes anomalies that distort the market.' },
+                { n: '3', title: 'Price & Index Calculation', body: 'From the cleaned data we derive each card\'s estimated market price (low / median / high) and price history. A TrustScore-weighted average (source reliability, listing type, condition) also feeds the market index with base value 1000.' },
+                { n: '4', title: 'Confidence Scoring', body: 'HIGH / MED / LOW confidence is derived from sample count and outlier ratio, published alongside the data. Values with insufficient data are hidden or marked as reference values.' },
               ].map(({ n, title, body }) => (
                 <li key={n} className="flex gap-4">
                   <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-navy text-[11px] font-bold text-white">{n}</span>
@@ -90,13 +90,13 @@ export default function AboutPage({ params }: { params: { locale: Locale } }) {
           </>
         ) : (
           <>
-            <p>GCI は4段階のパイプラインで指数を算出します。</p>
+            <p>GCI は4段階のパイプラインで、生の出品データを相場情報に変えています。</p>
             <ol className="mt-4 space-y-5">
               {[
                 { n: '1', title: '収集',       body: '複数の二次市場から取引データを収集します。販売中リスト・販売済みリストの両方を参照し、実際に成立した取引を優先します。' },
-                { n: '2', title: 'フィルタリング', body: 'PSA鑑定品・まとめ売り・偽造品・コンディション不明のリストを自動除外します。残ったデータに IQR（四分位範囲）で外れ値検出を行い、相場を歪める異常値を取り除きます。' },
-                { n: '3', title: '指数計算',    body: 'クリーンになったデータに対し、TrustScore（ソース信頼性・出品形態・コンディション）で重み付けした加重平均を計算します。結果は基準値 1000 のインデックスとして表現されます。' },
-                { n: '4', title: '信頼度付与',   body: 'サンプル数と外れ値率から HIGH / MED / LOW の信頼度を算出し、指数値とともに公開します。データが不足している場合は指数値を非表示にし、参考値として明示します。' },
+                { n: '2', title: 'フィルタリング', body: 'まとめ売り・偽造品疑い・コンディション不明の出品を自動除外します。鑑定品（PSA等）は別コンディションとして分離して追跡します。さらに IQR（四分位範囲）で外れ値検出を行い、相場を歪める釣り出品・異常値を取り除きます。' },
+                { n: '3', title: '相場・指数の算出', body: 'クリーンになったデータから、カードごとの推定相場（最安値・中央値・最高値）と価格推移を算出します。あわせて TrustScore（ソース信頼性・出品形態・コンディション）で重み付けした加重平均から、基準値 1000 の市場指数を計算します。' },
+                { n: '4', title: '信頼度付与',   body: 'サンプル数と外れ値率から HIGH / MED / LOW の信頼度を算出し、データとともに公開します。データが不足している場合は非表示にするか、参考値として明示します。' },
               ].map(({ n, title, body }) => (
                 <li key={n} className="flex gap-4">
                   <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-navy text-[11px] font-bold text-white">{n}</span>
@@ -116,15 +116,15 @@ export default function AboutPage({ params }: { params: { locale: Locale } }) {
         <div className="grid gap-4 sm:grid-cols-3">
           {isEn ? (
             <>
-              <AudienceCard icon="🃏" title="Collectors"     body="Objectively assess your collection's current market value. Understand whether it's a good time to buy or sell in the context of the overall market." />
-              <AudienceCard icon="📊" title="TCG Investors"  body="Track indices for entire games and sets, not just individual cards. Provides numbers useful for portfolio management." />
-              <AudienceCard icon="🏪" title="Card Shops"     body="Reference index for setting buy prices. Verify deviation from market rates numerically, supporting fair price formation." />
+              <AudienceCard icon="🃏" title="Collectors"     body="Check estimated prices and trends to judge when to buy or sell. Add cards to your watchlist and get email alerts on big price moves." />
+              <AudienceCard icon="📊" title="Portfolio Tracking" body="Register the cards you own and GCI automatically tracks their total value and unrealized gains against the latest market prices." />
+              <AudienceCard icon="🏪" title="Card Shops"     body="Reference data for setting buy prices. Verify deviation from market rates numerically, supporting fair price formation." />
             </>
           ) : (
             <>
-              <AudienceCard icon="🃏" title="コレクター"     body="手持ちカードの現在価値を客観的に把握。「買い時か、売り時か」を市場全体の文脈で判断できます。" />
-              <AudienceCard icon="📊" title="TCG投資家"    body="個別カードだけでなく、ゲーム全体・セット全体の指数推移を追跡。ポートフォリオ管理に使える数字を提供します。" />
-              <AudienceCard icon="🏪" title="カードショップ" body="買取価格設定の参考指標として。市場相場との乖離を数値で確認し、適正な価格形成を支援します。" />
+              <AudienceCard icon="🃏" title="コレクター"     body="推定相場と価格推移で「買い時・売り時」を判断。気になるカードはウォッチリストに入れておけば、大きな価格変動をメールでお知らせします。" />
+              <AudienceCard icon="📊" title="保有カード管理"  body="持っているカードを Portfolio に登録すると、最新相場に基づく評価額と含み損益を自動で追跡できます。" />
+              <AudienceCard icon="🏪" title="カードショップ" body="買取価格設定の参考データとして。市場相場との乖離を数値で確認し、適正な価格形成を支援します。" />
             </>
           )}
         </div>
@@ -135,15 +135,15 @@ export default function AboutPage({ params }: { params: { locale: Locale } }) {
         <div className="space-y-3 text-sm text-navy/70 leading-relaxed">
           {isEn ? (
             <>
-              <NotItem><strong className="text-navy">Not a price lookup site.</strong> GCI does not tell you what a card costs to buy today. Actual transactions happen on external marketplaces.</NotItem>
-              <NotItem><strong className="text-navy">Not investment advice.</strong> GCI index values do not constitute trading recommendations. Decisions based on this data are solely your responsibility.</NotItem>
-              <NotItem><strong className="text-navy">Not real-time data.</strong> Indices are currently updated nightly. Intraday spikes will be reflected in the next day&apos;s update.</NotItem>
+              <NotItem><strong className="text-navy">Not a marketplace.</strong> You cannot buy or sell cards on GCI. Actual transactions happen on external marketplaces — our prices are reference aggregates.</NotItem>
+              <NotItem><strong className="text-navy">Not investment advice.</strong> Estimated prices and index values do not constitute trading recommendations. Decisions based on this data are solely your responsibility.</NotItem>
+              <NotItem><strong className="text-navy">Not exchange-grade real-time data.</strong> Price data is collected periodically throughout the day and aggregates are recalculated regularly. Sudden moves may take time to appear.</NotItem>
             </>
           ) : (
             <>
-              <NotItem><strong className="text-navy">価格サイトではありません。</strong>「このカードが今いくらで買えるか」を教えるサービスではありません。実際の取引は各外部マーケットで行われます。</NotItem>
-              <NotItem><strong className="text-navy">投資助言ではありません。</strong>GCI の指数値は売買推奨を構成しません。掲載情報を参考にした取引の判断は、利用者ご自身の責任において行ってください。</NotItem>
-              <NotItem><strong className="text-navy">リアルタイムデータではありません。</strong>指数は現在、毎日夜間に更新されます。日中の急騰・急落は翌日の更新に反映されます。</NotItem>
+              <NotItem><strong className="text-navy">売買の場ではありません。</strong>GCI 上でカードの売買はできません。実際の取引は各外部マーケットで行われ、掲載する相場は参考集計です。</NotItem>
+              <NotItem><strong className="text-navy">投資助言ではありません。</strong>推定相場・指数値は売買推奨を構成しません。掲載情報を参考にした取引の判断は、利用者ご自身の責任において行ってください。</NotItem>
+              <NotItem><strong className="text-navy">取引所レベルのリアルタイムではありません。</strong>価格データは1日を通して定期的に収集し、集計は定期的に再計算されます。急な変動の反映には時間差があります。</NotItem>
             </>
           )}
         </div>
@@ -154,9 +154,9 @@ export default function AboutPage({ params }: { params: { locale: Locale } }) {
         <div className="space-y-3">
           {isEn ? (
             [
-              { phase: 'Now',    items: ['Pokémon / One Piece indices', 'Per-card confidence levels', 'Daily market summaries', 'Marketboard & Watchlist'] },
-              { phase: 'Soon',   items: ['Yu-Gi-Oh! / MTG support', 'Multiple data sources (TCGPlayer etc.)', 'Set-level indices', 'Email/Discord alert notifications'] },
-              { phase: 'Future', items: ['PSA/BGS grade-level indices', 'Game-level sub-indices', 'Portfolio tracking', 'Developer API v2'] },
+              { phase: 'Now',    items: ['Estimated prices (low / median / high) & trend charts', 'Portfolio tracking (value & unrealized gains)', 'Watchlist & price alerts', 'Daily market summaries & market index'] },
+              { phase: 'Soon',   items: ['More games (Yu-Gi-Oh! / MTG expansion)', 'More data sources', 'Set-level aggregates'] },
+              { phase: 'Future', items: ['PSA/BGS grade-level analytics', 'Game-level sub-indices', 'Developer API'] },
             ].map(({ phase, items }) => (
               <div key={phase} className="flex gap-4">
                 <span className="mt-0.5 w-14 shrink-0 text-[10px] uppercase tracking-widest text-navy/40 pt-0.5">{phase}</span>
@@ -171,9 +171,9 @@ export default function AboutPage({ params }: { params: { locale: Locale } }) {
             ))
           ) : (
             [
-              { phase: '現在',  items: ['ポケカ・ワンピ指数', 'カード別信頼度', '毎日の市場サマリー', 'Marketboard・Watchlist'] },
-              { phase: '近日',  items: ['遊戯王・MTG対応', '複数データソース（TCGPlayer等）', 'セット別指数', 'メール/Discord アラート通知'] },
-              { phase: '将来',  items: ['PSA/BGS グレード別指数', 'ゲーム別サブ指数', 'ポートフォリオ追跡', '開発者向け API v2'] },
+              { phase: '現在',  items: ['推定相場（最安/中央/最高）と価格推移チャート', 'Portfolio（評価額・含み損益の自動追跡）', 'ウォッチリストと価格変動アラート', '日次市場サマリーと市場指数'] },
+              { phase: '近日',  items: ['対応ゲーム拡充（遊戯王・MTG強化）', 'データソースの拡充', 'セット別の相場集計'] },
+              { phase: '将来',  items: ['PSA/BGS グレード別の相場分析', 'ゲーム別サブ指数', '開発者向け API'] },
             ].map(({ phase, items }) => (
               <div key={phase} className="flex gap-4">
                 <span className="mt-0.5 w-14 shrink-0 text-[10px] uppercase tracking-widest text-navy/40 pt-0.5">{phase}</span>

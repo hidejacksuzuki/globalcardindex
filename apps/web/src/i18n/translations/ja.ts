@@ -148,9 +148,9 @@ export const ja = {
   about: {
     breadcrumb:  'Home',
     tagline:     'Global Card Index',
-    heroTitle:   'カード市場に、信頼できる指標を。',
-    heroBody:    'GCI はトレーディングカードの「価格サイト」ではありません。市場全体を映す指数インフラです。',
-    s1Title:     'なぜ指数が必要か',
+    heroTitle:   'カード市場に、信頼できる相場を。',
+    heroBody:    'GCI はトレーディングカードの相場データプラットフォームです。推定相場・価格推移・保有カード管理、そして市場全体の指数を提供します。',
+    s1Title:     'なぜ GCI が必要か',
     s2Title:     'GCIの仕組み',
     s3Title:     '誰のためのサービスか',
     s4Title:     'GCIでないもの',

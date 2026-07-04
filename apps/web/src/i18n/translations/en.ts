@@ -148,9 +148,9 @@ export const en = {
   about: {
     breadcrumb:  'Home',
     tagline:     'Global Card Index',
-    heroTitle:   'Trusted benchmarks for the TCG market.',
-    heroBody:    'GCI is not a price lookup site. It\'s an index infrastructure that reflects the entire market.',
-    s1Title:     'Why an Index?',
+    heroTitle:   'Trusted prices for the TCG market.',
+    heroBody:    'GCI is a market data platform for trading cards — estimated prices, trends, portfolio tracking, and a market-wide index.',
+    s1Title:     'Why GCI?',
     s2Title:     'How GCI Works',
     s3Title:     'Who Is It For?',
     s4Title:     'What GCI Is NOT',
