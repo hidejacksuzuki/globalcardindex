@@ -71,7 +71,7 @@ export function AddToPortfolioButton({ cardId, cardName, userId: _userId, initia
           <button
             onClick={quickAdd}
             disabled={isPending}
-            className="inline-flex items-center gap-1.5 rounded-sm border border-navy/20 bg-white px-3 py-1.5 text-xs uppercase tracking-widest text-navy/60 hover:border-navy hover:bg-navy hover:text-white transition-all disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 rounded-sm border border-navy bg-navy px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white hover:bg-navy/80 transition-all disabled:opacity-40"
           >
             {isPending ? (
               <span className="text-base leading-none animate-spin">⊙</span>

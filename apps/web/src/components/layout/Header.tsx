@@ -30,7 +30,7 @@ export async function Header() {
             alt="Global Card Index"
             width={360}
             height={96}
-            className="h-16 w-auto"
+            className="h-20 w-auto"
             priority
           />
         </Link>
@@ -52,7 +52,7 @@ export async function Header() {
           {userId ? (
             <Link
               href="/account"
-              className="hidden sm:inline-flex items-center gap-1.5 border border-navy/20 px-3 py-1.5 text-xs text-navy/60 hover:border-navy hover:text-navy transition"
+              className="hidden sm:inline-flex items-center gap-1.5 border border-navy bg-navy px-3 py-1.5 text-xs font-semibold text-white hover:bg-navy/80 transition"
             >
               マイページ
             </Link>

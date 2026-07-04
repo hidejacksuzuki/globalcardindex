@@ -68,7 +68,7 @@ export function WatchButton({ cardId, slug, isWatched: initialWatched, userId }:
       ].join(" ")}
     >
       <span className="text-base leading-none">{watched ? "★" : "☆"}</span>
-      <span>{watched ? "Watching" : "Watch"}</span>
+      <span>{watched ? "ウォッチ中" : "ウォッチ"}</span>
     </button>
   );
 }

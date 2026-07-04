@@ -6,7 +6,7 @@ export const ja = {
     indices:     'Indices',
     marketboard: 'Marketboard',
     cards:       'Cards',
-    watchlist:   '☆ Watchlist',
+    watchlist:   '☆ ウォッチリスト',
     portfolio:   'Portfolio',
     about:       'About',
     newsletter:  'メール配信',

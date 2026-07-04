@@ -30,7 +30,7 @@ export type CardWithPrices = CardSummary & {
   totalPriceCount: number;
 };
 
-export type CardSortKey = "name" | "latestPrice";
+export type CardSortKey = "name" | "latestPrice" | "popular";
 export type SortOrder  = "asc" | "desc";
 
 export type ListCardsResult = {

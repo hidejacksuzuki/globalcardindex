@@ -40,11 +40,17 @@ function parsePositiveInt(raw: string | undefined, fallback: number): number {
 }
 
 function parseSort(raw: string | undefined): CardSortKey {
-  return raw === 'latestPrice' ? 'latestPrice' : 'name';
+  if (raw === 'latestPrice') return 'latestPrice';
+  if (raw === 'name')        return 'name';
+  // デフォルトは人気順（価格観測データが多い＝市場で動いているカードを上に）
+  return 'popular';
 }
 
-function parseOrder(raw: string | undefined): SortOrder {
-  return raw === 'desc' ? 'desc' : 'asc';
+function parseOrder(raw: string | undefined, sort: CardSortKey): SortOrder {
+  if (raw === 'desc') return 'desc';
+  if (raw === 'asc')  return 'asc';
+  // 未指定時のデフォルト: 名前順は昇順、人気順・価格順は降順
+  return sort === 'name' ? 'asc' : 'desc';
 }
 
 export default async function CardsPage({ params, searchParams }: Props) {
@@ -55,14 +61,15 @@ export default async function CardsPage({ params, searchParams }: Props) {
   const condFilter = searchParams.condition?.trim()  || undefined;
   const confFilter = searchParams.confidence?.trim() || undefined;
   const sort       = parseSort(searchParams.sort);
-  const order      = parseOrder(searchParams.order);
+  const order      = parseOrder(searchParams.order, sort);
   const page       = Math.max(1, parsePositiveInt(searchParams.page, 1));
   const pageSize   = Math.min(
     MAX_PAGE_SIZE,
     Math.max(1, parsePositiveInt(searchParams.pageSize, DEFAULT_PAGE_SIZE)),
   );
 
-  const result = await listCards({ search: q, sort, order, page, pageSize });
+  // 価格データが1件もないカードは一覧に出さない（β feedback: スカスカ感の解消）
+  const result = await listCards({ search: q, sort, order, page, pageSize, onlyWithPrices: true });
   const { cards, totalCount, totalPages } = result;
 
   const cardIds = cards.map((c) => c.id);
@@ -112,6 +119,31 @@ export default async function CardsPage({ params, searchParams }: Props) {
         defaultValue={q}
         placeholder={t.cards.searchPlaceholder}
       />
+
+      {/* Sort bar — 不動産検索風の並び替え選択 */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-navy/40">{isEn ? 'Sort:' : '並び替え:'}</span>
+        <FilterPill
+          label={isEn ? 'Popular' : '人気順'}
+          href={buildFilterHref({ q, sort: 'popular', order: 'desc', condition: condFilter, confidence: confFilter })}
+          active={sort === 'popular'}
+        />
+        <FilterPill
+          label={isEn ? 'Highest price' : '価格が高い順'}
+          href={buildFilterHref({ q, sort: 'latestPrice', order: 'desc', condition: condFilter, confidence: confFilter })}
+          active={sort === 'latestPrice' && order === 'desc'}
+        />
+        <FilterPill
+          label={isEn ? 'Lowest price' : '価格が安い順'}
+          href={buildFilterHref({ q, sort: 'latestPrice', order: 'asc', condition: condFilter, confidence: confFilter })}
+          active={sort === 'latestPrice' && order === 'asc'}
+        />
+        <FilterPill
+          label={isEn ? 'Name' : '名前順'}
+          href={buildFilterHref({ q, sort: 'name', order: 'asc', condition: condFilter, confidence: confFilter })}
+          active={sort === 'name'}
+        />
+      </div>
 
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-2">
@@ -295,9 +327,10 @@ function buildFilterHref(params: {
   confidence?: string;
 }): string {
   const p = new URLSearchParams();
+  const defaultOrder: SortOrder = params.sort === 'name' ? 'asc' : 'desc';
   if (params.q)          p.set('q',          params.q);
-  if (params.sort && params.sort !== 'name') p.set('sort', params.sort);
-  if (params.order && params.order !== 'asc') p.set('order', params.order);
+  if (params.sort && params.sort !== 'popular') p.set('sort', params.sort);
+  if (params.order && params.order !== defaultOrder) p.set('order', params.order);
   if (params.condition)  p.set('condition',  params.condition);
   if (params.confidence) p.set('confidence', params.confidence);
   const qs = p.toString();
@@ -312,11 +345,14 @@ function SortLink({
   k: CardSortKey; sort: CardSortKey; order: SortOrder; q?: string;
   children: React.ReactNode;
 }) {
-  const nextOrder: SortOrder = sort === k && order === 'asc' ? 'desc' : 'asc';
+  const defaultOrder: SortOrder = k === 'name' ? 'asc' : 'desc';
+  const nextOrder: SortOrder = sort === k
+    ? (order === 'asc' ? 'desc' : 'asc')
+    : defaultOrder;
   const params = new URLSearchParams();
-  if (q)            params.set('q',     q);
-  if (k !== 'name') params.set('sort',  k);
-  if (nextOrder !== 'asc') params.set('order', nextOrder);
+  if (q)               params.set('q',     q);
+  if (k !== 'popular') params.set('sort',  k);
+  if (nextOrder !== defaultOrder) params.set('order', nextOrder);
   const arrow = sort === k ? (order === 'asc' ? ' ↑' : ' ↓') : '';
   return (
     <Link href={`/cards?${params.toString()}`} className="inline-flex items-center gap-1 hover:text-navy">

@@ -24,6 +24,8 @@ export type ListCardsOptions = {
   pageSize?: number;
   skip?:     number;
   take?:     number;
+  /** true のとき価格データが1件もないカードを除外（Web一覧用。API後方互換のためデフォルト false） */
+  onlyWithPrices?: boolean;
 };
 
 const DEFAULT_PAGE_SIZE = 50;
@@ -47,6 +49,13 @@ function buildOrderBy(
       { name: "asc" },
     ];
   }
+  if (sort === "popular") {
+    // 人気順 = 価格観測データの多さ（市場での取引・出品の活発さの代理指標）
+    return [
+      { prices: { _count: order } } as Prisma.CardOrderByWithRelationInput,
+      { name: "asc" },
+    ];
+  }
   // デフォルト: 名前順
   return [{ name: order }, { setName: "asc" }];
 }
@@ -57,7 +66,10 @@ function buildOrderBy(
 export async function listCards(
   opts: ListCardsOptions = {},
 ): Promise<ListCardsResult> {
-  const where = buildCardSearchWhere(opts.search);
+  const baseWhere = buildCardSearchWhere(opts.search);
+  const where: Prisma.CardWhereInput = opts.onlyWithPrices
+    ? { ...baseWhere, prices: { some: {} } }
+    : baseWhere;
   const orderBy = buildOrderBy(opts.sort, opts.order);
 
   let skip: number;
