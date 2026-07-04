@@ -114,7 +114,12 @@ export type SetCardSummary = {
   observedAt:  string | null;
 };
 
-export async function getSetStats(setNameSlug: string): Promise<SetStats | null> {
+export async function getSetStats(rawSetNameSlug: string): Promise<SetStats | null> {
+  // Next.js の dynamic params は percent エンコードされたまま渡ってくることがある
+  // （"SV2a%20151" 等で 404 になるのを防ぐ）
+  let setNameSlug = rawSetNameSlug;
+  try { setNameSlug = decodeURIComponent(rawSetNameSlug); } catch { /* raw のまま */ }
+
   // setName が直接一致するもの、またはスラッグ的に変換して一致するものを検索
   const cards = await timedQuery(`getSetStats(${setNameSlug})`, () => prisma.card.findMany({
     where: {
@@ -197,7 +202,12 @@ export type CardSeoDetail = {
   maxPrice:    number | null;
 };
 
-export async function getCardBySlug(slug: string): Promise<CardSeoDetail | null> {
+export async function getCardBySlug(rawSlug: string): Promise<CardSeoDetail | null> {
+  // Next.js の dynamic params は percent エンコードされたまま渡ってくることがある
+  // （日本語 slug のカードが 404 になるバグの修正）
+  let slug = rawSlug;
+  try { slug = decodeURIComponent(rawSlug); } catch { /* 不正な % はそのまま扱う */ }
+
   const card = await prisma.card.findFirst({
     where: { OR: [{ slug }, { id: slug }] },
     include: {

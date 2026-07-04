@@ -102,7 +102,11 @@ export async function middleware(req: NextRequest) {
   }
 
   // 3. Rewrite to /[locale]/...
-  const response = NextResponse.rewrite(new URL(rewritePath, req.url));
+  //    new URL(path, base) はクエリ文字列を引き継がないため明示的に付け直す
+  //    （?sort= ?q= ?page= 等がすべて落ちるバグの修正）
+  const rewriteUrl = new URL(rewritePath, req.url);
+  rewriteUrl.search = req.nextUrl.search;
+  const response = NextResponse.rewrite(rewriteUrl);
 
   // 4. Persist locale in cookie
   response.cookies.set(LOCALE_COOKIE, locale, {
