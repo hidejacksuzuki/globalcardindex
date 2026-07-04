@@ -1,7 +1,7 @@
 # β公開前チェックリスト
 
 公開 Go/NoGo の判断に使う。全項目 ✅ になったら公開してよい。
-（最終更新: 2026-07-03）
+（最終更新: 2026-07-04）
 
 ## A. 技術面
 
@@ -9,21 +9,22 @@
 - [x] pending migration ゼロ（recalc_log_failures / beta_feedback 適用済み）
 - [x] `pnpm build`（web）が通る
 - [x] 型エラーゼロ（core / web / data）
-- [x] 本番スモークテスト通過（`./scripts/smoke-test.sh`）
+- [x] 本番スモークテスト通過（`./scripts/smoke-test.sh` — 2026-07-04 全パス）
 - [x] シークレットローテーション完了（POSTGRES_PASSWORD / JWT / SECRET_KEY）
-- [ ] Vercel の `NEXT_PUBLIC_BASE_URL` が本番URLで設定されているか確認
+- [x] メールログイン基盤（Resend ドメイン検証・マジックリンク送受信・サインイン成功 2026-07-04）
+- [x] `NEXT_PUBLIC_BASE_URL` — 空でもコード側フォールバックで安全（`||` 修正済み）
 - [ ] recalc cron が直近24時間エラーなし（/admin/logs の Recalc Stability）
 - [ ] fetch cron が直近24時間で価格を収集できている
 
 ## B. ユーザー動線（ブラウザで手動確認）
 
-- [ ] トップ → カード検索 → カード詳細 が迷わず辿れる
-- [ ] カード詳細に推定相場・価格推移・ソース別相場が表示される（データありカード）
-- [ ] 未ログインで「ログインしてPortfolioに追加」→ ログイン → 元のカードに戻る
-- [ ] Quick Add で Portfolio に追加 → /portfolio に反映
-- [ ] Portfolio の編集（枚数・取得単価・グレード・メモ）と削除
-- [ ] Watchlist の Quick Add ボタン → Portfolio 転換
-- [ ] β Feedback ボタン → 送信 → /admin/feedback に届く
+- [x] トップ → カード検索 → カード詳細 が辿れる（※入口の分かりにくさは改善候補: 一覧の行全体クリック化）
+- [x] カード詳細に相場情報が表示される（データありカードで確認）
+- [x] 未ログインCTA → メールログイン → サインイン完了（2026-07-04 本番で確認）
+- [x] Quick Add で Portfolio に追加 → /portfolio に反映
+- [x] Portfolio の編集（枚数・取得単価・グレード・メモ）と削除
+- [x] Watchlist の Quick Add ボタン → Portfolio 転換
+- [x] β Feedback ボタン → 送信 → /admin/feedback に届く（ステータス変更も可）
 - [ ] モバイル幅（375px）でヘッダー・テーブル・モーダルが崩れない
 - [ ] EN ロケール（/en/...）で主要ページが表示される
 
