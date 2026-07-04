@@ -8,7 +8,7 @@
  * 必要な環境変数:
  *   RESEND_API_KEY    — Resend ダッシュボード → API Keys
  *   RESEND_FROM_EMAIL — 送信元アドレス（Resend で検証済みドメイン必須）
- *                       例: "GCI <noreply@globalcardindex.com>"
+ *                       例: "GCI <noreply@gci-index.com>"
  */
 
 // ----------------------------------------------------------------
@@ -91,7 +91,7 @@ export function checkResendEnv(): { ok: boolean; missing: string[] } {
 
 export async function sendEmail(payload: EmailPayload): Promise<SendResult> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from   = process.env.RESEND_FROM_EMAIL ?? "GCI <noreply@globalcardindex.com>";
+  const from   = process.env.RESEND_FROM_EMAIL || "GCI <noreply@gci-index.com>";
 
   if (!apiKey) return { id: null, error: "RESEND_API_KEY is not set" };
 
@@ -316,7 +316,7 @@ export function buildUnsubscribeEmail(params: {
     </p>
     <p style="font-size:13px;color:#888;margin:0;">
       再度購読するには
-      <a href="${process.env.NEXT_PUBLIC_BASE_URL ?? "https://globalcardindex.com"}/newsletter"
+      <a href="${process.env.NEXT_PUBLIC_BASE_URL || "https://www.gci-index.com"}/newsletter"
          style="${LINK_STYLE}">こちら</a>
       から登録してください。
     </p>
@@ -324,7 +324,7 @@ export function buildUnsubscribeEmail(params: {
 
   const text = [
     "GCI ニュースレターの退会が完了しました。",
-    "再度購読: " + (process.env.NEXT_PUBLIC_BASE_URL ?? "https://globalcardindex.com") + "/newsletter",
+    "再度購読: " + (process.env.NEXT_PUBLIC_BASE_URL || "https://www.gci-index.com") + "/newsletter",
   ].join("\n");
 
   return {
@@ -344,7 +344,7 @@ export function buildDailyNewsletterEmail(params: {
   isTest?: boolean;
 }): EmailPayload {
   const { to, recap, unsubUrl, isTest = false } = params;
-  const baseUrl  = process.env.NEXT_PUBLIC_BASE_URL ?? "https://globalcardindex.com";
+  const baseUrl  = process.env.NEXT_PUBLIC_BASE_URL || "https://www.gci-index.com";
   const dailyUrl = `${baseUrl}/daily/${recap.date}`;
   const dateStr  = recap.date.replace(/-/g, "/");
 
@@ -428,7 +428,7 @@ export function buildDailyNewsletterEmail(params: {
     <p style="font-size:11px;color:#bbb;margin:0;">
       <a href="${unsubUrl}" style="color:#bbb;">配信停止</a>
       &nbsp;·&nbsp;
-      <a href="${baseUrl}" style="color:#bbb;">globalcardindex.com</a>
+      <a href="${baseUrl}" style="color:#bbb;">gci-index.com</a>
     </p>
   `);
 
@@ -488,7 +488,7 @@ export function buildMarketAlertEmail(params: {
 }): EmailPayload {
   const { to, cards, unsubUrl, date } = params;
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://globalcardindex.com";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.gci-index.com";
 
   const gainers = cards.filter((c) => c.changeRate >= 0).sort((a, b) => b.changeRate - a.changeRate);
   const losers  = cards.filter((c) => c.changeRate < 0).sort((a, b) => a.changeRate - b.changeRate);
@@ -619,7 +619,7 @@ export function buildWeeklyRecapEmail(params: {
   unsubUrl: string;
 }): EmailPayload {
   const { to, data, unsubUrl } = params;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://globalcardindex.com";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.gci-index.com";
 
   function cardItem(c: WeeklyRecapCard, sign: "up" | "down"): string {
     const color  = sign === "up" ? "#15803d" : "#dc2626";
