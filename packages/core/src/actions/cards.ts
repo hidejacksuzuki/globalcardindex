@@ -42,13 +42,10 @@ function buildOrderBy(
   sort: CardSortKey = "name",
   order: SortOrder  = "asc",
 ): Prisma.CardOrderByWithRelationInput[] {
-  if (sort === "latestPrice") {
-    // 最新価格の最大値で降順 / 昇順。価格なしのカードは末尾に。
-    return [
-      { prices: { _max: { price: order } } } as Prisma.CardOrderByWithRelationInput,
-      { name: "asc" },
-    ];
-  }
+  // NOTE: sort === "latestPrice" はここでは扱わない。
+  // Prisma のリレーション orderBy は _count のみ対応で、
+  // { prices: { _max: ... } } は PrismaClientValidationError になる
+  // （listCards 内の2段階クエリで処理する）。
   if (sort === "popular") {
     // 人気順 = 価格観測データの多さ（市場での取引・出品の活発さの代理指標）
     return [
@@ -87,6 +84,66 @@ export async function listCards(
     page     = Math.max(1, opts.page ?? 1);
     skip     = (page - 1) * pageSize;
     take     = pageSize;
+  }
+
+  // ── 価格順ソート: 2段階クエリ ──────────────────────────────
+  // Prisma はリレーションの orderBy で _max を使えないため、
+  // ① Price を cardId ごとに最大値で集計して並べ → ② その順でカードを取得する。
+  if (opts.sort === "latestPrice") {
+    const order = opts.order ?? "desc";
+
+    const matching = await prisma.card.findMany({ where, select: { id: true } });
+    const matchIds = matching.map((c) => c.id);
+
+    const grouped = await prisma.price.groupBy({
+      by:      ["cardId"],
+      // 外れ値・stale を除外（¥9,999,999 のような釣り出品がソート上位を汚染するため）
+      where:   { cardId: { in: matchIds }, isOutlier: false, isStale: false },
+      _max:    { price: true },
+      orderBy: [{ _max: { price: order } }],
+    });
+
+    let orderedIds = grouped.map((g) => g.cardId);
+    if (!opts.onlyWithPrices) {
+      // 価格なしカードは末尾に（従来の意図を踏襲）
+      const withPrice = new Set(orderedIds);
+      orderedIds = [...orderedIds, ...matchIds.filter((id) => !withPrice.has(id))];
+    }
+
+    const totalCount = orderedIds.length;
+    const pageIds    = orderedIds.slice(skip, skip + take);
+
+    const pageRows = await prisma.card.findMany({
+      where:   { id: { in: pageIds } },
+      include: {
+        prices: {
+          orderBy: { observedAt: "desc" },
+          take:    1,
+          select:  { price: true, currency: true, observedAt: true },
+        },
+      },
+    });
+    const rowMap = new Map(pageRows.map((c) => [c.id, c]));
+    const rows   = pageIds
+      .map((id) => rowMap.get(id))
+      .filter((c): c is NonNullable<typeof c> => c !== undefined);
+
+    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+    const cards: CardSummaryWithPrice[] = rows.map((c) => {
+      const latest = c.prices[0] ?? null;
+      return {
+        id:             c.id,
+        slug:           c.slug ?? null,
+        name:           c.name,
+        setName:        c.setName,
+        rarity:         c.rarity,
+        condition:      c.condition,
+        latestPrice:    latest ? latest.price       : null,
+        currency:       latest ? latest.currency    : null,
+        lastObservedAt: latest ? latest.observedAt.toISOString() : null,
+      };
+    });
+    return { cards, totalCount, page, pageSize, totalPages };
   }
 
   const [rows, totalCount] = await Promise.all([
