@@ -99,6 +99,28 @@ grep が早期にパイプを閉じ、書き込み側が SIGPIPE を受けて `p
 
 正常。Basic Auth（ADMIN_USER / ADMIN_PASSWORD）で保護している意図した設計。
 
+### 症状: push したのに gci-data（管理画面）に反映されない
+
+2026-07-04 に発生。git push で gci-web はデプロイされるのに、gci-data には
+デプロイ記録すら作られないことがある（Ignored Build Step は Automatic で問題なし、
+原因未特定）。回避策 — CLI から手動デプロイ:
+
+```bash
+cd "/Users/suzukihidenobu/Documents/Claude/Projects/Global Card Index"
+npx vercel link --yes --project gci-data
+npx vercel --prod
+```
+
+デプロイ後の反映確認: `curl -s -o /dev/null -w "%{http_code}" https://www.gci-data.com/api/v1/admin/feedback/test`
+が **405** なら新コード（404 なら旧コードのまま）。
+
+**教訓（2026-07-04 の feedback 不達事件）**: 「管理画面にデータが出ない」ときは
+①送信自体の成否をDBで確認 → ②管理画面側のデプロイが最新か → ③管理画面側の
+環境変数（gci-data の DATABASE_URL は gci-web とは別管理！）の順で切り分ける。
+このときは②（未デプロイ）と③（DATABASE_URL が46日前の旧パスワードのまま）の
+両方が原因だった。パスワードローテーション時は **gci-web と gci-data の両方**の
+環境変数更新を忘れないこと。
+
 ---
 
 ## 3. DB migration の適用
