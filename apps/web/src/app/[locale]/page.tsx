@@ -12,7 +12,6 @@ import {
   formatDateTime,
 } from '@gci/core';
 import { SearchHero }    from '@/components/index/SearchHero';
-import { SubscribeForm } from '@/components/newsletter/SubscribeForm';
 import { Disclaimer }    from '@/components/common/Disclaimer';
 import { getTranslations } from '@/i18n';
 import { auth }          from '@/auth';
@@ -222,19 +221,24 @@ export default async function HomePage({ params }: { params: { locale: Locale } 
           </section>
         )}
 
-        {/* ── Newsletter CTA ─────────────────────────────────────── */}
-        <section className="border border-navy/10 bg-white px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="flex items-center gap-3 flex-1">
-            <span className="text-xl">✉️</span>
-            <div>
-              <p className="text-sm font-semibold text-navy">最新の相場情報をメールでお届け</p>
-              <p className="text-xs text-navy/50">マーケットの変動を見逃さないために、ニュースレターを登録しましょう。</p>
+        {/* ── アカウント誘導 CTA（Newsletterから差し替え・βでは登録導線を一本化） ── */}
+        {!userId && (
+          <section className="border border-navy/10 bg-white px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3 flex-1">
+              <span className="text-xl">🔔</span>
+              <div>
+                <p className="text-sm font-semibold text-navy">気になるカードの価格変動をメールでお知らせ</p>
+                <p className="text-xs text-navy/50">ログインすると、ウォッチリストに登録したカードの価格アラートを受け取れます。</p>
+              </div>
             </div>
-          </div>
-          <div className="w-full sm:max-w-xs">
-            <SubscribeForm />
-          </div>
-        </section>
+            <Link
+              href="/login"
+              className="w-full sm:w-auto text-center bg-navy text-white px-5 py-2.5 text-sm font-semibold rounded-sm hover:bg-navy/80 transition shrink-0"
+            >
+              ログインして始める
+            </Link>
+          </section>
+        )}
 
         <Disclaimer variant="footer" />
       </div>

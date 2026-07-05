@@ -7,12 +7,11 @@ import { usePathname }          from "next/navigation";
 type NavLink = { href: string; label: string; desktop?: string };
 
 type Props = {
-  links:           NavLink[];
-  newsletterLabel: string;
-  userId:          string | null;
+  links:  NavLink[];
+  userId: string | null;
 };
 
-export function MobileMenu({ links, newsletterLabel, userId }: Props) {
+export function MobileMenu({ links, userId }: Props) {
   const [open,    setOpen]    = useState(false);
   const pathname              = usePathname();
 
@@ -63,10 +62,6 @@ export function MobileMenu({ links, newsletterLabel, userId }: Props) {
           })}
 
           <div className="px-5 pt-4 mt-2 border-t border-navy/5 space-y-2">
-            <Link href="/newsletter" className="block w-full text-center border border-gold/60 bg-gold/5 px-3 py-2 text-xs font-medium text-navy/70 hover:bg-gold/10 transition">
-              {newsletterLabel}
-            </Link>
-
             {userId ? (
               <Link href="/account" className="block w-full text-center border border-navy/15 px-3 py-2 text-xs text-navy/60 hover:text-navy hover:border-navy/40 transition">
                 マイページ

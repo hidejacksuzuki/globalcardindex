@@ -73,12 +73,6 @@ export default function LocaleLayout({
                   >
                     {t.footer.discord}
                   </a>
-                  <a
-                    href="/newsletter"
-                    className="rounded border border-navy/20 px-4 py-1.5 text-xs font-medium text-navy/60 transition hover:border-navy/40 hover:text-navy"
-                  >
-                    {t.footer.newsletterSubscribe}
-                  </a>
                 </div>
               </div>
             )}
@@ -91,7 +85,6 @@ export default function LocaleLayout({
               <a href="/games"         className="hover:text-navy transition">{t.nav.games}</a>
               <a href="/daily"         className="hover:text-navy transition">{t.nav.daily}</a>
               <a href="/indices"       className="hover:text-navy transition">{t.nav.indices}</a>
-              <a href="/newsletter"    className="hover:text-navy transition">{t.nav.newsletter}</a>
               <a href="/about"         className="hover:text-navy transition">{t.nav.about}</a>
               <a href="/beta"          className="hover:text-navy transition">{t.footer.beta}</a>
               <a href="/terms"         className="hover:text-navy transition font-medium">{t.footer.terms}</a>

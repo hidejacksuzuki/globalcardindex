@@ -75,7 +75,7 @@ export async function Header() {
           )}
 
           {/* Mobile */}
-          <MobileMenu links={navLinks} newsletterLabel={t.nav.newsletter} userId={userId} />
+          <MobileMenu links={navLinks} userId={userId} />
         </div>
       </div>
     </header>
