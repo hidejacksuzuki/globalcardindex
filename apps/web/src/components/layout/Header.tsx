@@ -12,7 +12,8 @@ export async function Header() {
   const userId  = session?.user?.id ?? null;
 
   const navLinks = [
-    { href: '/cards',       label: 'カード検索',   desktop: '' },
+    // モバイルではヘッダー幅が375pxに収まらないため隠す（ドロワーメニュー内にあり機能は維持）
+    { href: '/cards',       label: 'カード検索',   desktop: 'hidden sm:inline' },
     { href: '/marketboard', label: 'マーケット',   desktop: 'hidden md:inline' },
     { href: '/trending',    label: 'ランキング',   desktop: 'hidden md:inline' },
     { href: '/portfolio',   label: 'Portfolio',    desktop: 'hidden sm:inline' },
@@ -22,7 +23,7 @@ export async function Header() {
 
   return (
     <header className="border-b border-navy/10 bg-white sticky top-0 z-30">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3 gap-4">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-3 gap-2 sm:gap-4">
         {/* Logo */}
         <Link href="/" className="shrink-0">
           <Image
