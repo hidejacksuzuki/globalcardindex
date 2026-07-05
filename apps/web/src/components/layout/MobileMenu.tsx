@@ -38,7 +38,7 @@ export function MobileMenu({ links, newsletterLabel, userId }: Props) {
         <div className="fixed inset-0 z-40 bg-navy/30 backdrop-blur-sm" onClick={() => setOpen(false)} />
       )}
 
-      <div className={`fixed top-0 right-0 bottom-0 z-50 w-64 bg-white border-l border-navy/10 shadow-xl transition-transform ${open ? "translate-x-0" : "translate-x-full"}`}>
+      <div className={`fixed top-0 right-0 bottom-0 z-50 w-64 bg-white border-l border-navy/10 shadow-xl transition-[transform,visibility] duration-200 ${open ? "translate-x-0 visible" : "translate-x-full invisible"}`}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-navy/5">
           <span className="text-xs uppercase tracking-widest text-navy/50">Menu</span>
           <button onClick={() => setOpen(false)} className="text-navy/30 hover:text-navy transition text-xl leading-none">✕</button>

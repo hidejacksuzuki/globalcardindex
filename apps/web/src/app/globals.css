@@ -9,6 +9,10 @@
 html,
 body {
   background-color: #f7f8fb;
+  /* 画面外へ translate した固定要素（モバイルメニュー等）が
+     iOS Safari/Chrome で横スクロール領域を生むのを防ぐ。
+     overflow-x: hidden と違い position: sticky を壊さない */
+  overflow-x: clip;
 }
 
 body {
