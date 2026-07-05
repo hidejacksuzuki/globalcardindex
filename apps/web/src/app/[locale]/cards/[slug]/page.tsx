@@ -1,7 +1,7 @@
 import type { Metadata }        from "next";
 import { notFound }              from "next/navigation";
 import Link                      from "next/link";
-import { getCardBySlug, getCardPriceHistory } from "@gci/core";
+import { getCardBySlug, getCardPriceHistory, getCardEngagement } from "@gci/core";
 import { getGame }               from "@gci/core";
 import { WatchButton }           from "@/components/watchlist/WatchButton";
 import { isWatching, isUserWatching } from "@gci/core";
@@ -79,9 +79,10 @@ export default async function CardSlugPage({
     ? await isInPortfolio(userId, card.id).catch(() => ({ inPortfolio: false as const }))
     : { inPortfolio: false as const };
 
-  // 価格推移・per-card index value（並列取得）
-  const [priceHistory, cardIndex] = await Promise.all([
+  // 価格推移・熱量・per-card index value（並列取得）
+  const [priceHistory, engagement, cardIndex] = await Promise.all([
     getCardPriceHistory(card.id, 90).catch(() => []),
+    getCardEngagement(card.id).catch(() => ({ watchers: 0, holders: 0, recentSales: [] })),
     prisma.indexValue.findFirst({
       where:   { cardId: card.id },
       orderBy: { calculatedAt: "desc" },
@@ -187,10 +188,30 @@ export default async function CardSlugPage({
         </div>
       </header>
 
-      {/* 推定相場 */}
+      {/* GCI Price Confidence — 推定相場と、その信頼性を一緒に示す */}
       {card.priceCount > 0 && card.currency && (
         <section className="border border-navy/10 bg-white p-6">
-          <h2 className="text-xs uppercase tracking-widest text-navy/50 mb-4">推定相場</h2>
+          <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+            <div className="flex items-center gap-3">
+              <h2 className="text-xs uppercase tracking-widest text-navy/50">推定相場</h2>
+              {cardIndex?.confidence && (
+                <ConfidenceBadge confidence={cardIndex.confidence} />
+              )}
+            </div>
+            {/* 熱量バッジ */}
+            <div className="flex items-center gap-3 text-[11px] text-navy/45">
+              {engagement.watchers > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <span>☆</span>{engagement.watchers}人がウォッチ中
+                </span>
+              )}
+              {engagement.holders > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <span>🗂</span>{engagement.holders}人が保有
+                </span>
+              )}
+            </div>
+          </div>
           <dl className="grid grid-cols-2 gap-6 sm:grid-cols-4">
             <div>
               <dt className="text-xs uppercase tracking-widest text-navy/40">最安値</dt>
@@ -217,9 +238,47 @@ export default async function CardSlugPage({
               </dd>
             </div>
           </dl>
-          <p className="mt-4 text-[11px] text-navy/40 border-t border-navy/5 pt-3">
-            ※ 直近60件の信頼スコア上位データから算出。外れ値・古いデータを除外済み。
-          </p>
+          {/* Price Confidence 行 — データの信頼性を数字で示す */}
+          <div className="mt-4 border-t border-navy/5 pt-3 flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-4 text-[11px] text-navy/50">
+              {card.avgTrust !== null && (
+                <span>
+                  データ信頼スコア{" "}
+                  <strong className={`tabular-nums ${card.avgTrust >= 70 ? "text-green-700" : card.avgTrust >= 50 ? "text-amber-600" : "text-navy/60"}`}>
+                    {card.avgTrust}/100
+                  </strong>
+                </span>
+              )}
+              {card.lastObservedAt && (
+                <span>更新: {relativeTime(card.lastObservedAt)}</span>
+              )}
+            </div>
+            <p className="text-[11px] text-navy/35">
+              ※ 直近60件の信頼スコア上位データから算出。外れ値・古いデータを除外済み。
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* 直近の取引・価格観測 */}
+      {engagement.recentSales.length > 0 && card.currency && (
+        <section className="border border-navy/10 bg-white p-6">
+          <h2 className="text-xs uppercase tracking-widest text-navy/50 mb-4">直近の価格データ</h2>
+          <ul className="divide-y divide-navy/5">
+            {engagement.recentSales.map((s, i) => (
+              <li key={i} className="flex items-center justify-between py-2.5 text-sm">
+                <span className="text-navy/50 text-xs">{relativeTime(s.observedAt)}</span>
+                <span className="inline-flex items-center gap-2">
+                  {s.sold ? (
+                    <span className="rounded bg-green-50 border border-green-200 px-1.5 py-0.5 text-[10px] text-green-700">落札</span>
+                  ) : (
+                    <span className="rounded bg-navy/5 border border-navy/10 px-1.5 py-0.5 text-[10px] text-navy/50">観測</span>
+                  )}
+                  <span className="tabular-nums font-medium text-navy">{formatPrice(s.price, s.currency)}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
@@ -358,6 +417,17 @@ export default async function CardSlugPage({
 // ----------------------------------------------------------------
 // Sub components
 // ----------------------------------------------------------------
+
+function relativeTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const min    = Math.floor(diffMs / 60_000);
+  if (min < 60)      return `${Math.max(min, 1)}分前`;
+  const hours = Math.floor(min / 60);
+  if (hours < 24)    return `${hours}時間前`;
+  const days = Math.floor(hours / 24);
+  if (days < 30)     return `${days}日前`;
+  return `${Math.floor(days / 30)}ヶ月前`;
+}
 
 function Stat({
   label,

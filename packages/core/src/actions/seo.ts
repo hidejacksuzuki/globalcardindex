@@ -200,6 +200,10 @@ export type CardSeoDetail = {
   minPrice:    number | null;
   medianPrice: number | null;
   maxPrice:    number | null;
+  /** 算出に使ったサンプルのトラストスコア平均 (0-100)。Price Confidence 表示用 */
+  avgTrust:    number | null;
+  /** 最新の価格観測時刻 (ISO)。「◯時間前に更新」表示用 */
+  lastObservedAt: string | null;
 };
 
 export async function getCardBySlug(rawSlug: string): Promise<CardSeoDetail | null> {
@@ -219,7 +223,7 @@ export async function getCardBySlug(rawSlug: string): Promise<CardSeoDetail | nu
         },
         orderBy: { observedAt: "desc" },
         take:    60,
-        select:  { price: true, currency: true, observedAt: true },
+        select:  { price: true, currency: true, observedAt: true, trustScore: true },
       },
     },
   });
@@ -242,6 +246,9 @@ export async function getCardBySlug(rawSlug: string): Promise<CardSeoDetail | nu
   const prices = card.prices.map((p) => p.price);
   const minPrice    = prices.length > 0 ? Math.min(...prices) : null;
   const maxPrice    = prices.length > 0 ? Math.max(...prices) : null;
+  const avgTrust    = card.prices.length > 0
+    ? Math.round(card.prices.reduce((s, p) => s + p.trustScore, 0) / card.prices.length)
+    : null;
   const sorted      = [...prices].sort((a, b) => a - b);
   const mid         = Math.floor(sorted.length / 2);
   const medianPrice = sorted.length > 0
@@ -266,6 +273,8 @@ export async function getCardBySlug(rawSlug: string): Promise<CardSeoDetail | nu
     minPrice,
     medianPrice,
     maxPrice,
+    avgTrust,
+    lastObservedAt: latest?.observedAt.toISOString() ?? null,
   };
 }
 
@@ -394,6 +403,74 @@ export async function getCardSourceStats(cardId: string): Promise<CardSourceStat
       };
     })
     .sort((a, b) => b.sampleCount - a.sampleCount);
+}
+
+// ----------------------------------------------------------------
+// getCardEngagement — カード詳細の「熱量」指標
+// ウォッチ数・保有者数・直近の取引（実データのみ、推定値なし）
+// ----------------------------------------------------------------
+
+export type RecentSale = {
+  price:      number;
+  currency:   string;
+  observedAt: string; // ISO
+  sold:       boolean; // true = 落札確認済み / false = 出品観測
+};
+
+export type CardEngagement = {
+  watchers:    number;       // ウォッチしている人数（ログイン + 匿名セッション）
+  holders:     number;       // Portfolio に登録している人数
+  recentSales: RecentSale[]; // 直近の取引（落札優先、なければ価格観測）
+};
+
+export async function getCardEngagement(cardId: string): Promise<CardEngagement> {
+  const [userWatch, anonWatch, holders, sold] = await Promise.all([
+    prisma.userWatchlistItem.count({ where: { cardId } }),
+    prisma.watchlistItem.count({ where: { cardId } }),
+    prisma.portfolioCard.count({ where: { cardId } }),
+    prisma.price.findMany({
+      where: {
+        cardId,
+        availability: "sold",
+        isOutlier:    false,
+        trustScore:   { gte: TRUST_THRESHOLD },
+      },
+      orderBy: { observedAt: "desc" },
+      take:    5,
+      select:  { price: true, currency: true, observedAt: true },
+    }),
+  ]);
+
+  // 落札データがまだ収集されていないカードは、直近の価格観測でフォールバック
+  // （sold と観測はバッジで明確に区別して表示する）
+  let recentSales: RecentSale[] = sold.map((s) => ({
+    price:      s.price,
+    currency:   s.currency,
+    observedAt: s.observedAt.toISOString(),
+    sold:       true,
+  }));
+
+  if (recentSales.length === 0) {
+    const observed = await prisma.price.findMany({
+      where: {
+        cardId,
+        isOutlier:  false,
+        isStale:    false,
+        trustScore: { gte: TRUST_THRESHOLD },
+      },
+      orderBy: { observedAt: "desc" },
+      take:    5,
+      select:  { price: true, currency: true, observedAt: true },
+    });
+    recentSales = observed.map((s) => ({
+      price:      s.price,
+      currency:   s.currency,
+      observedAt: s.observedAt.toISOString(),
+      sold:       false,
+    }));
+  }
+
+  return { watchers: userWatch + anonWatch, holders, recentSales };
 }
 
 // ----------------------------------------------------------------

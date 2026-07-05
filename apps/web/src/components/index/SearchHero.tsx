@@ -2,8 +2,15 @@
 
 import { useState, useRef } from "react";
 import { useRouter }         from "next/navigation";
+import Link                  from "next/link";
 
 const POPULAR = ["ピカチュウ", "リーリエ", "ブラッキー", "ナンジャモ", "ミモザ"];
+
+const FEATURES = [
+  { icon: "📈", title: "Price Tracking",  body: "実売データから推定相場と価格推移を毎日更新" },
+  { icon: "🗂", title: "Portfolio",       body: "保有カードの評価額・含み損益を自動で追跡" },
+  { icon: "🔥", title: "Market Trends",   body: "急騰・急落ランキングと市場全体の動きを可視化" },
+];
 
 type Props = {
   lastUpdated?: string | null;
@@ -32,11 +39,11 @@ export function SearchHero({ lastUpdated }: Props) {
         {/* Left */}
         <div className="space-y-6">
           <div className="space-y-3">
-            <h1 className="text-3xl sm:text-4xl font-bold text-white leading-tight tracking-tight">
-              あなたのカード、<br className="sm:hidden" />今いくら？
+            <h1 className="text-3xl sm:text-5xl font-bold text-white leading-tight tracking-tight">
+              トレカ市場を、<br className="sm:hidden" />透明に。
             </h1>
-            <p className="text-sm text-white/60 leading-relaxed">
-              価格データから算出した最新相場を、誰でも、透明に。
+            <p className="text-base text-white/70 leading-relaxed">
+              あなたのカードの最新相場を追跡。
             </p>
           </div>
 
@@ -72,6 +79,34 @@ export function SearchHero({ lastUpdated }: Props) {
               >
                 {label}
               </button>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <div className="flex gap-3 flex-wrap">
+            <Link
+              href="/cards"
+              className="bg-white text-navy px-6 py-3 text-sm font-semibold rounded-sm hover:bg-white/90 transition"
+            >
+              カードを探す
+            </Link>
+            <Link
+              href="/portfolio"
+              className="border border-white/30 text-white px-6 py-3 text-sm font-semibold rounded-sm hover:bg-white/10 transition"
+            >
+              ポートフォリオを作る
+            </Link>
+          </div>
+
+          {/* 3 features */}
+          <div className="grid sm:grid-cols-3 gap-3 pt-2">
+            {FEATURES.map(({ icon, title, body }) => (
+              <div key={title} className="border border-white/10 bg-white/5 rounded-sm px-4 py-3">
+                <p className="text-sm font-semibold text-white">
+                  <span className="mr-1.5">{icon}</span>{title}
+                </p>
+                <p className="mt-1 text-xs text-white/50 leading-relaxed">{body}</p>
+              </div>
             ))}
           </div>
         </div>
