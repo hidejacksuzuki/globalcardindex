@@ -91,6 +91,14 @@ export default function LocaleLayout({
             </nav>
 
             <Disclaimer variant="footer" />
+
+            <p className="text-[11px] text-navy/30 text-center">
+              © {new Date().getFullYear()} Global Card Index
+              <br className="sm:hidden" />
+              <span className="sm:before:content-['_·_']">
+                「Global Card Index」は商標出願中です。
+              </span>
+            </p>
           </div>
         </footer>
 
