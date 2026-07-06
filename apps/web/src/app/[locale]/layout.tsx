@@ -92,13 +92,17 @@ export default function LocaleLayout({
 
             <Disclaimer variant="footer" />
 
-            <p className="text-[11px] text-navy/30 text-center">
-              © {new Date().getFullYear()} Global Card Index
-              <br className="sm:hidden" />
-              <span className="sm:before:content-['_·_']">
-                「Global Card Index」は商標出願中です。
-              </span>
-            </p>
+            <div className="text-[11px] text-navy/30 text-center space-y-0.5">
+              <p>© {new Date().getFullYear()} Global Card Index</p>
+              {htmlLang === 'en' ? (
+                <>
+                  <p>Global Card Index is an independent trading card market analytics platform.</p>
+                  <p>&quot;Global Card Index&quot; is a trademark pending.</p>
+                </>
+              ) : (
+                <p>「Global Card Index」は商標出願中です。</p>
+              )}
+            </div>
           </div>
         </footer>
 
