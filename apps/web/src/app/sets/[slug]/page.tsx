@@ -4,6 +4,7 @@ import Link                from "next/link";
 import { getSetStats }     from "@gci/core";
 import { getGame }         from "@gci/core";
 import { formatPrice }     from "@gci/core";
+import { safeJsonLd }            from "@/lib/jsonLd";
 
 export const revalidate = 3600; // ISR: 1時間キャッシュ
 
@@ -138,7 +139,7 @@ export default async function SetPage({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: safeJsonLd({
             "@context":  "https://schema.org",
             "@type":     "ItemList",
             name:        `${stats.setName} カード一覧`,

@@ -14,6 +14,7 @@ import { AddToPortfolioButton }  from "@/components/portfolio/AddToPortfolioButt
 import { PriceChart }            from "@/components/cards/PriceChart";
 import { isInPortfolio }         from "@gci/core";
 import { auth }                  from "@/auth";
+import { safeJsonLd }            from "@/lib/jsonLd";
 
 export const dynamic = "force-dynamic";
 
@@ -390,7 +391,7 @@ export default async function CardSlugPage({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: safeJsonLd({
             "@context": "https://schema.org",
             "@type":    "Product",
             name:       card.name,

@@ -12,6 +12,7 @@ import { CardViewTracker }       from "@/components/analytics/CardViewTracker";
 import { CardRequestButton }     from "@/components/cards/CardRequestButton";
 import { PriceChart }            from "@/components/cards/PriceChart";
 import { auth }                  from "@/auth";
+import { safeJsonLd }            from "@/lib/jsonLd";
 
 export const dynamic = "force-dynamic";
 
@@ -307,7 +308,7 @@ export default async function CardSlugPage({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: safeJsonLd({
             "@context": "https://schema.org",
             "@type":    "Product",
             name:       card.name,

@@ -4,6 +4,7 @@ import Link                 from "next/link";
 import { getGame, getGameSlugs } from "@gci/core";
 import { getGameStats }     from "@gci/core";
 import { formatPrice }      from "@gci/core";
+import { safeJsonLd }            from "@/lib/jsonLd";
 
 export const revalidate = 3600; // ISR: 1時間キャッシュ
 
@@ -147,7 +148,7 @@ export default async function GamePage({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: safeJsonLd({
             "@context":   "https://schema.org",
             "@type":      "WebPage",
             name:         `${game.name} 相場・価格指数`,
