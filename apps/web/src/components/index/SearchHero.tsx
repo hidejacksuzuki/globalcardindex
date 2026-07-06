@@ -39,11 +39,14 @@ export function SearchHero({ lastUpdated }: Props) {
         {/* Left */}
         <div className="space-y-6">
           <div className="space-y-3">
+            <span className="inline-flex items-center gap-1.5 border border-gold-400/60 bg-gold-400/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-gold-100 rounded-sm">
+              Public Beta
+            </span>
             <h1 className="text-3xl sm:text-5xl font-bold text-white leading-tight tracking-tight">
               トレカ市場を、<br className="sm:hidden" />透明に。
             </h1>
             <p className="text-base text-white/70 leading-relaxed">
-              あなたのカードの最新相場を追跡。
+              あなたのカードの最新相場を追跡。現在β版として提供中です。
             </p>
           </div>
 
