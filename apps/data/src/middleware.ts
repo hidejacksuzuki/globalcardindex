@@ -47,10 +47,47 @@ function unauthorized(): NextResponse {
   });
 }
 
+/**
+ * Basic Auth 保護が必要な管理系 API パスの接頭辞。
+ *
+ * セキュリティ監査 (2026-07-06) で発覚: これらのルートは各ファイルが個別に
+ * `Referer` ヘッダーの中身（攻撃者が自由に設定できる）を admin 判定に使う
+ * `isAuthorized()` を実装しており、実質認証なしで呼び出せた
+ * （例: curl -H "Referer: https://x/admin/y" で管理者操作が可能だった）。
+ * ミドルウェアで先に弾くことで、ルート側の実装に依存せず一括で防御する。
+ *
+ * /api/v1/cron/* と /api/v1/webhooks/* はここに含めない:
+ *   - cron は Vercel Cron が Bearer $CRON_SECRET を送る想定で Basic Auth を送れない
+ *     （authorizeCron() で別途保護されている）
+ *   - webhooks は外部サービス（Resend）が呼ぶため Basic Auth を送れない
+ *     （svix 署名検証で別途保護されている）
+ * /api/v1/cards, /api/v1/cards/[id] は意図した公開 API のため対象外。
+ */
+const PROTECTED_API_PREFIXES = [
+  "/api/admin",
+  "/api/v1/card-requests",
+  "/api/v1/cards/bulk-add",
+  "/api/v1/cards/candidates",
+  "/api/v1/cards/import-watchlist",
+  "/api/v1/cards/quick-add",
+  "/api/v1/collector",
+  "/api/v1/auction-listings",
+  "/api/v1/listings",
+  "/api/v1/market-listings",
+  "/api/v1/prices",
+  "/api/v1/index",
+  "/api/v1/import",
+  "/api/v1/debug",
+];
+
 export function middleware(req: NextRequest) {
-  // /admin/*（画面）と /api/v1/admin/*（管理API）を対象
+  // /admin/*（画面）・/api/v1/admin/*・上記の管理API群を対象
   const { pathname } = req.nextUrl;
-  if (!pathname.startsWith("/admin") && !pathname.startsWith("/api/v1/admin")) {
+  const isProtected =
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/api/v1/admin") ||
+    PROTECTED_API_PREFIXES.some((p) => pathname.startsWith(p));
+  if (!isProtected) {
     return NextResponse.next();
   }
 
@@ -105,5 +142,22 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/v1/admin/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/api/admin/:path*",
+    "/api/v1/admin/:path*",
+    "/api/v1/card-requests/:path*",
+    "/api/v1/cards/bulk-add",
+    "/api/v1/cards/candidates/:path*",
+    "/api/v1/cards/import-watchlist",
+    "/api/v1/cards/quick-add",
+    "/api/v1/collector/:path*",
+    "/api/v1/auction-listings/:path*",
+    "/api/v1/listings/:path*",
+    "/api/v1/market-listings/:path*",
+    "/api/v1/prices/:path*",
+    "/api/v1/index/:path*",
+    "/api/v1/import/:path*",
+    "/api/v1/debug/:path*",
+  ],
 };

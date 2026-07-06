@@ -11,13 +11,16 @@ import { timingSafeEqual }           from "@gci/core";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * セキュリティ監査 (2026-07-06): Referer による認証迂回を撤去し Bearer 認証のみに限定。
+ * 理由は sync-cards/route.ts のコメント参照。
+ */
 function isAuthorized(req: NextRequest): boolean {
   const secret  = process.env.CRON_SECRET ?? "";
   const auth    = req.headers.get("authorization") ?? "";
   if (secret.length >= 16 && auth.startsWith("Bearer ") &&
       timingSafeEqual(auth.slice(7).trim(), secret)) return true;
-  const referer = req.headers.get("referer") ?? "";
-  return referer.includes("/admin/") || process.env.NODE_ENV !== "production";
+  return process.env.NODE_ENV !== "production";
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {

@@ -19,16 +19,17 @@ import { parseWatchlistCsv, timingSafeEqual, writeCronLog } from "@gci/core";
 export const dynamic = "force-dynamic";
 
 /**
- * CRON_SECRET による Bearer 認証 + 管理画面（referer）による認証を許可。
- * Vercel Cron は Bearer ヘッダーを付与。管理画面のボタンは referer で識別。
+ * CRON_SECRET による Bearer 認証。Vercel Cron が Bearer ヘッダーを付与する。
+ *
+ * セキュリティ監査 (2026-07-06): 以前は Referer ヘッダーに "/admin/" が
+ * 含まれていれば認証を通す抜け道があった。Referer は攻撃者が任意に設定できる
+ * ため実質認証なしで呼び出せてしまっていた。Bearer 認証のみに限定する。
  */
 function isAuthorized(req: NextRequest): boolean {
   const secret  = process.env.CRON_SECRET ?? "";
   const header  = req.headers.get("authorization") ?? "";
   if (secret.length >= 16 && header.startsWith("Bearer ") &&
       timingSafeEqual(header.slice(7).trim(), secret)) return true;
-  const referer = req.headers.get("referer") ?? "";
-  if (referer.includes("/admin/")) return true;
   return process.env.NODE_ENV !== "production";
 }
 
