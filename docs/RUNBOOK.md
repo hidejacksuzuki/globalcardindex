@@ -129,6 +129,10 @@ X API はプリペイドのクレジット制。開発者アカウントの残�
 対処: https://developer.x.com/ にログイン → Credits / Billing →
 「Purchase credits」でチャージ（最低 $5、残高は失効しない）。
 
+コスト実測（2026-07-06）: **1投稿 ≈ $0.20**。3投稿/日 = 月93投稿 ≈ **$19/月**。
+$5 チャージは約8日分。残高切れで自動投稿が黙って止まるので、
+/admin/distribution で「Not posted」が続いていたらまず残高を疑うこと。
+
 - 投稿状況の確認: https://www.gci-data.com/admin/distribution （X朝/昼/夜の列）
 - 手動再送: 同ページの Actions 列「𝕏 post」ボタン（dry で文面確認してから）
 - TWITTER_* の4キーは **gci-data のみ**に設定（gci-web には不要）
