@@ -121,6 +121,18 @@ npx vercel --prod
 両方が原因だった。パスワードローテーション時は **gci-web と gci-data の両方**の
 環境変数更新を忘れないこと。
 
+### 症状: X投稿が `402 CreditsDepleted` で失敗する
+
+X API はプリペイドのクレジット制。開発者アカウントの残高が切れると
+朝・昼・夜の自動投稿がすべて失敗する（キーや権限の問題ではない）。
+
+対処: https://developer.x.com/ にログイン → Credits / Billing →
+「Purchase credits」でチャージ（最低 $5、残高は失効しない）。
+
+- 投稿状況の確認: https://www.gci-data.com/admin/distribution （X朝/昼/夜の列）
+- 手動再送: 同ページの Actions 列「𝕏 post」ボタン（dry で文面確認してから）
+- TWITTER_* の4キーは **gci-data のみ**に設定（gci-web には不要）
+
 ---
 
 ## 3. DB migration の適用
