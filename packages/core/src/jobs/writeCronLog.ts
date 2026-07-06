@@ -26,6 +26,8 @@ export type CronName =
   | "sync-cards"
   | "daily-snapshot"
   | "daily-post"
+  | "x-noon"
+  | "x-evening"
   | "daily-discord"
   | "daily-newsletter"
   | "watchlist-alerts"

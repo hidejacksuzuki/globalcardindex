@@ -18,6 +18,14 @@
       "schedule": "5 23 * * *"
     },
     {
+      "path": "/api/v1/cron/x-noon",
+      "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/v1/cron/x-evening",
+      "schedule": "30 11 * * *"
+    },
+    {
       "path": "/api/v1/cron/daily-discord",
       "schedule": "10 23 * * *"
     },

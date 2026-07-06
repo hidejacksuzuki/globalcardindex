@@ -129,11 +129,141 @@ export function buildTweetPreview(recap: DailyRecap): TweetPreview {
   const baseUrl  = process.env.NEXT_PUBLIC_BASE_URL ?? "https://globalcardindex.com";
   const url      = `${baseUrl}/daily/${recap.date}`;
 
-  // URL を 23 文字に置換してカウント
-  const countableText = text.replace(url, "X".repeat(23));
-  const charCount     = [...countableText].length;   // コードポイント単位
+  return buildPreviewFromText(text, [url]);
+}
 
+/**
+ * 汎用: テキスト中の URL をすべて t.co 換算(23文字)に置換してから
+ * 文字数をカウントする（コードポイント単位）。
+ */
+function buildPreviewFromText(text: string, urls: string[]): TweetPreview {
+  let countableText = text;
+  for (const url of urls) {
+    countableText = countableText.replaceAll(url, "X".repeat(23));
+  }
+  const charCount = [...countableText].length;
   return { text, charCount, withinLimit: charCount <= 280 };
+}
+
+// ----------------------------------------------------------------
+// 朝・昼・夜の定型ツイート（β polish: 毎日最低3投稿）
+// ----------------------------------------------------------------
+
+/** 朝 08:05 JST — daily-post cron。"Today's Market" */
+export function buildMorningTweetText(params: {
+  date:          string;  // "2026-07-05"
+  gainersCount:  number;
+  losersCount:   number;
+  updatedCount:  number;
+  url:           string;  // /daily/{date}
+}): string {
+  const { gainersCount, losersCount, updatedCount, url } = params;
+  return [
+    "📈 Today's Market",
+    "",
+    "本日の市場動向",
+    "",
+    `↑ 上昇カード：${gainersCount}`,
+    `↓ 下落カード：${losersCount}`,
+    `更新カード数：${updatedCount}`,
+    "",
+    url,
+    "",
+    "#ポケカ",
+    "#ワンピースカード",
+    "#遊戯王",
+  ].join("\n");
+}
+
+export function buildMorningTweetPreview(params: Parameters<typeof buildMorningTweetText>[0]): TweetPreview {
+  return buildPreviewFromText(buildMorningTweetText(params), [params.url]);
+}
+
+/** 昼 12:30 JST — x-noon cron。"今日の急騰カード" */
+export function buildNoonTweetText(params: {
+  cardName:  string;
+  changePct: number;      // 例: 18.2 (符号なし、正の値)
+  price:     number | null;
+  currency:  string | null;
+  url:       string;      // /cards/{slug}
+}): string {
+  const { cardName, changePct, price, currency, url } = params;
+  const priceStr = price !== null && currency
+    ? formatYenLike(price, currency)
+    : "データ不足";
+
+  return [
+    "🔥 今日の急騰カード",
+    "",
+    cardName,
+    `+${changePct.toFixed(1)}%`,
+    "",
+    "参考相場",
+    priceStr,
+    "",
+    "詳しくはこちら",
+    url,
+  ].join("\n");
+}
+
+export function buildNoonTweetPreview(params: Parameters<typeof buildNoonTweetText>[0]): TweetPreview {
+  return buildPreviewFromText(buildNoonTweetText(params), [params.url]);
+}
+
+/** 夜 20:30 JST — x-evening cron。"今日の価格更新" (+ 新規カードがあれば追記) */
+export function buildEveningTweetText(params: {
+  updatedCount: number;
+  newCount:     number;
+  newCards:     { name: string; slug: string | null }[];  // 表示は先頭5件まで
+  url:          string;   // /cards（検索導線）
+}): string {
+  const { updatedCount, newCount, newCards, url } = params;
+
+  const lines: string[] = [
+    "📊 今日の価格更新",
+    "",
+    "更新カード",
+    `${updatedCount}枚`,
+    "",
+    "新規追加",
+    `${newCount}枚`,
+  ];
+
+  if (newCount > 0 && newCards.length > 0) {
+    lines.push("");
+    lines.push("New Cards Added");
+    lines.push("");
+    for (const c of newCards.slice(0, 5)) {
+      lines.push(`・${c.name}`);
+    }
+    if (newCount > newCards.length) {
+      lines.push(`ほか ${newCount - newCards.length} 件`);
+    }
+    lines.push("");
+    lines.push("検索はこちら");
+  } else {
+    lines.push("");
+  }
+
+  lines.push(url);
+
+  return lines.join("\n");
+}
+
+export function buildEveningTweetPreview(params: Parameters<typeof buildEveningTweetText>[0]): TweetPreview {
+  return buildPreviewFromText(buildEveningTweetText(params), [params.url]);
+}
+
+function formatYenLike(price: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat("ja-JP", {
+      style:                 "currency",
+      currency,
+      maximumFractionDigits: currency === "JPY" ? 0 : 2,
+    }).format(price);
+  } catch {
+    return `${Math.round(price)} ${currency}`;
+  }
 }
 
 // ----------------------------------------------------------------

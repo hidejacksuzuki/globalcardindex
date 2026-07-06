@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authorizeCron, writeCronLog } from "@gci/core";
 import {
-  buildTweetText,
-  buildTweetPreview,
+  buildMorningTweetPreview,
   postTweet,
   uploadOGImageFromUrl,
   checkTwitterEnv,
@@ -13,6 +12,9 @@ import {
   saveDailyRecap,
   saveTweetResult,
   getSnapshotTweetStatus,
+  getDailyUpdateStats,
+  getTopGainers,
+  getTopLosers,
 } from "@gci/core";
 
 export const dynamic = "force-dynamic";
@@ -82,8 +84,20 @@ async function handle(req: NextRequest) {
     recap = await getDailyRecapByDate(targetDate) ?? await getDailyRecap();
   }
 
-  // ── 3. ツイートテキスト生成 ──────────────────────────────────
-  const preview = buildTweetPreview(recap);
+  // ── 3. ツイートテキスト生成（"Today's Market" テンプレート） ─────
+  const baseUrlForText = process.env.NEXT_PUBLIC_BASE_URL || "https://gci-index.com";
+  const [gainersAll, losersAll, updateStats] = await Promise.all([
+    getTopGainers(300),
+    getTopLosers(300),
+    getDailyUpdateStats(targetDate),
+  ]);
+  const preview = buildMorningTweetPreview({
+    date:         targetDate,
+    gainersCount: gainersAll.length,
+    losersCount:  losersAll.length,
+    updatedCount: updateStats.updatedCardsCount,
+    url:          `${baseUrlForText}/daily/${targetDate}`,
+  });
 
   if (isPreview) {
     return NextResponse.json({

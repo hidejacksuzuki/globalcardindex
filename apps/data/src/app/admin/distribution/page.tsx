@@ -5,9 +5,11 @@ export const dynamic = "force-dynamic";
 export default async function AdminDistributionPage() {
   const logs = await getDistributionLogs(60);
 
-  const totalPostedX       = logs.filter((l) => l.tweetId).length;
-  const totalPostedDiscord = logs.filter((l) => l.discordMessageId).length;
-  const totalDays          = logs.length;
+  const totalPostedX        = logs.filter((l) => l.tweetId).length;
+  const totalPostedXNoon    = logs.filter((l) => l.noonTweetId).length;
+  const totalPostedXEvening = logs.filter((l) => l.eveningTweetId).length;
+  const totalPostedDiscord  = logs.filter((l) => l.discordMessageId).length;
+  const totalDays           = logs.length;
 
   return (
     <div className="space-y-10">
@@ -22,10 +24,16 @@ export default async function AdminDistributionPage() {
       {/* ── サマリーカード ── */}
       <section>
         <h2 className="mb-4 text-xs uppercase tracking-widest text-navy/40">Summary</h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
           <StatCard label="Snapshots"      value={totalDays.toString()}            />
-          <StatCard label="X / Twitter"    value={`${totalPostedX} / ${totalDays}`}
+          <StatCard label="X 朝"    value={`${totalPostedX} / ${totalDays}`}
             highlight={totalPostedX === totalDays ? "green" : totalPostedX > 0 ? "amber" : "red"}
+          />
+          <StatCard label="X 昼"    value={`${totalPostedXNoon} / ${totalDays}`}
+            highlight={totalPostedXNoon === totalDays ? "green" : totalPostedXNoon > 0 ? "amber" : "red"}
+          />
+          <StatCard label="X 夜"    value={`${totalPostedXEvening} / ${totalDays}`}
+            highlight={totalPostedXEvening === totalDays ? "green" : totalPostedXEvening > 0 ? "amber" : "red"}
           />
           <StatCard label="Discord"        value={`${totalPostedDiscord} / ${totalDays}`}
             highlight={totalPostedDiscord === totalDays ? "green" : totalPostedDiscord > 0 ? "amber" : "red"}
@@ -38,8 +46,12 @@ export default async function AdminDistributionPage() {
       <section>
         <h2 className="mb-3 text-xs uppercase tracking-widest text-navy/40">Channels</h2>
         <div className="flex flex-wrap gap-4 text-xs text-navy/60">
-          <ChannelLegend icon="𝕏" label="X / Twitter"
-            desc="毎朝 01:00 JST — /api/v1/cron/daily-post" />
+          <ChannelLegend icon="𝕏" label="X 朝 — Today's Market"
+            desc="毎朝 08:05 JST — /api/v1/cron/daily-post" />
+          <ChannelLegend icon="𝕏" label="X 昼 — 今日の急騰カード"
+            desc="毎日 12:30 JST — /api/v1/cron/x-noon" />
+          <ChannelLegend icon="𝕏" label="X 夜 — 今日の価格更新"
+            desc="毎日 20:30 JST — /api/v1/cron/x-evening" />
           <ChannelLegend icon="🎮" label="Discord"
             desc="毎朝 02:00 JST — /api/v1/cron/daily-discord" />
           <ChannelLegend icon="📡" label="RSS"
@@ -65,7 +77,9 @@ export default async function AdminDistributionPage() {
                   <th className="px-4 py-3">Date</th>
                   <th className="px-4 py-3">Generated</th>
                   <th className="px-4 py-3">RSS</th>
-                  <th className="px-4 py-3">X / Twitter</th>
+                  <th className="px-4 py-3">X 朝</th>
+                  <th className="px-4 py-3">X 昼</th>
+                  <th className="px-4 py-3">X 夜</th>
                   <th className="px-4 py-3">Discord</th>
                   <th className="px-4 py-3">Actions</th>
                 </tr>
@@ -95,6 +109,14 @@ export default async function AdminDistributionPage() {
           <p className="rounded bg-navy/5 px-3 py-2">
             curl -H &quot;Authorization: Bearer $CRON_SECRET&quot; \<br />
             &nbsp;&nbsp;&quot;/api/v1/cron/daily-post?date=YYYY-MM-DD&amp;dry=1&quot;
+          </p>
+          <p className="rounded bg-navy/5 px-3 py-2">
+            curl -H &quot;Authorization: Bearer $CRON_SECRET&quot; \<br />
+            &nbsp;&nbsp;&quot;/api/v1/cron/x-noon?date=YYYY-MM-DD&amp;dry=1&quot;
+          </p>
+          <p className="rounded bg-navy/5 px-3 py-2">
+            curl -H &quot;Authorization: Bearer $CRON_SECRET&quot; \<br />
+            &nbsp;&nbsp;&quot;/api/v1/cron/x-evening?date=YYYY-MM-DD&amp;dry=1&quot;
           </p>
           <p className="rounded bg-navy/5 px-3 py-2">
             curl -H &quot;Authorization: Bearer $CRON_SECRET&quot; \<br />
@@ -153,7 +175,7 @@ function DistributionRow({ row }: { row: DistributionLogRow }) {
         />
       </td>
 
-      {/* X / Twitter */}
+      {/* X 朝 */}
       <td className="px-4 py-3">
         {row.tweetId ? (
           <PostedBadge
@@ -165,6 +187,36 @@ function DistributionRow({ row }: { row: DistributionLogRow }) {
           />
         ) : (
           <NotPostedBadge channel="x" date={row.date} />
+        )}
+      </td>
+
+      {/* X 昼 */}
+      <td className="px-4 py-3">
+        {row.noonTweetId ? (
+          <PostedBadge
+            posted={true}
+            label="Posted"
+            href={row.noonTweetUrl ?? undefined}
+            sublabel={fmtDatetime(row.noonTweetedAt)}
+            title={`Tweet ID: ${row.noonTweetId}`}
+          />
+        ) : (
+          <NotPostedBadge channel="x-noon" date={row.date} />
+        )}
+      </td>
+
+      {/* X 夜 */}
+      <td className="px-4 py-3">
+        {row.eveningTweetId ? (
+          <PostedBadge
+            posted={true}
+            label="Posted"
+            href={row.eveningTweetUrl ?? undefined}
+            sublabel={fmtDatetime(row.eveningTweetedAt)}
+            title={`Tweet ID: ${row.eveningTweetId}`}
+          />
+        ) : (
+          <NotPostedBadge channel="x-evening" date={row.date} />
         )}
       </td>
 
@@ -182,11 +234,13 @@ function DistributionRow({ row }: { row: DistributionLogRow }) {
         )}
       </td>
 
-      {/* Actions — 手動再送へのリンク（将来の拡張ポイント） */}
+      {/* Actions — 手動再送へのリンク */}
       <td className="px-4 py-3">
-        <div className="flex gap-2">
-          <RetriggerLink channel="x"       date={row.date} />
-          <RetriggerLink channel="discord" date={row.date} />
+        <div className="flex flex-wrap gap-2">
+          <RetriggerLink channel="x"         date={row.date} />
+          <RetriggerLink channel="x-noon"    date={row.date} />
+          <RetriggerLink channel="x-evening" date={row.date} />
+          <RetriggerLink channel="discord"   date={row.date} />
         </div>
       </td>
     </tr>
@@ -280,34 +334,43 @@ function PostedBadge({
   );
 }
 
+type DistChannel = "x" | "x-noon" | "x-evening" | "discord";
+
 function NotPostedBadge({
-  channel,
-  date,
+  channel: _channel,
+  date:    _date,
 }: {
-  channel: "x" | "discord";
+  channel: DistChannel;
   date:    string;
 }) {
-  const label = channel === "x" ? "Not posted" : "Not posted";
   return (
     <div className="space-y-0.5">
       <span className="inline-block rounded-sm bg-navy/5 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-widest text-navy/35">
-        — {label}
+        — Not posted
       </span>
     </div>
   );
 }
+
+const CHANNEL_LABEL: Record<DistChannel, string> = {
+  "x":         "X 朝",
+  "x-noon":    "X 昼",
+  "x-evening": "X 夜",
+  "discord":   "Discord",
+};
 
 /** 手動再送ボタン — /admin/api/retrigger プロキシ経由で CRON_SECRET を付与 */
 function RetriggerLink({
   channel,
   date,
 }: {
-  channel: "x" | "discord";
+  channel: DistChannel;
   date:    string;
 }) {
   const dryUrl   = `/admin/api/retrigger?channel=${channel}&date=${date}`;
   const forceUrl = `/admin/api/retrigger?channel=${channel}&date=${date}&force=1`;
-  const icon     = channel === "x" ? "𝕏" : "🎮";
+  const icon     = channel === "discord" ? "🎮" : "𝕏";
+  const label    = CHANNEL_LABEL[channel];
 
   return (
     <div className="flex gap-1">
@@ -315,7 +378,7 @@ function RetriggerLink({
         href={dryUrl}
         target="_blank"
         rel="noopener noreferrer"
-        title={`Dry-run ${channel === "x" ? "X" : "Discord"} for ${date}`}
+        title={`Dry-run ${label} for ${date}`}
         className="inline-flex items-center gap-1 rounded border border-navy/15 px-2 py-1 text-[10px] text-navy/50 transition hover:border-navy/30 hover:text-navy/70"
       >
         {icon} dry
@@ -324,7 +387,7 @@ function RetriggerLink({
         href={forceUrl}
         target="_blank"
         rel="noopener noreferrer"
-        title={`本番投稿 ${channel === "x" ? "X" : "Discord"} for ${date}（クリックで即投稿）`}
+        title={`本番投稿 ${label} for ${date}（クリックで即投稿）`}
         className="inline-flex items-center gap-1 rounded border border-red-200 px-2 py-1 text-[10px] text-red-400 transition hover:border-red-400 hover:text-red-600"
       >
         {icon} post

@@ -275,6 +275,116 @@ export async function getSnapshotDiscordStatus(date: string): Promise<{
   };
 }
 
+/**
+ * 昼の X 投稿結果を DB に記録（idempotency guard）。
+ */
+export async function saveNoonTweetResult(
+  date:     string,
+  tweetId:  string,
+  tweetUrl: string,
+): Promise<void> {
+  await prisma.dailyRecapSnapshot.update({
+    where: { date },
+    data:  { noonTweetId: tweetId, noonTweetUrl: tweetUrl, noonTweetedAt: new Date() },
+  });
+}
+
+/**
+ * 指定日のスナップショットに昼の tweetId があれば返す（重複投稿防止チェック）。
+ */
+export async function getSnapshotNoonTweetStatus(date: string): Promise<{
+  hasTweet: boolean;
+  tweetId:  string | null;
+  tweetUrl: string | null;
+} | null> {
+  const row = await prisma.dailyRecapSnapshot.findUnique({
+    where:  { date },
+    select: { noonTweetId: true, noonTweetUrl: true },
+  });
+  if (!row) return null;
+  return {
+    hasTweet: row.noonTweetId !== null,
+    tweetId:  row.noonTweetId,
+    tweetUrl: row.noonTweetUrl,
+  };
+}
+
+/**
+ * 夜の X 投稿結果を DB に記録（idempotency guard）。
+ */
+export async function saveEveningTweetResult(
+  date:     string,
+  tweetId:  string,
+  tweetUrl: string,
+): Promise<void> {
+  await prisma.dailyRecapSnapshot.update({
+    where: { date },
+    data:  { eveningTweetId: tweetId, eveningTweetUrl: tweetUrl, eveningTweetedAt: new Date() },
+  });
+}
+
+/**
+ * 指定日のスナップショットに夜の tweetId があれば返す（重複投稿防止チェック）。
+ */
+export async function getSnapshotEveningTweetStatus(date: string): Promise<{
+  hasTweet: boolean;
+  tweetId:  string | null;
+  tweetUrl: string | null;
+} | null> {
+  const row = await prisma.dailyRecapSnapshot.findUnique({
+    where:  { date },
+    select: { eveningTweetId: true, eveningTweetUrl: true },
+  });
+  if (!row) return null;
+  return {
+    hasTweet: row.eveningTweetId !== null,
+    tweetId:  row.eveningTweetId,
+    tweetUrl: row.eveningTweetUrl,
+  };
+}
+
+// ----------------------------------------------------------------
+// 昼・夜の X 投稿用データ — 当日の価格更新統計
+// ----------------------------------------------------------------
+
+export type DailyUpdateStats = {
+  updatedCardsCount: number;                                  // 当日 Price 観測があったカード数
+  newCardsCount:     number;                                  // 当日新規追加されたカード数
+  newCards:          { name: string; slug: string | null }[]; // 新規カードの先頭数件（表示用）
+};
+
+/**
+ * 当日（date 省略時はサーバーローカル日付、他 cron と同じ toLocaleDateString("sv-SE") 基準）の
+ * 価格更新統計。昼・夜の X 投稿で使用する。
+ */
+export async function getDailyUpdateStats(date?: string): Promise<DailyUpdateStats> {
+  const targetDate = date ?? new Date().toLocaleDateString("sv-SE");
+  const dayStart   = new Date(`${targetDate}T00:00:00.000Z`);
+  const dayEnd     = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+
+  const [updatedGroups, newCardsCount, newCards] = await Promise.all([
+    prisma.price.groupBy({
+      by:    ["cardId"],
+      where: { capturedAt: { gte: dayStart, lt: dayEnd } },
+    }),
+    prisma.card.count({
+      where: { createdAt: { gte: dayStart, lt: dayEnd }, isVisible: true, deletedAt: null },
+    }),
+    prisma.card.findMany({
+      where:   { createdAt: { gte: dayStart, lt: dayEnd }, isVisible: true, deletedAt: null },
+      orderBy: { createdAt: "asc" },
+      take:    5,
+      select:  { name: true, slug: true },
+    }),
+  ]);
+
+  return {
+    updatedCardsCount: updatedGroups.length,
+    newCardsCount,
+    newCards,
+  };
+}
+
 // ----------------------------------------------------------------
 // Admin: Distribution Logs
 // ----------------------------------------------------------------
@@ -282,10 +392,18 @@ export async function getSnapshotDiscordStatus(date: string): Promise<{
 export type DistributionLogRow = {
   date:              string;
   generatedAt:       string;   // ISO
-  // X
+  // X — 朝（"Today's Market"）
   tweetId:           string | null;
   tweetedAt:         string | null;  // ISO
   tweetUrl:          string | null;
+  // X — 昼（"今日の急騰カード"）
+  noonTweetId:       string | null;
+  noonTweetedAt:     string | null;  // ISO
+  noonTweetUrl:      string | null;
+  // X — 夜（"今日の価格更新"）
+  eveningTweetId:    string | null;
+  eveningTweetedAt:  string | null;  // ISO
+  eveningTweetUrl:   string | null;
   // Discord
   discordMessageId:  string | null;
   discordPostedAt:   string | null;  // ISO
@@ -307,6 +425,12 @@ export async function getDistributionLogs(
       tweetId:          true,
       tweetedAt:        true,
       tweetUrl:         true,
+      noonTweetId:      true,
+      noonTweetedAt:    true,
+      noonTweetUrl:     true,
+      eveningTweetId:   true,
+      eveningTweetedAt: true,
+      eveningTweetUrl:  true,
       discordMessageId: true,
       discordPostedAt:  true,
     },
@@ -318,6 +442,12 @@ export async function getDistributionLogs(
     tweetId:          r.tweetId,
     tweetedAt:        r.tweetedAt?.toISOString() ?? null,
     tweetUrl:         r.tweetUrl,
+    noonTweetId:      r.noonTweetId,
+    noonTweetedAt:    r.noonTweetedAt?.toISOString() ?? null,
+    noonTweetUrl:     r.noonTweetUrl,
+    eveningTweetId:   r.eveningTweetId,
+    eveningTweetedAt: r.eveningTweetedAt?.toISOString() ?? null,
+    eveningTweetUrl:  r.eveningTweetUrl,
     discordMessageId: r.discordMessageId,
     discordPostedAt:  r.discordPostedAt?.toISOString() ?? null,
   }));

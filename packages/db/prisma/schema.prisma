@@ -203,9 +203,18 @@ model DailyRecapSnapshot {
   generatedAt DateTime  @default(now())
 
   // Week 6: X 投稿管理（idempotency guard）
+  // tweetId/tweetedAt/tweetUrl = 朝の投稿（daily-post cron, 08:05 JST, "Today's Market"）
   tweetId     String?             // 投稿済み tweet ID
   tweetedAt   DateTime?           // 投稿時刻
   tweetUrl    String?             // https://x.com/i/web/status/{id}
+
+  // Beta polish: 昼・夜の X 投稿管理（idempotency guard）
+  noonTweetId      String?        // 昼の投稿（x-noon cron, 12:30 JST, "今日の急騰カード"）
+  noonTweetedAt    DateTime?
+  noonTweetUrl     String?
+  eveningTweetId   String?        // 夜の投稿（x-evening cron, 20:30 JST, "今日の価格更新"）
+  eveningTweetedAt DateTime?
+  eveningTweetUrl  String?
 
   // Week 8: Discord 投稿管理（idempotency guard）
   discordMessageId String?        // 投稿済み Discord message ID
