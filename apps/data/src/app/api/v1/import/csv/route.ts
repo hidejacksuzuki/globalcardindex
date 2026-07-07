@@ -5,10 +5,7 @@
  * Accepts a multipart/form-data upload with a "file" field containing
  * a GCI-standard CSV file, or a raw text/csv body.
  *
- * Auth: HTTP Basic Auth (same as /admin/* — handled by middleware.ts)
- * This route sits under /api/v1 (not /admin) but is only called from
- * the admin UI, which is already behind Basic Auth.
- * Add an extra CRON_SECRET check for programmatic use.
+ * Auth: Bearer CRON_SECRET のみ（旧 Referer 判定は撤去、2026-07-06 監査）。
  *
  * Query params:
  *   ?dry=1   — parse and validate only, no DB writes
@@ -36,16 +33,9 @@ export async function POST(req: NextRequest) {
     authHeader.startsWith("Bearer ") &&
     authHeader.slice(7).trim() === cronSecret;
 
-  // If not a programmatic call, require the admin cookie (set by Basic Auth middleware).
-  // In Next.js Edge middleware, Basic Auth is enforced for /admin/* routes.
-  // This API route is called client-side from /admin/import, so the browser
-  // already passed Basic Auth and includes the session. We trust that here.
-  // (For belt-and-suspenders, check referer in production.)
-  const referer = req.headers.get("referer") ?? "";
-  const isFromAdmin =
-    referer.includes("/admin/") ||
-    isProgrammatic ||
-    process.env.NODE_ENV !== "production";
+  // セキュリティ監査 (2026-07-06): Referer ヘッダーは攻撃者が自由に設定できるため
+  // "/admin/" を含むだけで認証を通す旧ロジックを撤去。programmatic (Bearer) のみ許可。
+  const isFromAdmin = isProgrammatic || process.env.NODE_ENV !== "production";
 
   if (!isFromAdmin) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });

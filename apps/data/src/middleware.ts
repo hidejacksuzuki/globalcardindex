@@ -56,15 +56,20 @@ function unauthorized(): NextResponse {
  * （例: curl -H "Referer: https://x/admin/y" で管理者操作が可能だった）。
  * ミドルウェアで先に弾くことで、ルート側の実装に依存せず一括で防御する。
  *
- * /api/v1/cron/* と /api/v1/webhooks/* はここに含めない:
+ * /api/v1/cron/*・/api/v1/webhooks/*・/api/admin/*・/api/v1/import/* はここに含めない:
  *   - cron は Vercel Cron が Bearer $CRON_SECRET を送る想定で Basic Auth を送れない
  *     （authorizeCron() で別途保護されている）
  *   - webhooks は外部サービス（Resend）が呼ぶため Basic Auth を送れない
  *     （svix 署名検証で別途保護されている）
+ *   - /api/admin/* と /api/v1/import/* は Chrome 拡張機能（Mercari/eBay/ヤフオク
+ *     収集ツール）が Bearer $CRON_SECRET（または X-GCI-Key）でクロスオリジン呼び出し
+ *     する設計のため、ここで Basic Auth を要求するとブラウザのネイティブ認証ダイアログが
+ *     先に割り込み拡張機能が動作しなくなる。これらは各ルートの isAuthorized() 側で
+ *     Referer フォールバックを撤去し Bearer 認証のみに限定する対応を取った
+ *     （2026-07-06 監査で /api/v1/import を一旦含めてしまい拡張機能が壊れたため修正）。
  * /api/v1/cards, /api/v1/cards/[id] は意図した公開 API のため対象外。
  */
 const PROTECTED_API_PREFIXES = [
-  "/api/admin",
   "/api/v1/card-requests",
   "/api/v1/cards/bulk-add",
   "/api/v1/cards/candidates",
@@ -76,7 +81,6 @@ const PROTECTED_API_PREFIXES = [
   "/api/v1/market-listings",
   "/api/v1/prices",
   "/api/v1/index",
-  "/api/v1/import",
   "/api/v1/debug",
 ];
 
@@ -144,7 +148,6 @@ export function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     "/admin/:path*",
-    "/api/admin/:path*",
     "/api/v1/admin/:path*",
     "/api/v1/card-requests/:path*",
     "/api/v1/cards/bulk-add",
@@ -157,7 +160,6 @@ export const config = {
     "/api/v1/market-listings/:path*",
     "/api/v1/prices/:path*",
     "/api/v1/index/:path*",
-    "/api/v1/import/:path*",
     "/api/v1/debug/:path*",
   ],
 };

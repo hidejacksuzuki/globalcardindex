@@ -34,8 +34,7 @@ function isAuthorized(req: NextRequest): boolean {
   const auth   = req.headers.get("authorization") ?? "";
   if (secret.length >= 16 && auth.startsWith("Bearer ") &&
       timingSafeEqual(auth.slice(7).trim(), secret)) return true;
-  const referer = req.headers.get("referer") ?? "";
-  return referer.includes("/admin/") || process.env.NODE_ENV !== "production";
+  return process.env.NODE_ENV !== "production";
 }
 
 const VALID_SOURCES = [
