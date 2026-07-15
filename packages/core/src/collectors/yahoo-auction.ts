@@ -57,6 +57,26 @@ const BULK_WORDS_YA   = ["まとめ", "大量", "セット", "福袋"];
 const LANGUAGE_YA     = ["海外版", "英語版", "中国語", "韓国語", "英語"];
 const CONDITION_BAD   = ["傷あり", "状態難", "ジャンク"];
 
+/**
+ * カード名がタイトルに確認できない場合の matchScore 上限。
+ *
+ * calcAuctionScore は「落札済み(+20) / 入札あり(+10)」という、どの落札にも
+ * 付く加点を持つため、rarity(25)+set(20)+closed(20)+bids(10)=75 が
+ * カード名ゼロ点で成立し、承認閾値(75)を素通りしてしまう
+ * （同一セット・同一レアの別カードが誤承認される問題。2026-07 調査）。
+ *
+ * そこで「カード名がタイトルに無いものは自動承認させない」ゲートとして、
+ * 名前未確認の場合は matchScore をこの値に頭打ちする。
+ * 60 は autoVerdict() で "review"（要人手確認）となり、
+ * 承認閾値 75 の3経路（updatePrices / import / auto-approve cron）を通さない。
+ */
+const NAME_REQUIRED_CAP = 60;
+
+/** 名前照合用の正規化: lowercase + 空白除去（全角/半角スペース差を吸収） */
+function normalizeForName(s: string): string {
+  return s.toLowerCase().replace(/[\s　]+/g, "");
+}
+
 export type AuctionScoringTarget = {
   name:       string;
   rarity:     string;
@@ -77,11 +97,13 @@ export function calcAuctionScore(
   bidCount?: number,
 ): AuctionScoringResult {
   const t       = title.toLowerCase();
+  const tns     = normalizeForName(title);   // 空白除去済み（名前照合用）
   const reasons: string[] = [];
   let score     = 0;
 
-  // +35: card name match
-  if (target.name && t.includes(target.name.toLowerCase())) {
+  // +35: card name match（空白差を吸収して照合）
+  const nameHit = !!target.name && tns.includes(normalizeForName(target.name));
+  if (nameHit) {
     score += 35; reasons.push("カード名一致 +35");
   }
   // +25: rarity match
@@ -134,8 +156,19 @@ export function calcAuctionScore(
   // -80: 偽物
   if (title.includes("偽物") || title.includes("レプリカ")) { score -= 80; reasons.push("偽物 -80"); }
 
-  const matchScore = Math.max(0, Math.min(100, score));
-  const trustScore = Math.max(0, Math.min(100, matchScore + (bidCount ?? 0 > 3 ? 5 : 0)));
+  let matchScore = Math.max(0, Math.min(100, score));
+
+  // ── カード名必須ゲート ──────────────────────────────────────────────
+  // カード名がタイトルに確認できない場合は自動承認させない（誤マッチ防止）。
+  // grading 等の加点で 75 を超えていても、名前未確認なら要人手確認へ落とす。
+  if (!nameHit && matchScore > NAME_REQUIRED_CAP) {
+    matchScore = NAME_REQUIRED_CAP;
+    reasons.push(`カード名未確認により ${NAME_REQUIRED_CAP} に頭打ち`);
+  }
+
+  // 入札が多い(>3)ものは信頼性を +5（優先順位バグ修正: 以前は bidCount を素通し加算していた）
+  const trustBonus = (bidCount ?? 0) > 3 ? 5 : 0;
+  const trustScore = Math.max(0, Math.min(100, matchScore + trustBonus));
 
   return { matchScore, trustScore, reasons };
 }
