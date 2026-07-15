@@ -9,9 +9,11 @@ import {
   getGameSnapshots,
   getDailyRecap,
   getPortfolioSummary,
+  getCardThumbnails,
   formatDateTime,
 } from '@gci/core';
 import { SearchHero }    from '@/components/index/SearchHero';
+import { CardThumb }     from '@/components/cards/CardThumb';
 import { Disclaimer }    from '@/components/common/Disclaimer';
 import { getTranslations } from '@/i18n';
 import { auth }          from '@/auth';
@@ -47,6 +49,10 @@ export default async function HomePage({ params }: { params: { locale: Locale } 
       getDailyRecap().catch(() => null),
       userId ? getPortfolioSummary(userId).catch(() => null) : Promise.resolve(null),
     ]);
+
+  // マーケットムーバー各カードの代表サムネイルを一括取得（N+1 回避）
+  const moverCardIds = [...gainers, ...losers, ...trending].map((c) => c.cardId);
+  const thumbs = await getCardThumbnails(moverCardIds).catch(() => ({} as Record<string, string>));
 
   const series      = history.map((h) => h.value).reverse();
   const lastUpdated = snapshot ? formatDateTime(snapshot.calculatedAt, params.locale) : null;
@@ -87,6 +93,7 @@ export default async function HomePage({ params }: { params: { locale: Locale } 
               cards={gainers}
               mode="up"
               moreHref="/gainers"
+              thumbs={thumbs}
             />
             {/* 急落 */}
             <MoverColumn
@@ -96,9 +103,10 @@ export default async function HomePage({ params }: { params: { locale: Locale } 
               cards={losers}
               mode="down"
               moreHref="/losers"
+              thumbs={thumbs}
             />
             {/* 注目 */}
-            <TrendingColumn cards={trending} />
+            <TrendingColumn cards={trending} thumbs={thumbs} />
           </div>
         </section>
 
@@ -306,10 +314,11 @@ function SummaryCell({ label, value, sub, valueClass = 'text-navy' }: { label: s
 // ── Market Mover columns ──────────────────────────────────────────────────────
 
 function MoverColumn({
-  title, titleColor, titleIcon, cards, mode, moreHref
+  title, titleColor, titleIcon, cards, mode, moreHref, thumbs
 }: {
   title: string; titleColor: string; titleIcon: string;
   cards: MarketCard[]; mode: 'up' | 'down'; moreHref: string;
+  thumbs: Record<string, string>;
 }) {
   return (
     <div className="px-4 py-4 space-y-3">
@@ -330,9 +339,7 @@ function MoverColumn({
                 className="flex items-center gap-2 group hover:bg-navy/[0.02] -mx-2 px-2 py-1.5 rounded-sm transition"
               >
                 <span className="w-4 text-[10px] text-navy/25 tabular-nums shrink-0">{i + 1}</span>
-                <div className="w-8 h-8 shrink-0 bg-navy/5 rounded-sm flex items-center justify-center text-[10px] text-navy/30 font-bold overflow-hidden">
-                  {card.cardName?.slice(0, 1) ?? '?'}
-                </div>
+                <CardThumb src={thumbs[card.cardId]} char={card.cardName?.slice(0, 1) ?? '?'} />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-navy truncate group-hover:text-navy/80">{card.cardName}</p>
                   <p className="text-[10px] text-navy/35 truncate">{card.setName}</p>
@@ -362,7 +369,7 @@ const TRENDING_COLORS = [
   'border-blue-200 bg-blue-50 text-blue-600',
 ];
 
-function TrendingColumn({ cards }: { cards: MarketCard[] }) {
+function TrendingColumn({ cards, thumbs }: { cards: MarketCard[]; thumbs: Record<string, string> }) {
   return (
     <div className="px-4 py-4 space-y-3">
       <div className="flex items-center justify-between">
@@ -376,9 +383,7 @@ function TrendingColumn({ cards }: { cards: MarketCard[] }) {
               href={card.slug ? `/cards/${card.slug}` : '/cards'}
               className="flex items-center gap-2 group hover:bg-navy/[0.02] -mx-2 px-2 py-1.5 rounded-sm transition"
             >
-              <div className="w-8 h-8 shrink-0 bg-navy/5 rounded-sm flex items-center justify-center text-[10px] text-navy/30 font-bold">
-                {card.cardName?.slice(0, 1) ?? '?'}
-              </div>
+              <CardThumb src={thumbs[card.cardId]} char={card.cardName?.slice(0, 1) ?? '?'} />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-navy truncate">{card.cardName}</p>
                 <p className="text-[10px] text-navy/35 truncate">{card.setName}</p>

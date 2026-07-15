@@ -113,3 +113,48 @@ export async function getCardListingPhotos(
     })
     .slice(0, limit);
 }
+
+/**
+ * getCardThumbnails — 複数カードの代表サムネイル URL を一括取得
+ *
+ * ホームページのマーケットムーバー等、多数のカードを一覧するときの
+ * サムネ表示用。getCardListingPhotos と同じ信頼できるソース
+ * （Mercari 手動選択 + eBay、matchScore >= 80）から、カードごとに
+ * 最新の1枚だけを返す。N+1 を避けるため distinct で一括取得する。
+ *
+ * @returns cardId -> imageUrl のマップ（写真が無いカードはキーごと欠落）
+ */
+export async function getCardThumbnails(
+  cardIds: string[],
+): Promise<Record<string, string>> {
+  const ids = Array.from(new Set(cardIds)).filter(Boolean);
+  if (ids.length === 0) return {};
+
+  const [market, listings, ebay] = await Promise.all([
+    prisma.rawMarketListing.findMany({
+      where:    { cardId: { in: ids }, status: { in: APPROVED }, imageUrl: { not: null }, matchScore: { gte: MIN_MATCH_SCORE } },
+      orderBy:  [{ cardId: "asc" }, { capturedAt: "desc" }],
+      distinct: ["cardId"],
+      select:   { cardId: true, imageUrl: true },
+    }),
+    prisma.rawListing.findMany({
+      where:    { cardId: { in: ids }, status: { in: APPROVED }, imageUrl: { not: null }, matchScore: { gte: MIN_MATCH_SCORE } },
+      orderBy:  [{ cardId: "asc" }, { capturedAt: "desc" }],
+      distinct: ["cardId"],
+      select:   { cardId: true, imageUrl: true },
+    }),
+    prisma.ebayListing.findMany({
+      where:    { cardId: { in: ids }, status: { in: [...APPROVED, "imported"] }, imageUrl: { not: null }, matchScore: { gte: MIN_MATCH_SCORE } },
+      orderBy:  [{ cardId: "asc" }, { createdAt: "desc" }],
+      distinct: ["cardId"],
+      select:   { cardId: true, imageUrl: true },
+    }),
+  ]);
+
+  // 優先度: Mercari(手動選択) > eBay > 旧 RawListing。先に入れた方を優先。
+  const map: Record<string, string> = {};
+  for (const r of [...market, ...ebay, ...listings]) {
+    if (r.imageUrl && !map[r.cardId]) map[r.cardId] = r.imageUrl;
+  }
+  return map;
+}
