@@ -6,6 +6,7 @@ export * from "./market";
 export * from "./newsletter";
 export * from "./recap";
 export * from "./seo";
+export * from "./listingPhotos";
 export * from "./watchlist";
 export * from "./userWatchlist";
 export * from "./portfolio";

@@ -11,6 +11,8 @@ import { prisma }                from "@gci/db";
 import { CardViewTracker }       from "@/components/analytics/CardViewTracker";
 import { CardRequestButton }     from "@/components/cards/CardRequestButton";
 import { PriceChart }            from "@/components/cards/PriceChart";
+import { ListingPhotoStrip }     from "@/components/cards/ListingPhotoStrip";
+import { getCardListingPhotos }  from "@gci/core";
 import { auth }                  from "@/auth";
 import { safeJsonLd }            from "@/lib/jsonLd";
 
@@ -74,9 +76,10 @@ export default async function CardSlugPage({
     ? await isUserWatching(userId, card.id).catch(() => false)
     : await isWatching(card.id).catch(() => false);
 
-  // 価格推移・ソース別相場・per-card index value（並列取得）
-  const [priceHistory, cardIndex] = await Promise.all([
+  // 価格推移・ソース別相場・per-card index value・出品写真（並列取得）
+  const [priceHistory, listingPhotos, cardIndex] = await Promise.all([
     getCardPriceHistory(card.id, 90).catch(() => []),
+    getCardListingPhotos(card.id).catch(() => []),
     prisma.indexValue.findFirst({
       where:   { cardId: card.id },
       orderBy: { calculatedAt: "desc" },
@@ -162,6 +165,9 @@ export default async function CardSlugPage({
         </dl>
 
       </header>
+
+      {/* 実際の出品写真（出品者提供画像・ホットリンク表示） */}
+      <ListingPhotoStrip photos={listingPhotos} />
 
       {/* 推定相場 */}
       {card.priceCount > 0 && card.currency && (

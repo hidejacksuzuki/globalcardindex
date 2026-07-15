@@ -12,6 +12,8 @@ import { CardViewTracker }       from "@/components/analytics/CardViewTracker";
 import { CardRequestButton }     from "@/components/cards/CardRequestButton";
 import { AddToPortfolioButton }  from "@/components/portfolio/AddToPortfolioButton";
 import { PriceChart }            from "@/components/cards/PriceChart";
+import { ListingPhotoStrip }     from "@/components/cards/ListingPhotoStrip";
+import { getCardListingPhotos }  from "@gci/core";
 import { isInPortfolio }         from "@gci/core";
 import { auth }                  from "@/auth";
 import { safeJsonLd }            from "@/lib/jsonLd";
@@ -80,10 +82,11 @@ export default async function CardSlugPage({
     ? await isInPortfolio(userId, card.id).catch(() => ({ inPortfolio: false as const }))
     : { inPortfolio: false as const };
 
-  // 価格推移・熱量・per-card index value（並列取得）
-  const [priceHistory, engagement, cardIndex] = await Promise.all([
+  // 価格推移・熱量・per-card index value・出品写真（並列取得）
+  const [priceHistory, engagement, listingPhotos, cardIndex] = await Promise.all([
     getCardPriceHistory(card.id, 90).catch(() => []),
     getCardEngagement(card.id).catch(() => ({ watchers: 0, holders: 0, recentSales: [] })),
+    getCardListingPhotos(card.id).catch(() => []),
     prisma.indexValue.findFirst({
       where:   { cardId: card.id },
       orderBy: { calculatedAt: "desc" },
@@ -188,6 +191,9 @@ export default async function CardSlugPage({
           )}
         </div>
       </header>
+
+      {/* 実際の出品写真（出品者提供画像・ホットリンク表示） */}
+      <ListingPhotoStrip photos={listingPhotos} />
 
       {/* GCI Price Confidence — 推定相場と、その信頼性を一緒に示す */}
       {card.priceCount > 0 && card.currency && (
