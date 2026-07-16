@@ -72,9 +72,14 @@ const CONDITION_BAD   = ["傷あり", "状態難", "ジャンク"];
  */
 const NAME_REQUIRED_CAP = 60;
 
-/** 名前照合用の正規化: lowercase + 空白除去（全角/半角スペース差を吸収） */
+/**
+ * 名前照合用の正規化: lowercase + 記号・空白を全除去（英数字と文字のみ残す）。
+ * トークン抽出側と同じ正規化をハイスタック（タイトル）にも適用することで、
+ * "シロナ&カトレア" ↔ "シロナ＆カトレア"、"閃刀姫－ロゼ" ↔ "閃刀姫-ロゼ" などの
+ * 記号差を吸収する（トークンだけ記号除去し title は残す非対称を解消）。
+ */
 function normalizeForName(s: string): string {
-  return s.toLowerCase().replace(/[\s　]+/g, "");
+  return s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
 }
 
 /**
