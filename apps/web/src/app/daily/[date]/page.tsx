@@ -4,13 +4,12 @@ import { getDailyRecapByDate, getRecentRecapDates } from "@gci/core";
 import { RecapView }        from "@/components/market/RecapView";
 
 // DB に存在する日付だけ静的生成（直近90日）
+// ビルド時プリレンダーはしない（2026-07-08）。以前は直近90日分を静的生成して
+// いたが、多数ページの同時プリレンダーが getGameStats 等の重いクエリと競合し、
+// Supabase の接続プールを枯渇させてビルドが不安定だった。dynamicParams（既定
+// true）により各日付は初回アクセスでオンデマンド生成し revalidate でキャッシュする。
 export async function generateStaticParams() {
-  try {
-    const dates = await getRecentRecapDates(90);
-    return dates.map((date) => ({ date }));
-  } catch {
-    return [];
-  }
+  return [];
 }
 
 // ISR: 新しいアーカイブが保存されたら on-demand revalidation か時間で再生成

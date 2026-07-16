@@ -1,7 +1,7 @@
 import type { Metadata }   from "next";
 import { notFound }         from "next/navigation";
 import Link                 from "next/link";
-import { getGame, getGameSlugs } from "@gci/core";
+import { getGame } from "@gci/core";
 import { getGameStats }     from "@gci/core";
 import { formatPrice }      from "@gci/core";
 import { safeJsonLd }            from "@/lib/jsonLd";
@@ -11,8 +11,12 @@ export const revalidate = 3600; // ISR: 1時間キャッシュ
 // ----------------------------------------------------------------
 // Static params  (ISR / static export に対応)
 // ----------------------------------------------------------------
+// ビルド時プリレンダーはしない（2026-07-08）。ページ描画で呼ぶ getGameStats が
+// 重く（pokemon で約33秒）、ビルド時の同時プリレンダーで接続プールを枯渇させて
+// いた。dynamicParams（既定 true）により初回アクセスでオンデマンド生成し
+// revalidate でキャッシュする。
 export async function generateStaticParams() {
-  return getGameSlugs().map((slug) => ({ slug }));
+  return [];
 }
 
 // ----------------------------------------------------------------
