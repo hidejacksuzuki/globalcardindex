@@ -2,7 +2,7 @@ import type { Metadata }    from "next";
 import { redirect }          from "next/navigation";
 import Link                  from "next/link";
 import { auth }              from "@/auth";
-import { getPortfolio }      from "@gci/core";
+import { getPortfolio, getCardThumbnails } from "@gci/core";
 import { PortfolioClient }   from "./PortfolioClient";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,8 @@ export default async function PortfolioPage() {
   const userId  = session?.user?.id;
   if (!userId) redirect("/login?callbackUrl=/portfolio");
 
-  const items = await getPortfolio(userId).catch(() => []);
+  const items  = await getPortfolio(userId).catch(() => []);
+  const thumbs = await getCardThumbnails(items.map((i) => i.cardId)).catch(() => ({} as Record<string, string>));
 
   return (
     <div className="space-y-6">
@@ -40,7 +41,7 @@ export default async function PortfolioPage() {
         </Link>
       </div>
 
-      <PortfolioClient items={items} />
+      <PortfolioClient items={items} thumbs={thumbs} />
     </div>
   );
 }

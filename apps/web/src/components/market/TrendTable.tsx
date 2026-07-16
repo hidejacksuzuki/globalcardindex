@@ -9,15 +9,17 @@ import Link              from "next/link";
 import type { MarketCard } from "@gci/core";
 import { getGame }       from "@gci/core";
 import { PriceCell, PriceChangeCell } from "@/components/market/PriceCell";
+import { CardThumb }     from "@/components/cards/CardThumb";
 
 export type TrendMode = "trending" | "gainers" | "losers" | "volume";
 
 type Props = {
-  cards: MarketCard[];
-  mode:  TrendMode;
+  cards:   MarketCard[];
+  mode:    TrendMode;
+  thumbs?: Record<string, string>;
 };
 
-export function TrendTable({ cards, mode }: Props) {
+export function TrendTable({ cards, mode, thumbs = {} }: Props) {
   if (cards.length === 0) {
     return (
       <div className="border border-navy/10 bg-white p-12 text-center">
@@ -50,7 +52,7 @@ export function TrendTable({ cards, mode }: Props) {
         </thead>
         <tbody className="divide-y divide-navy/5">
           {cards.map((card, i) => (
-            <TrendRow key={card.cardId} card={card} rank={i + 1} mode={mode} />
+            <TrendRow key={card.cardId} card={card} rank={i + 1} mode={mode} thumb={thumbs[card.cardId]} />
           ))}
         </tbody>
       </table>
@@ -60,7 +62,7 @@ export function TrendTable({ cards, mode }: Props) {
 
 // ----------------------------------------------------------------
 
-function TrendRow({ card, rank, mode }: { card: MarketCard; rank: number; mode: TrendMode }) {
+function TrendRow({ card, rank, mode, thumb }: { card: MarketCard; rank: number; mode: TrendMode; thumb?: string }) {
   const game = card.game ? getGame(card.game) : null;
   const href = card.slug ? `/cards/${card.slug}` : `/cards/${card.cardId}`;
 
@@ -79,6 +81,7 @@ function TrendRow({ card, rank, mode }: { card: MarketCard; rank: number; mode: 
       {/* カード名 */}
       <td className="px-4 py-3">
         <div className="flex items-start gap-2 min-w-0">
+          <CardThumb src={thumb} char={card.cardName?.slice(0, 1) ?? "?"} />
           {game && (
             <span className="mt-0.5 text-sm shrink-0" title={game.name}>
               {game.emoji}

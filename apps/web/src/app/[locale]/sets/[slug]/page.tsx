@@ -4,6 +4,8 @@ import Link                from "next/link";
 import { getSetStats }     from "@gci/core";
 import { getGame }         from "@gci/core";
 import { formatPrice }     from "@gci/core";
+import { getCardThumbnails } from "@gci/core";
+import { CardThumb }       from "@/components/cards/CardThumb";
 import { safeJsonLd }            from "@/lib/jsonLd";
 
 export const revalidate = 3600; // ISR: 1時間キャッシュ
@@ -55,7 +57,8 @@ export default async function SetPage({
   const stats   = await getSetStats(setName);
   if (!stats) notFound();
 
-  const game = stats.game ? getGame(stats.game) : null;
+  const game   = stats.game ? getGame(stats.game) : null;
+  const thumbs = await getCardThumbnails(stats.cards.map((c) => c.id)).catch(() => ({} as Record<string, string>));
 
   return (
     <div className="space-y-8">
@@ -105,15 +108,20 @@ export default async function SetPage({
                 {stats.cards.map((card) => (
                   <tr key={card.id} className="hover:bg-navy/[0.02]">
                     <td className="px-4 py-3">
-                      <Link
-                        href={card.slug ? `/cards/${card.slug}` : `/cards/${card.id}`}
-                        className="font-medium text-navy hover:underline underline-offset-2"
-                      >
-                        {card.name}
-                      </Link>
-                      <p className="text-[10px] text-navy/40">
-                        {card.rarity} · {card.condition}
-                      </p>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <CardThumb src={thumbs[card.id]} char={card.name?.slice(0, 1) ?? "?"} />
+                        <div className="min-w-0">
+                          <Link
+                            href={card.slug ? `/cards/${card.slug}` : `/cards/${card.id}`}
+                            className="font-medium text-navy hover:underline underline-offset-2 truncate block"
+                          >
+                            {card.name}
+                          </Link>
+                          <p className="text-[10px] text-navy/40">
+                            {card.rarity} · {card.condition}
+                          </p>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums font-medium text-navy">
                       {card.latestPrice !== null && card.currency

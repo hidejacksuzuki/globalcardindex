@@ -1,12 +1,14 @@
 import Link                from 'next/link';
 import {
   getWatchlistCards,
+  getCardThumbnails,
   type WatchlistCard,
   type PriceSignal,
   type SignalType,
   formatPrice,
   formatDateTime,
 } from '@gci/core';
+import { CardThumb }            from '@/components/cards/CardThumb';
 import { WatchButton }          from '@/components/watchlist/WatchButton';
 import { QuickPortfolioButton } from '@/components/portfolio/QuickPortfolioButton';
 import { auth }                 from '@/auth';
@@ -22,6 +24,7 @@ export default async function WatchlistPage({ params }: { params: { locale: Loca
   const session = await auth();
   const userId  = session?.user?.id ?? null;
   const cards   = await getWatchlistCards();
+  const thumbs  = await getCardThumbnails(cards.map((c) => c.cardId)).catch(() => ({} as Record<string, string>));
 
   // Portfolioに登録済みのカードIDセットをサーバー側で取得
   const portfolioCardIds: Set<string> = userId
@@ -49,7 +52,7 @@ export default async function WatchlistPage({ params }: { params: { locale: Loca
                 {cards
                   .filter((c) => c.signals.length > 0)
                   .map((card) => (
-                    <AlertCard key={card.cardId} card={card} />
+                    <AlertCard key={card.cardId} card={card} thumb={thumbs[card.cardId]} />
                   ))}
               </div>
             </section>
@@ -78,15 +81,20 @@ export default async function WatchlistPage({ params }: { params: { locale: Loca
                   {cards.map((card) => (
                     <tr key={card.cardId} className="hover:bg-navy/[0.02]">
                       <td className="px-4 py-3">
-                        <Link
-                          href={`/cards/${card.cardId}`}
-                          className="font-medium text-navy hover:underline underline-offset-2"
-                        >
-                          {card.cardName}
-                        </Link>
-                        <p className="text-[10px] text-navy/40">
-                          {card.rarity} · {card.condition}
-                        </p>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <CardThumb src={thumbs[card.cardId]} char={card.cardName?.slice(0, 1) ?? '?'} />
+                          <div className="min-w-0">
+                            <Link
+                              href={`/cards/${card.cardId}`}
+                              className="font-medium text-navy hover:underline underline-offset-2 truncate block"
+                            >
+                              {card.cardName}
+                            </Link>
+                            <p className="text-[10px] text-navy/40">
+                              {card.rarity} · {card.condition}
+                            </p>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-navy/50 text-xs">{card.setName}</td>
                       <td className="px-4 py-3 text-right tabular-nums font-medium text-navy">
@@ -150,21 +158,24 @@ function EmptyState({ isEn }: { isEn: boolean }) {
   );
 }
 
-function AlertCard({ card }: { card: WatchlistCard }) {
+function AlertCard({ card, thumb }: { card: WatchlistCard; thumb?: string }) {
   const hasBull = card.signals.some((s) => s.type === 'up' || s.type === 'new_high');
   const border  = hasBull ? 'border-gold-300 bg-gold-50/40' : 'border-red-200 bg-red-50/30';
 
   return (
     <div className={`border p-4 ${border}`}>
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <Link
-            href={`/cards/${card.cardId}`}
-            className="font-semibold text-navy hover:underline underline-offset-2"
-          >
-            {card.cardName}
-          </Link>
-          <p className="text-xs text-navy/50">{card.setName} · {card.rarity}</p>
+        <div className="flex items-center gap-2 min-w-0">
+          <CardThumb src={thumb} char={card.cardName?.slice(0, 1) ?? '?'} />
+          <div className="min-w-0">
+            <Link
+              href={`/cards/${card.cardId}`}
+              className="font-semibold text-navy hover:underline underline-offset-2 truncate block"
+            >
+              {card.cardName}
+            </Link>
+            <p className="text-xs text-navy/50">{card.setName} · {card.rarity}</p>
+          </div>
         </div>
         <div className="text-right shrink-0">
           {card.latestPrice !== null && card.currency && (

@@ -3,6 +3,7 @@
 import Link   from 'next/link';
 import { useCurrency, formatCurrency, type Currency } from '@/lib/currency';
 import { useLocale } from '@/i18n/context';
+import { CardThumb } from '@/components/cards/CardThumb';
 import type { MarketboardRow, MarketSortKey, MarketSortOrder } from '@gci/core';
 import type { Locale } from '@/i18n/config';
 
@@ -26,9 +27,10 @@ type Props = {
   query?:  string;
   locale?: Locale;
   labels?: TableLabels;
+  thumbs?: Record<string, string>;
 };
 
-export function MarketTable({ rows, sort = null, order = 'desc', query, locale = 'ja', labels }: Props) {
+export function MarketTable({ rows, sort = null, order = 'desc', query, locale = 'ja', labels, thumbs = {} }: Props) {
   const { currency } = useCurrency();
   const ctxLocale    = useLocale();
   const loc          = locale || ctxLocale;
@@ -60,7 +62,7 @@ export function MarketTable({ rows, sort = null, order = 'desc', query, locale =
         </thead>
         <tbody className="divide-y divide-navy/5">
           {rows.map((row) => (
-            <MarketRow key={row.cardId} row={row} currency={currency} locale={loc} />
+            <MarketRow key={row.cardId} row={row} currency={currency} locale={loc} thumb={thumbs[row.cardId]} />
           ))}
         </tbody>
       </table>
@@ -70,7 +72,7 @@ export function MarketTable({ rows, sort = null, order = 'desc', query, locale =
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function MarketRow({ row, currency, locale }: { row: MarketboardRow; currency: Currency; locale: string }) {
+function MarketRow({ row, currency, locale, thumb }: { row: MarketboardRow; currency: Currency; locale: string; thumb?: string }) {
   const displayPrice =
     row.latestPrice != null && row.currency
       ? formatCurrency(row.latestPrice, row.currency as Currency, currency, locale)
@@ -79,9 +81,12 @@ function MarketRow({ row, currency, locale }: { row: MarketboardRow; currency: C
   return (
     <tr className="text-navy/80 transition hover:bg-navy/[0.02]">
       <td className="px-4 py-3">
-        <Link href={`/cards/${row.cardId}`} className="font-medium text-navy hover:text-gold-700 transition">
-          {row.name}
-        </Link>
+        <div className="flex items-center gap-2 min-w-0">
+          <CardThumb src={thumb} char={row.name?.slice(0, 1) ?? '?'} />
+          <Link href={`/cards/${row.cardId}`} className="font-medium text-navy hover:text-gold-700 transition truncate">
+            {row.name}
+          </Link>
+        </div>
       </td>
       <td className="max-w-[120px] truncate px-4 py-3 text-xs text-navy/50">{row.setName}</td>
       <td className="px-4 py-3"><CondBadge condition={row.condition} /></td>

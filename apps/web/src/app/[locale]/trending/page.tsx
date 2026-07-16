@@ -1,6 +1,6 @@
 import type { Metadata }    from 'next';
 import Link                   from 'next/link';
-import { getTrendingCards }   from '@gci/core';
+import { getTrendingCards, getCardThumbnails }   from '@gci/core';
 import { TrendTable }         from '@/components/market/TrendTable';
 import { getTranslations }    from '@/i18n';
 import type { Locale }        from '@/i18n/config';
@@ -20,7 +20,8 @@ export async function generateMetadata({ params }: { params: { locale: Locale } 
 export default async function TrendingPage({ params }: { params: { locale: Locale } }) {
   const t    = getTranslations(params.locale);
   const isEn = params.locale === 'en';
-  const cards = await getTrendingCards(50).catch(() => []);
+  const cards  = await getTrendingCards(50).catch(() => []);
+  const thumbs = await getCardThumbnails(cards.map((c) => c.cardId)).catch(() => ({}));
 
   return (
     <div className="space-y-8">
@@ -36,7 +37,7 @@ export default async function TrendingPage({ params }: { params: { locale: Local
         </div>
       </header>
 
-      <TrendTable cards={cards} mode="trending" />
+      <TrendTable cards={cards} mode="trending" thumbs={thumbs} />
     </div>
   );
 }

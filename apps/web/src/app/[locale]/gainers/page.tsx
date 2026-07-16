@@ -1,6 +1,6 @@
 import type { Metadata }  from 'next';
 import Link               from 'next/link';
-import { getTopGainers }  from '@gci/core';
+import { getTopGainers, getCardThumbnails }  from '@gci/core';
 import { TrendTable }     from '@/components/market/TrendTable';
 import { getTranslations } from '@/i18n';
 import type { Locale }    from '@/i18n/config';
@@ -20,7 +20,8 @@ export async function generateMetadata({ params }: { params: { locale: Locale } 
 export default async function GainersPage({ params }: { params: { locale: Locale } }) {
   const t    = getTranslations(params.locale);
   const isEn = params.locale === 'en';
-  const cards = await getTopGainers(50).catch(() => []);
+  const cards  = await getTopGainers(50).catch(() => []);
+  const thumbs = await getCardThumbnails(cards.map((c) => c.cardId)).catch(() => ({}));
 
   const statLabels = isEn
     ? { top: 'Top Gain', count: 'Ranked', avg: 'Avg Gain' }
@@ -70,7 +71,7 @@ export default async function GainersPage({ params }: { params: { locale: Locale
         </div>
       )}
 
-      <TrendTable cards={cards} mode="gainers" />
+      <TrendTable cards={cards} mode="gainers" thumbs={thumbs} />
     </div>
   );
 }

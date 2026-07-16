@@ -1,6 +1,6 @@
 import type { Metadata }  from 'next';
 import Link               from 'next/link';
-import { getTopLosers }   from '@gci/core';
+import { getTopLosers, getCardThumbnails }   from '@gci/core';
 import { TrendTable }     from '@/components/market/TrendTable';
 import { getTranslations } from '@/i18n';
 import type { Locale }    from '@/i18n/config';
@@ -20,7 +20,8 @@ export async function generateMetadata({ params }: { params: { locale: Locale } 
 export default async function LosersPage({ params }: { params: { locale: Locale } }) {
   const t    = getTranslations(params.locale);
   const isEn = params.locale === 'en';
-  const cards = await getTopLosers(50).catch(() => []);
+  const cards  = await getTopLosers(50).catch(() => []);
+  const thumbs = await getCardThumbnails(cards.map((c) => c.cardId)).catch(() => ({}));
 
   const statLabels = isEn
     ? { top: 'Top Drop', count: 'Ranked', avg: 'Avg Drop' }
@@ -70,7 +71,7 @@ export default async function LosersPage({ params }: { params: { locale: Locale 
         </div>
       )}
 
-      <TrendTable cards={cards} mode="losers" />
+      <TrendTable cards={cards} mode="losers" thumbs={thumbs} />
     </div>
   );
 }

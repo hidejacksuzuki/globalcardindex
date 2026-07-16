@@ -3,10 +3,11 @@
 import { useState, useTransition } from "react";
 import Link                         from "next/link";
 import type { PortfolioItem }       from "@gci/core";
+import { CardThumb }                from "@/components/cards/CardThumb";
 import { AddPortfolioModal }        from "@/components/portfolio/AddPortfolioModal";
 import { Toast }                    from "@/components/ui/Toast";
 
-type Props = { items: PortfolioItem[] };
+type Props = { items: PortfolioItem[]; thumbs?: Record<string, string> };
 
 function fmt(val: number | null, currency: string | null = "JPY") {
   if (val === null) return "—";
@@ -22,7 +23,7 @@ function pct(val: number | null) {
   return `${val >= 0 ? "+" : ""}${val.toFixed(1)}%`;
 }
 
-export function PortfolioClient({ items: initialItems }: Props) {
+export function PortfolioClient({ items: initialItems, thumbs = {} }: Props) {
   const [items,      setItems]      = useState<PortfolioItem[]>(initialItems);
   const [editItem,   setEditItem]   = useState<PortfolioItem | null>(null);
   const [toast,      setToast]      = useState<string | null>(null);
@@ -121,21 +122,24 @@ export function PortfolioClient({ items: initialItems }: Props) {
               return (
                 <tr key={item.id} className="hover:bg-navy/[0.015] transition">
                   <td className="px-4 py-3 min-w-[160px]">
-                    <div>
-                      {item.slug ? (
-                        <Link
-                          href={`/cards/${item.slug}`}
-                          className="font-medium text-navy hover:underline underline-offset-2 truncate block max-w-[200px]"
-                        >
-                          {item.name}
-                        </Link>
-                      ) : (
-                        <span className="font-medium text-navy truncate block max-w-[200px]">{item.name}</span>
-                      )}
-                      <span className="text-[10px] text-navy/40 truncate block max-w-[200px]">
-                        {item.setName}
-                        {item.memo ? ` · ${item.memo}` : ""}
-                      </span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <CardThumb src={thumbs[item.cardId]} char={item.name?.slice(0, 1) ?? "?"} />
+                      <div className="min-w-0">
+                        {item.slug ? (
+                          <Link
+                            href={`/cards/${item.slug}`}
+                            className="font-medium text-navy hover:underline underline-offset-2 truncate block max-w-[200px]"
+                          >
+                            {item.name}
+                          </Link>
+                        ) : (
+                          <span className="font-medium text-navy truncate block max-w-[200px]">{item.name}</span>
+                        )}
+                        <span className="text-[10px] text-navy/40 truncate block max-w-[200px]">
+                          {item.setName}
+                          {item.memo ? ` · ${item.memo}` : ""}
+                        </span>
+                      </div>
                     </div>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">

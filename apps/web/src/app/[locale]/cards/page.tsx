@@ -3,8 +3,9 @@
  */
 
 import Link             from 'next/link';
-import { listCards } from '@gci/core';
+import { listCards, getCardThumbnails } from '@gci/core';
 import { SearchBar }    from '@/components/ui/SearchBar';
+import { CardThumb }    from '@/components/cards/CardThumb';
 import type { CardSortKey, SortOrder } from '@gci/core';
 import { prisma }       from '@gci/db';
 import { Disclaimer }          from '@/components/common/Disclaimer';
@@ -73,6 +74,7 @@ export default async function CardsPage({ params, searchParams }: Props) {
   const { cards, totalCount, totalPages } = result;
 
   const cardIds = cards.map((c) => c.id);
+  const thumbs  = await getCardThumbnails(cardIds).catch(() => ({} as Record<string, string>));
   const indexRows = await prisma.indexValue.findMany({
     where:   { cardId: { in: cardIds } },
     orderBy: { calculatedAt: 'desc' },
@@ -249,12 +251,15 @@ export default async function CardsPage({ params, searchParams }: Props) {
                 return (
                   <tr key={c.id} className="text-navy/80 transition hover:bg-navy/[0.02]">
                     <td className="px-4 py-3">
-                      <Link
-                        href={`/cards/${c.slug ?? c.id}`}
-                        className="font-medium text-navy hover:text-gold-700 transition"
-                      >
-                        {c.name}
-                      </Link>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <CardThumb src={thumbs[c.id]} char={c.name?.slice(0, 1) ?? '?'} />
+                        <Link
+                          href={`/cards/${c.slug ?? c.id}`}
+                          className="font-medium text-navy hover:text-gold-700 transition truncate"
+                        >
+                          {c.name}
+                        </Link>
+                      </div>
                     </td>
                     <td className="max-w-[120px] truncate px-4 py-3 text-navy/55 text-xs">
                       {c.setName}

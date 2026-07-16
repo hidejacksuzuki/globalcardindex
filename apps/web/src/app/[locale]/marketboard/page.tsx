@@ -1,5 +1,5 @@
 import Link            from 'next/link';
-import { getMarketboard, MARKET_SORT_KEYS } from '@gci/core';
+import { getMarketboard, getCardThumbnails, MARKET_SORT_KEYS } from '@gci/core';
 import { SearchBar }   from '@/components/ui/SearchBar';
 import { Disclaimer }  from '@/components/common/Disclaimer';
 import { MarketTable } from '@/components/market/MarketTable';
@@ -37,6 +37,7 @@ export default async function MarketboardPage({ params, searchParams }: Props) {
   const reference = rows.filter((r) => r.confidence !== 'HIGH' && r.confidence !== 'MED');
 
   const activeRows = section === 'reliable' ? reliable : reference;
+  const thumbs     = await getCardThumbnails(activeRows.map((r) => r.cardId)).catch(() => ({}));
   const updatedAt  = rows.length > 0
     ? rows.map((r) => r.lastObservedAt).filter(Boolean).sort().at(-1)
     : null;
@@ -104,6 +105,7 @@ export default async function MarketboardPage({ params, searchParams }: Props) {
           query={q}
           locale={params.locale}
           labels={m}
+          thumbs={thumbs}
         />
       )}
 
