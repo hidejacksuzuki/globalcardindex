@@ -77,6 +77,38 @@ function normalizeForName(s: string): string {
   return s.toLowerCase().replace(/[\s　]+/g, "");
 }
 
+/**
+ * カード名の「識別トークン」。レアリティ/型番/接尾辞など、どのカードにも付き得る
+ * 汎用語を落として、キャラクター名など識別に効く語だけを残す。
+ * 例: "切手BOX ピカチュウ" → ["切手box","ピカチュウ"] / "Mewtwo ex" → ["mewtwo"]
+ */
+const GENERIC_NAME_TOKENS = new Set([
+  "ex", "gx", "v", "vmax", "vstar", "sar", "sr", "hr", "ar", "ur", "rr", "rrr",
+  "psa", "bgs", "ars", "cgc", "sa", "ssr", "csr", "psr", "s", "a",
+]);
+
+function nameTokens(name: string): string[] {
+  return name
+    .toLowerCase()
+    .split(/[\s　・:：/／\-–—()（）\[\]【】]+/)
+    .map((t) => t.replace(/[^\p{L}\p{N}]/gu, ""))
+    .filter((t) => t.length >= 2 && !GENERIC_NAME_TOKENS.has(t));
+}
+
+/**
+ * カード名がタイトルに存在するか。
+ * 連続部分一致ではなく「識別トークンが全てタイトルに含まれるか」で判定するため、
+ * 多語名（"切手BOX ピカチュウ" ↔ "…ピカチュウ…切手BOX…"）や区切り差
+ * （"ニコ・ロビン" ↔ "ニコ ロビン"）でも正しく一致する。
+ * 識別トークンが1つも無い名前（汎用語のみ）は照合不能として false（安全側）。
+ */
+export function nameMatchesTitle(title: string, name: string): boolean {
+  const toks = nameTokens(name);
+  if (toks.length === 0) return false;
+  const t = normalizeForName(title);
+  return toks.every((tok) => t.includes(tok));
+}
+
 export type AuctionScoringTarget = {
   name:       string;
   rarity:     string;
@@ -97,12 +129,11 @@ export function calcAuctionScore(
   bidCount?: number,
 ): AuctionScoringResult {
   const t       = title.toLowerCase();
-  const tns     = normalizeForName(title);   // 空白除去済み（名前照合用）
   const reasons: string[] = [];
   let score     = 0;
 
-  // +35: card name match（空白差を吸収して照合）
-  const nameHit = !!target.name && tns.includes(normalizeForName(target.name));
+  // +35: card name match（識別トークンが全てタイトルに含まれるかで照合）
+  const nameHit = !!target.name && nameMatchesTitle(title, target.name);
   if (nameHit) {
     score += 35; reasons.push("カード名一致 +35");
   }
