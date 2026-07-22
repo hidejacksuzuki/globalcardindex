@@ -114,6 +114,30 @@ export function nameMatchesTitle(title: string, name: string): boolean {
   return toks.every((tok) => t.includes(tok));
 }
 
+/**
+ * setName からカード番号らしきトークンを抽出（例 "207/XY-P プロモ" → "207/xy-p"）。
+ * 「123/ABC-1」形式（数字+スラッシュ+英数）のみ対象。"sv7a" 等の通常セット名は対象外。
+ */
+export function extractCardNumber(setName: string): string | null {
+  const m = setName.match(/\d+\s*\/\s*[A-Za-z0-9-]+/);
+  return m ? m[0] : null;
+}
+
+/**
+ * タイトルが対象カード本人を指しているかの同一性判定。
+ *   1. カード名の識別トークンが全て含まれる、または
+ *   2. setName がカード番号（例 "207/XY-P"）を含み、それがタイトルにも含まれる
+ * プロモ等では「ポンチョを着たピカチュウ 207/XY-P」のようにキャラ修飾
+ * （リザードン/レックウザ）をタイトルに書かず番号で区別する慣習があるため、
+ * 番号一致も本人確認として扱う（eBay 採点の cardNumber 一致と同じ発想）。
+ */
+export function auctionIdentityHit(title: string, name: string, setName: string): boolean {
+  if (nameMatchesTitle(title, name)) return true;
+  const num = extractCardNumber(setName);
+  if (num && normalizeForName(title).includes(normalizeForName(num))) return true;
+  return false;
+}
+
 export type AuctionScoringTarget = {
   name:       string;
   rarity:     string;
@@ -137,8 +161,8 @@ export function calcAuctionScore(
   const reasons: string[] = [];
   let score     = 0;
 
-  // +35: card name match（識別トークンが全てタイトルに含まれるかで照合）
-  const nameHit = !!target.name && nameMatchesTitle(title, target.name);
+  // +35: card name match（識別トークン照合 or カード番号一致で本人確認）
+  const nameHit = !!target.name && auctionIdentityHit(title, target.name, target.setName);
   if (nameHit) {
     score += 35; reasons.push("カード名一致 +35");
   }
