@@ -192,6 +192,34 @@ export default async function CardSlugPage({
         </div>
       </header>
 
+      {/* 価格データ未収集カードの空状態（行き止まり回避） */}
+      {card.priceCount === 0 && (
+        <section className="border border-navy/10 bg-white p-8 text-center space-y-4">
+          <p className="text-3xl">📊</p>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-navy">このカードの価格データはまだ収集中です</p>
+            <p className="text-xs text-navy/50 leading-relaxed">
+              市場での取引が確認され次第、推定相場・価格推移を表示します。<br />
+              ウォッチに追加しておくと、データが揃ったときに見つけやすくなります。
+            </p>
+          </div>
+          <div className="flex items-center justify-center gap-2 flex-wrap pt-1">
+            <Link
+              href={`/sets/${encodeURIComponent(card.setName)}`}
+              className="border border-navy/20 px-4 py-2 text-xs text-navy/70 hover:border-navy hover:text-navy transition"
+            >
+              {card.setName} の他のカード →
+            </Link>
+            <Link
+              href="/cards"
+              className="border border-navy/20 px-4 py-2 text-xs text-navy/70 hover:border-navy hover:text-navy transition"
+            >
+              価格データのあるカードを探す →
+            </Link>
+          </div>
+        </section>
+      )}
+
       {/* 実際の出品写真（出品者提供画像・ホットリンク表示） */}
       <ListingPhotoStrip photos={listingPhotos} />
 
@@ -239,23 +267,15 @@ export default async function CardSlugPage({
               </dd>
             </div>
             <div>
-              <dt className="text-xs uppercase tracking-widest text-navy/40">サンプル数</dt>
+              <dt className="text-xs uppercase tracking-widest text-navy/40">観測件数</dt>
               <dd className="mt-1 text-lg tabular-nums text-navy/60">
                 {card.priceCount.toLocaleString()} 件
               </dd>
             </div>
           </dl>
-          {/* Price Confidence 行 — データの信頼性を数字で示す */}
+          {/* データの鮮度と算出方法の注記（信頼性の要約は上の信頼度バッジに一本化） */}
           <div className="mt-4 border-t border-navy/5 pt-3 flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-4 text-[11px] text-navy/50">
-              {card.avgTrust !== null && (
-                <span>
-                  データ信頼スコア{" "}
-                  <strong className={`tabular-nums ${card.avgTrust >= 70 ? "text-green-700" : card.avgTrust >= 50 ? "text-amber-600" : "text-navy/60"}`}>
-                    {card.avgTrust}/100
-                  </strong>
-                </span>
-              )}
               {card.lastObservedAt && (
                 <span>更新: {relativeTime(card.lastObservedAt)}</span>
               )}
@@ -308,7 +328,7 @@ export default async function CardSlugPage({
       {/* Card Index — 補助情報 */}
       {showIndex && cardIndex && (
         <section className="border border-navy/10 bg-white p-6">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-1">
             <h2 className="text-xs uppercase tracking-widest text-navy/50">Card Index</h2>
             {isLowConf && (
               <span className="rounded bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-600 border border-red-200">
@@ -321,6 +341,9 @@ export default async function CardSlugPage({
               </span>
             )}
           </div>
+          <p className="mb-4 text-[11px] text-navy/40 leading-relaxed">
+            上の推定相場を長期の窓で平滑化した補助指標です。価格そのものではなく、算出方法・対象期間が異なるため件数や変化率は上の数字と一致しません。
+          </p>
           <dl className="grid grid-cols-2 gap-6 sm:grid-cols-4">
             <div>
               <dt className="text-xs uppercase tracking-widest text-navy/50">指数値</dt>
@@ -329,7 +352,7 @@ export default async function CardSlugPage({
               </dd>
             </div>
             <div>
-              <dt className="text-xs uppercase tracking-widest text-navy/50">前回比</dt>
+              <dt className="text-xs uppercase tracking-widest text-navy/50">指数の前回比</dt>
               <dd className={`mt-1 text-lg tabular-nums ${
                 cardIndex.changeRate > 0 ? "text-gold-700" :
                 cardIndex.changeRate < 0 ? "text-red-600" :
@@ -340,7 +363,7 @@ export default async function CardSlugPage({
               </dd>
             </div>
             <div>
-              <dt className="text-xs uppercase tracking-widest text-navy/50">サンプル数</dt>
+              <dt className="text-xs uppercase tracking-widest text-navy/50">指数サンプル数</dt>
               <dd className="mt-1 text-lg tabular-nums text-navy/60">
                 {cardIndex.sampleCount ?? "—"}
               </dd>
