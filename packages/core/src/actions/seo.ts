@@ -294,6 +294,10 @@ export async function getCardPriceHistory(
 ): Promise<PricePoint[]> {
   const since = new Date(Date.now() - days * 86_400_000);
 
+  // 直近500件を取得する（desc で新しい順に取り、表示用に古い順へ反転）。
+  // 以前は asc + take 500 で「最古の500件」を返しており、観測数が 500 を
+  // 超えるカードではチャートに古いデータしか渡らず、既定の 7日/30日 窓が
+  // 常に空（「この期間のデータが不足」）になっていた。
   const rows = await prisma.price.findMany({
     where: {
       cardId,
@@ -302,12 +306,12 @@ export async function getCardPriceHistory(
       isStale:    false,
       trustScore: { gte: TRUST_THRESHOLD },
     },
-    orderBy: { observedAt: "asc" },
+    orderBy: { observedAt: "desc" },
     select:  { price: true, currency: true, observedAt: true },
     take:    500,
   });
 
-  return rows.map((r) => ({
+  return rows.reverse().map((r) => ({
     date:     r.observedAt.toISOString(),
     price:    r.price,
     currency: r.currency,

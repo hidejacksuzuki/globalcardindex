@@ -43,8 +43,36 @@ type Props = {
   defaultPeriod?: Period;
 };
 
+/**
+ * 指定期間に2点以上あるかを判定
+ */
+function hasEnough(points: PricePoint[], days: number): boolean {
+  const cutoff = Date.now() - days * 86_400_000;
+  let n = 0;
+  for (const p of points) {
+    if (new Date(p.date).getTime() >= cutoff) {
+      if (++n >= 2) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * 初期表示する期間を決める。希望の期間にデータが無ければ、データのある
+ * 最短の期間へ自動フォールバックする（希望が30日でも、直近データが40日前
+ * までしか無いカードで空チャートを出さないため）。
+ */
+function pickInitialPeriod(points: PricePoint[], preferred: Period): Period {
+  const daysOf = (k: Period) => PERIODS.find((p) => p.key === k)!.days;
+  if (hasEnough(points, daysOf(preferred))) return preferred;
+  for (const { key } of PERIODS) {
+    if (hasEnough(points, daysOf(key))) return key;
+  }
+  return "90d";
+}
+
 export function PriceChart({ points, defaultPeriod = "30d" }: Props) {
-  const [period, setPeriod] = useState<Period>(defaultPeriod);
+  const [period, setPeriod] = useState<Period>(() => pickInitialPeriod(points, defaultPeriod));
 
   const filtered = useMemo(() => {
     const days    = PERIODS.find((p) => p.key === period)!.days;
