@@ -114,7 +114,7 @@ const MIN_REF_OBS_7D  = 3;    // change7d の基準値を採用する最低の�
 // 別カード混入や参照価格の破綻（データ品質問題）に由来する。急騰/急落
 // ランキング等のヘッドラインから除外する（change7d を null 化）。
 // 根本原因（誤マッチ汚染）は収集マッチング精度の改善で対処予定。
-const MAX_PLAUSIBLE_GAIN_7D =  300;
+const MAX_PLAUSIBLE_GAIN_7D =  200;
 const MIN_PLAUSIBLE_LOSS_7D = -80;
 
 /** 数値配列の中央値。空なら null */
