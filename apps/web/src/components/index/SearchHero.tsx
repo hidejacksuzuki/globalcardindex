@@ -8,7 +8,7 @@ const POPULAR = ["ピカチュウ", "リーリエ", "ブラッキー", "ナン�
 
 const FEATURES = [
   { icon: "📈", title: "Price Tracking",  body: "実売データから推定相場と価格推移を毎日更新" },
-  { icon: "🗂", title: "Portfolio",       body: "保有カードの評価額・含み損益を自動で追跡" },
+  { icon: "🗂", title: "マイカード",       body: "保有カードの評価額・含み損益を自動で追跡" },
   { icon: "🔥", title: "Market Trends",   body: "急騰・急落ランキングと市場全体の動きを可視化" },
 ];
 
@@ -97,7 +97,7 @@ export function SearchHero({ lastUpdated }: Props) {
               href="/portfolio"
               className="border border-white/30 text-white px-6 py-3 text-sm font-semibold rounded-sm hover:bg-white/10 transition"
             >
-              ポートフォリオを作る
+              マイカードを作る
             </Link>
           </div>
 

@@ -117,13 +117,13 @@ export default function AboutPage({ params }: { params: { locale: Locale } }) {
           {isEn ? (
             <>
               <AudienceCard icon="🃏" title="Collectors"     body="Check estimated prices and trends to judge when to buy or sell. Add cards to your watchlist and get email alerts on big price moves." />
-              <AudienceCard icon="📊" title="Portfolio Tracking" body="Register the cards you own and GCI automatically tracks their total value and unrealized gains against the latest market prices." />
+              <AudienceCard icon="📊" title="My Cards" body="Register the cards you own and GCI automatically tracks their total value and unrealized gains against the latest market prices." />
               <AudienceCard icon="🏪" title="Card Shops"     body="Reference data for setting buy prices. Verify deviation from market rates numerically, supporting fair price formation." />
             </>
           ) : (
             <>
               <AudienceCard icon="🃏" title="コレクター"     body="推定相場と価格推移で「買い時・売り時」を判断。気になるカードはウォッチリストに入れておけば、大きな価格変動をメールでお知らせします。" />
-              <AudienceCard icon="📊" title="保有カード管理"  body="持っているカードを Portfolio に登録すると、最新相場に基づく評価額と含み損益を自動で追跡できます。" />
+              <AudienceCard icon="📊" title="保有カード管理"  body="持っているカードを マイカード に登録すると、最新相場に基づく評価額と含み損益を自動で追跡できます。" />
               <AudienceCard icon="🏪" title="カードショップ" body="買取価格設定の参考データとして。市場相場との乖離を数値で確認し、適正な価格形成を支援します。" />
             </>
           )}
@@ -154,7 +154,7 @@ export default function AboutPage({ params }: { params: { locale: Locale } }) {
         <div className="space-y-3">
           {isEn ? (
             [
-              { phase: 'Now',    items: ['Estimated prices (low / median / high) & trend charts', 'Portfolio tracking (value & unrealized gains)', 'Watchlist & price alerts', 'Daily market summaries & market index'] },
+              { phase: 'Now',    items: ['Estimated prices (low / median / high) & trend charts', 'My Cards tracking (value & unrealized gains)', 'Watchlist & price alerts', 'Daily market summaries & market index'] },
               { phase: 'Soon',   items: ['More games (Yu-Gi-Oh! / MTG expansion)', 'More data sources', 'Set-level aggregates'] },
               { phase: 'Future', items: ['PSA/BGS grade-level analytics', 'Game-level sub-indices', 'Developer API'] },
             ].map(({ phase, items }) => (
@@ -171,7 +171,7 @@ export default function AboutPage({ params }: { params: { locale: Locale } }) {
             ))
           ) : (
             [
-              { phase: '現在',  items: ['推定相場（最安/中央/最高）と価格推移チャート', 'Portfolio（評価額・含み損益の自動追跡）', 'ウォッチリストと価格変動アラート', '日次市場サマリーと市場指数'] },
+              { phase: '現在',  items: ['推定相場（最安/中央/最高）と価格推移チャート', 'マイカード（評価額・含み損益の自動追跡）', 'ウォッチリストと価格変動アラート', '日次市場サマリーと市場指数'] },
               { phase: '近日',  items: ['対応ゲーム拡充（遊戯王・MTG強化）', 'データソースの拡充', 'セット別の相場集計'] },
               { phase: '将来',  items: ['PSA/BGS グレード別の相場分析', 'ゲーム別サブ指数', '開発者向け API'] },
             ].map(({ phase, items }) => (

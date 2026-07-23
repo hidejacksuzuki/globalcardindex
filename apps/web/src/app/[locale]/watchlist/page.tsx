@@ -73,7 +73,7 @@ export default async function WatchlistPage({ params }: { params: { locale: Loca
                     <th className="px-4 py-3 text-right">7d</th>
                     <th className="px-4 py-3">Signals</th>
                     <th className="px-4 py-3">{isEn ? 'Added' : '追加日'}</th>
-                    <th className="px-4 py-3">Portfolio</th>
+                    <th className="px-4 py-3">マイカード</th>
                     <th className="px-4 py-3"></th>
                   </tr>
                 </thead>

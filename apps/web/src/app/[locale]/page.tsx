@@ -71,7 +71,7 @@ export default async function HomePage({ params }: { params: { locale: Locale } 
         )}
         {userId && !portfolioSummary && (
           <section className="border border-navy/10 bg-white px-6 py-4 flex items-center justify-between gap-4">
-            <p className="text-sm text-navy/50">ポートフォリオにカードが登録されていません。</p>
+            <p className="text-sm text-navy/50">マイカードにカードが登録されていません。</p>
             <Link href="/cards" className="shrink-0 border border-navy/20 px-4 py-1.5 text-xs uppercase tracking-widest text-navy hover:border-navy/50 transition">
               カードを探す →
             </Link>
@@ -268,10 +268,10 @@ function PortfolioSummarySection({ summary }: { summary: PortfolioSummary }) {
       <div className="flex items-center justify-between px-6 py-3 border-b border-navy/5">
         <div className="flex items-center gap-2">
           <span className="text-base">📦</span>
-          <p className="text-xs font-semibold uppercase tracking-widest text-navy/60">マイポートフォリオ</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-navy/60">マイカード</p>
         </div>
         <Link href="/portfolio" className="text-xs text-blue-500 hover:text-blue-700 transition">
-          ポートフォリオを見る →
+          マイカードを見る →
         </Link>
       </div>
       <dl className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-navy/5">

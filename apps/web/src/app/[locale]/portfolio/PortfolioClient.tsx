@@ -30,7 +30,7 @@ export function PortfolioClient({ items: initialItems, thumbs = {} }: Props) {
   const [_p,         startTransition] = useTransition();
 
   const remove = (id: string, name: string) => {
-    if (!confirm(`「${name}」をポートフォリオから削除しますか？`)) return;
+    if (!confirm(`「${name}」をマイカードから削除しますか？`)) return;
     startTransition(async () => {
       const res = await fetch(`/api/v1/portfolio/${id}`, { method: "DELETE" });
       if (res.ok) {
@@ -40,7 +40,7 @@ export function PortfolioClient({ items: initialItems, thumbs = {} }: Props) {
     });
   };
 
-  const refresh = async (msg = "Portfolio を更新しました") => {
+  const refresh = async (msg = "マイカードを更新しました") => {
     const res  = await fetch("/api/v1/portfolio");
     const data = await res.json() as { ok: boolean; items?: PortfolioItem[] };
     if (data.ok && data.items) setItems(data.items);
@@ -62,9 +62,9 @@ export function PortfolioClient({ items: initialItems, thumbs = {} }: Props) {
     return (
       <div className="border border-navy/10 bg-white p-12 text-center space-y-4">
         <div>
-          <p className="text-sm font-medium text-navy">Portfolioにカードがありません</p>
+          <p className="text-sm font-medium text-navy">マイカードにカードがありません</p>
           <p className="mt-2 text-xs text-navy/40 leading-relaxed">
-            カード詳細ページの「+ Portfolioに追加」から登録できます。
+            カード詳細ページの「+ マイカードに追加」から登録できます。
           </p>
         </div>
         <Link
@@ -195,7 +195,7 @@ export function PortfolioClient({ items: initialItems, thumbs = {} }: Props) {
           cardName={editItem.name}
           existingItem={editItem}
           onClose={() => setEditItem(null)}
-          onSaved={() => refresh("Portfolio を更新しました")}
+          onSaved={() => refresh("マイカードを更新しました")}
         />
       )}
 

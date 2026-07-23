@@ -56,7 +56,7 @@ export default function TermsPage({ params }: { params: { locale: Locale } }) {
 
           <Section title="2. Accounts">
             <p>
-              Some features (Portfolio, watchlist alerts, etc.) require an account registered with
+              Some features (My Cards, watchlist alerts, etc.) require an account registered with
               your email address. Sign-in links and notifications are sent to that address. You are
               responsible for keeping your email account secure. To delete your account and
               associated data, please request it via the in-service feedback function; we will
@@ -192,14 +192,14 @@ export default function TermsPage({ params }: { params: { locale: Locale } }) {
               Global Card Index（以下「本サービス」）は、トレーディングカードの相場情報を提供する
               情報提供サービスです。外部マーケットから収集した取引データをもとに、カードごとの
               推定相場（最安値・中央値・最高値）・価格推移・市場全体の指数を提供するほか、
-              登録ユーザー向けに保有カードの管理（Portfolio）・ウォッチリスト・価格変動アラート
+              登録ユーザー向けに保有カードの管理（マイカード）・ウォッチリスト・価格変動アラート
               等の機能を提供します。
             </p>
           </Section>
 
           <Section title="2. アカウント">
             <p>
-              一部の機能（Portfolio・ウォッチリストのアラート等）の利用には、メールアドレスによる
+              一部の機能（マイカード・ウォッチリストのアラート等）の利用には、メールアドレスによる
               アカウント登録が必要です。ログイン用リンクや各種通知は登録されたメールアドレスに
               送信されます。メールアカウントの管理は利用者ご自身の責任で行ってください。
               アカウントおよび登録データの削除を希望する場合は、サービス内のフィードバック機能
@@ -211,7 +211,7 @@ export default function TermsPage({ params }: { params: { locale: Locale } }) {
             <p>本サービスは以下の情報を取得し、次の目的で利用します：</p>
             <ul className="mt-3 space-y-1.5 text-sm list-disc pl-5">
               <li>メールアドレス — ログイン認証、および利用者が有効にした通知（価格アラート・週次まとめ等）の送信のため。通知はアカウント設定からいつでも停止できます。</li>
-              <li>利用者が登録するデータ — Portfolio の登録内容（カード・枚数・取得価格・メモ）、ウォッチリスト、フィードバックの内容。各機能の提供およびサービス改善のため。</li>
+              <li>利用者が登録するデータ — マイカード の登録内容（カード・枚数・取得価格・メモ）、ウォッチリスト、フィードバックの内容。各機能の提供およびサービス改善のため。</li>
               <li>アクセスログ — セキュリティ確保およびサービス改善のため。</li>
             </ul>
             <p className="mt-3">

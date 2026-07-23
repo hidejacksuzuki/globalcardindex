@@ -8,8 +8,8 @@ import { PortfolioClient }   from "./PortfolioClient";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title:       "Portfolio | Global Card Index",
-  description: "あなたのカードポートフォリオ。総評価額・含み損益をリアルタイムで確認。",
+  title:       "マイカード | Global Card Index",
+  description: "あなたの保有カードの総評価額・含み損益をリアルタイムで確認。",
 };
 
 export default async function PortfolioPage() {
@@ -28,9 +28,9 @@ export default async function PortfolioPage() {
           <nav className="text-[10px] uppercase tracking-widest text-navy/40 mb-1">
             <Link href="/" className="hover:text-navy transition">Home</Link>
             <span className="mx-1">/</span>
-            <span>Portfolio</span>
+            <span>マイカード</span>
           </nav>
-          <h1 className="text-2xl font-semibold text-navy">My Portfolio</h1>
+          <h1 className="text-2xl font-semibold text-navy">マイカード</h1>
           <p className="mt-0.5 text-sm text-navy/50">保有カードの評価額・含み損益</p>
         </div>
         <Link

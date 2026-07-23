@@ -42,14 +42,14 @@ export function AddToPortfolioButton({ cardId, cardName, userId: _userId, initia
         const data = await res.json() as { ok: boolean; item?: PortfolioCard };
         if (!res.ok || !data.ok) throw new Error();
         setItem(data.item ?? { id: "", quantity: 1, avgBuyPrice: null, memo: null });
-        setToast("Portfolioに追加しました");
+        setToast("マイカードに追加しました");
       } catch {
         setToast("エラーが発生しました");
       }
     });
   };
 
-  const handleModalSaved = async (toastMsg = "Portfolio を更新しました") => {
+  const handleModalSaved = async (toastMsg = "マイカードを更新しました") => {
     setShowModal(false);
     // 最新状態を取得
     try {
@@ -78,7 +78,7 @@ export function AddToPortfolioButton({ cardId, cardName, userId: _userId, initia
             ) : (
               <span className="text-base leading-none">+</span>
             )}
-            <span>Portfolioに追加</span>
+            <span>マイカードに追加</span>
           </button>
           {/* 詳細入力リンク */}
           <button
@@ -95,7 +95,7 @@ export function AddToPortfolioButton({ cardId, cardName, userId: _userId, initia
             cardName={cardName}
             existingItem={null}
             onClose={() => setShowModal(false)}
-            onSaved={() => handleModalSaved("Portfolioに追加しました")}
+            onSaved={() => handleModalSaved("マイカードに追加しました")}
           />
         )}
 
@@ -103,7 +103,7 @@ export function AddToPortfolioButton({ cardId, cardName, userId: _userId, initia
           <Toast
             message={toast}
             type={toast.includes("エラー") ? "error" : "success"}
-            action={toast.includes("エラー") ? undefined : { label: "Portfolioを見る", href: "/portfolio" }}
+            action={toast.includes("エラー") ? undefined : { label: "マイカードを見る", href: "/portfolio" }}
             onDone={() => setToast(null)}
           />
         )}
@@ -117,7 +117,7 @@ export function AddToPortfolioButton({ cardId, cardName, userId: _userId, initia
       <div className="flex items-center gap-2">
         <span className="inline-flex items-center gap-1.5 rounded-sm border border-green-400 bg-green-50 px-3 py-1.5 text-xs uppercase tracking-widest text-green-700">
           <span className="text-base leading-none">✓</span>
-          <span>Portfolio登録済み</span>
+          <span>マイカード登録済み</span>
         </span>
         <button
           onClick={() => setShowModal(true)}
@@ -129,7 +129,7 @@ export function AddToPortfolioButton({ cardId, cardName, userId: _userId, initia
           href="/portfolio"
           className="text-[11px] text-navy/35 hover:text-navy transition underline underline-offset-2"
         >
-          Portfolioを見る
+          マイカードを見る
         </Link>
       </div>
 
@@ -139,7 +139,7 @@ export function AddToPortfolioButton({ cardId, cardName, userId: _userId, initia
           cardName={cardName}
           existingItem={item}
           onClose={() => setShowModal(false)}
-          onSaved={() => handleModalSaved("Portfolio を更新しました")}
+          onSaved={() => handleModalSaved("マイカードを更新しました")}
         />
       )}
 
@@ -147,7 +147,7 @@ export function AddToPortfolioButton({ cardId, cardName, userId: _userId, initia
         <Toast
           message={toast}
           type={toast.includes("エラー") ? "error" : "success"}
-          action={{ label: "Portfolioを見る", href: "/portfolio" }}
+          action={{ label: "マイカードを見る", href: "/portfolio" }}
           onDone={() => setToast(null)}
         />
       )}
