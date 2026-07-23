@@ -228,7 +228,12 @@ export default async function CardSlugPage({
         <section className="border border-navy/10 bg-white p-6">
           <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
             <div className="flex items-center gap-3">
-              <h2 className="text-xs uppercase tracking-widest text-navy/50">推定相場</h2>
+              <h2
+                title="複数マーケットの実売データ（落札・売却済み）を集計し、外れ値を除いて算出した推定価格帯です。最安値・中央値・最高値で相場のレンジを示します。"
+                className="text-xs uppercase tracking-widest text-navy/50 cursor-help"
+              >
+                推定相場
+              </h2>
               {cardIndex?.confidence && (
                 <ConfidenceBadge confidence={cardIndex.confidence} />
               )}
@@ -281,7 +286,7 @@ export default async function CardSlugPage({
               )}
             </div>
             <p className="text-[11px] text-navy/35">
-              ※ 直近60件の信頼スコア上位データから算出。外れ値・古いデータを除外済み。
+              ※ 実際の落札・売却データ直近60件の信頼スコア上位から算出。外れ値・古いデータは除外済み。
             </p>
           </div>
         </section>
@@ -346,7 +351,12 @@ export default async function CardSlugPage({
           </p>
           <dl className="grid grid-cols-2 gap-6 sm:grid-cols-4">
             <div>
-              <dt className="text-xs uppercase tracking-widest text-navy/50">指数値</dt>
+              <dt
+                title="基準値1000からの相対的な価格水準を表す指数です。1000より大きいほど基準時点より高く、複数の観測を長期の窓で平滑化して算出します。"
+                className="text-xs uppercase tracking-widest text-navy/50 cursor-help"
+              >
+                指数値
+              </dt>
               <dd className="mt-1 text-lg font-semibold tabular-nums text-navy">
                 {cardIndex.value.toFixed(1)}
               </dd>
@@ -476,6 +486,12 @@ function Stat({
   );
 }
 
+const CONFIDENCE_TOOLTIP: Record<string, string> = {
+  HIGH: "信頼度 高: サンプル数が十分で価格のばらつきも小さく、相場として信頼できます。",
+  MED:  "信頼度 中: サンプルはあるものの数がやや少ない、または価格にばらつきがあります。参考程度に。",
+  LOW:  "信頼度 低: サンプルが少なく相場が定まっていません。参考値としてご覧ください。",
+};
+
 function ConfidenceBadge({ confidence }: { confidence: string | null }) {
   if (!confidence) return <span className="text-sm text-navy/30">—</span>;
   const styles: Record<string, string> = {
@@ -484,7 +500,10 @@ function ConfidenceBadge({ confidence }: { confidence: string | null }) {
     LOW:  "bg-red-100   text-red-700",
   };
   return (
-    <span className={`inline-block rounded px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${styles[confidence] ?? "bg-navy/10 text-navy/50"}`}>
+    <span
+      title={CONFIDENCE_TOOLTIP[confidence] ?? "相場の信頼度"}
+      className={`inline-block cursor-help rounded px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${styles[confidence] ?? "bg-navy/10 text-navy/50"}`}
+    >
       {confidence}
     </span>
   );

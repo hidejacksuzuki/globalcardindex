@@ -428,34 +428,11 @@ export type CardEngagement = {
 };
 
 export async function getCardEngagement(cardId: string): Promise<CardEngagement> {
-  const [userWatch, anonWatch, holders, sold] = await Promise.all([
+  const [userWatch, anonWatch, holders, recent] = await Promise.all([
     prisma.userWatchlistItem.count({ where: { cardId } }),
     prisma.watchlistItem.count({ where: { cardId } }),
     prisma.portfolioCard.count({ where: { cardId } }),
     prisma.price.findMany({
-      where: {
-        cardId,
-        availability: "sold",
-        isOutlier:    false,
-        trustScore:   { gte: TRUST_THRESHOLD },
-      },
-      orderBy: { observedAt: "desc" },
-      take:    5,
-      select:  { price: true, currency: true, observedAt: true },
-    }),
-  ]);
-
-  // 落札データがまだ収集されていないカードは、直近の価格観測でフォールバック
-  // （sold と観測はバッジで明確に区別して表示する）
-  let recentSales: RecentSale[] = sold.map((s) => ({
-    price:      s.price,
-    currency:   s.currency,
-    observedAt: s.observedAt.toISOString(),
-    sold:       true,
-  }));
-
-  if (recentSales.length === 0) {
-    const observed = await prisma.price.findMany({
       where: {
         cardId,
         isOutlier:  false,
@@ -464,17 +441,27 @@ export async function getCardEngagement(cardId: string): Promise<CardEngagement>
       },
       orderBy: { observedAt: "desc" },
       take:    5,
-      select:  { price: true, currency: true, observedAt: true },
-    });
-    recentSales = observed.map((s) => ({
-      price:      s.price,
-      currency:   s.currency,
-      observedAt: s.observedAt.toISOString(),
-      sold:       false,
-    }));
-  }
+      select:  { price: true, currency: true, observedAt: true, sourceType: true },
+    }),
+  ]);
+
+  // sold 判定は sourceType から導く。availability 列は運用上 null のままで、
+  // 落札実績(mercari_sold / yahoo_auction_closed 等)を「観測」と誤ラベルして
+  // いた。実データの約99%は落札実績のため、正しく「落札」と表示する。
+  const recentSales: RecentSale[] = recent.map((s) => ({
+    price:      s.price,
+    currency:   s.currency,
+    observedAt: s.observedAt.toISOString(),
+    sold:       isSoldSource(s.sourceType),
+  }));
 
   return { watchers: userWatch + anonWatch, holders, recentSales };
+}
+
+/** sourceType が落札・売却済み（出品中でない）を表すか */
+function isSoldSource(sourceType: string | null): boolean {
+  if (!sourceType) return false;
+  return /(sold|closed)/i.test(sourceType);
 }
 
 // ----------------------------------------------------------------
