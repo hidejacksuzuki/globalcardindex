@@ -66,6 +66,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const todayStart = new Date(now);
   todayStart.setHours(0, 0, 0, 0);
 
+  // パフォーマンス (2026-07-23): 以前は createdAt で絞っていたが、RawAuctionResult は
+  // 70万行あり createdAt にインデックスが無いため毎回フルスキャンで ~24秒かかっていた。
+  // capturedAt はインデックス済みで値も createdAt と同一（挿入時に同時設定・実測差0秒）。
+  // 「今日“収集”したもの」という意味的にも capturedAt が正しいため、全て capturedAt に統一。
+
   // ── Today's RawListing stats (bookmarklet / import) ──────────────────────
   const [
     totalItems,
@@ -73,10 +78,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     approvedItems,
     rejectedItems,
   ] = await Promise.all([
-    prisma.rawListing.count({ where: { createdAt: { gte: todayStart } } }),
-    prisma.rawListing.count({ where: { createdAt: { gte: todayStart }, status: "pending" } }),
-    prisma.rawListing.count({ where: { createdAt: { gte: todayStart }, status: "approved" } }),
-    prisma.rawListing.count({ where: { createdAt: { gte: todayStart }, status: "rejected" } }),
+    prisma.rawListing.count({ where: { capturedAt: { gte: todayStart } } }),
+    prisma.rawListing.count({ where: { capturedAt: { gte: todayStart }, status: "pending" } }),
+    prisma.rawListing.count({ where: { capturedAt: { gte: todayStart }, status: "approved" } }),
+    prisma.rawListing.count({ where: { capturedAt: { gte: todayStart }, status: "rejected" } }),
   ]);
 
   // CollectorRun は旧フロー互換で残す（セッション数のみ参照）
@@ -90,27 +95,27 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const errorItems    = 0;
 
   // ── Today's RawAuctionResult stats (server-side Yahoo cron) ─────────────
-  const [
-    yahooTotal,
-    yahooApproved,
-    yahooPending,
-    yahooLastRow,
-  ] = await Promise.all([
-    prisma.rawAuctionResult.count({
-      where: { createdAt: { gte: todayStart }, source: "yahoo_auction_closed" },
-    }),
-    prisma.rawAuctionResult.count({
-      where: { createdAt: { gte: todayStart }, source: "yahoo_auction_closed", status: "approved" },
-    }),
-    prisma.rawAuctionResult.count({
-      where: { createdAt: { gte: todayStart }, source: "yahoo_auction_closed", status: "pending" },
+  // status 別カウントは 3 回の count を 1 回の groupBy に集約（今日分を 3 回
+  // スキャンせず 1 回で済ませる）。
+  const [auctionByStatus, yahooLastRow] = await Promise.all([
+    prisma.rawAuctionResult.groupBy({
+      by:     ["status"],
+      where:  { capturedAt: { gte: todayStart }, source: "yahoo_auction_closed" },
+      _count: { _all: true },
     }),
     prisma.rawAuctionResult.findFirst({
       where:   { source: "yahoo_auction_closed" },
-      orderBy: { createdAt: "desc" },
-      select:  { createdAt: true },
+      orderBy: { capturedAt: "desc" },
+      select:  { capturedAt: true },
     }),
   ]);
+  const auctionCount = (status?: string): number =>
+    status
+      ? auctionByStatus.find((r) => r.status === status)?._count._all ?? 0
+      : auctionByStatus.reduce((sum, r) => sum + r._count._all, 0);
+  const yahooTotal    = auctionCount();
+  const yahooApproved = auctionCount("approved");
+  const yahooPending  = auctionCount("pending");
 
   // ── Last RecalcLog ────────────────────────────────────────────────────────
   const lastRecalc = await prisma.recalcLog.findFirst({
@@ -144,7 +149,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         total:      yahooTotal,
         approved:   yahooApproved,
         pending:    yahooPending,
-        lastCardAt: yahooLastRow?.createdAt?.toISOString() ?? null,
+        lastCardAt: yahooLastRow?.capturedAt?.toISOString() ?? null,
       },
       recalc: {
         lastRunAt:      lastRecalc?.createdAt?.toISOString() ?? null,
