@@ -4,6 +4,7 @@ import { Header }          from '@/components/layout/Header';
 import { Disclaimer }      from '@/components/common/Disclaimer';
 import { BetaFeedbackWidget } from '@/components/feedback/BetaFeedbackWidget';
 import { PlausibleAnalytics } from '@/components/analytics/PlausibleAnalytics';
+import { Analytics }          from '@vercel/analytics/next';
 import { I18nProvider }    from '@/i18n/context';
 import { CurrencyProvider } from '@/lib/currency';
 import { getTranslations, locales, isValidLocale } from '@/i18n';
@@ -107,6 +108,7 @@ export default function LocaleLayout({
         </footer>
 
         <BetaFeedbackWidget />
+        <Analytics />
       </CurrencyProvider>
     </I18nProvider>
   );
