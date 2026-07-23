@@ -232,12 +232,12 @@ export default async function CardsPage({ params, searchParams }: Props) {
                 <th className="px-4 py-3">
                   <SortLink k="name" sort={sort} order={order} q={q}>{t.cards.colCard}</SortLink>
                 </th>
-                <th className="px-4 py-3">{t.cards.colSet}</th>
-                <th className="px-4 py-3">{t.cards.colCondition}</th>
-                <th className="px-4 py-3">{t.cards.colConfidence}</th>
-                <th className="px-4 py-3 text-right">{t.cards.colIndex}</th>
+                <th className="px-4 py-3 hidden md:table-cell">{t.cards.colSet}</th>
+                <th className="px-4 py-3 hidden sm:table-cell">{t.cards.colCondition}</th>
+                <th className="px-4 py-3 hidden lg:table-cell">{t.cards.colConfidence}</th>
+                <th className="px-4 py-3 text-right hidden md:table-cell">{t.cards.colIndex}</th>
                 <th className="px-4 py-3 text-right">Δ</th>
-                <th className="px-4 py-3 text-right">{t.cards.colSamples}</th>
+                <th className="px-4 py-3 text-right hidden lg:table-cell">{t.cards.colSamples}</th>
                 <th className="px-4 py-3 text-right">
                   <SortLink k="latestPrice" sort={sort} order={order} q={q}>
                     {t.cards.colLatestPrice}
@@ -261,19 +261,19 @@ export default async function CardsPage({ params, searchParams }: Props) {
                         </Link>
                       </div>
                     </td>
-                    <td className="max-w-[120px] truncate px-4 py-3 text-navy/55 text-xs">
+                    <td className="max-w-[120px] truncate px-4 py-3 text-navy/55 text-xs hidden md:table-cell">
                       {c.setName}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 hidden sm:table-cell">
                       <CondBadge condition={c.condition} />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 hidden lg:table-cell">
                       {idx?.confidence
                         ? <ConfidenceBadge tier={idx.confidence} />
                         : <span className="text-navy/25 text-xs">—</span>
                       }
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums font-medium text-navy">
+                    <td className="px-4 py-3 text-right tabular-nums font-medium text-navy hidden md:table-cell">
                       {idx?.value != null
                         ? idx.value.toFixed(1)
                         : <span className="text-navy/25">—</span>
@@ -285,7 +285,7 @@ export default async function CardsPage({ params, searchParams }: Props) {
                         : <span className="text-navy/25">—</span>
                       }
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-navy/55">
+                    <td className="px-4 py-3 text-right tabular-nums text-navy/55 hidden lg:table-cell">
                       {idx?.sampleCount != null
                         ? idx.sampleCount
                         : <span className="text-navy/25">—</span>

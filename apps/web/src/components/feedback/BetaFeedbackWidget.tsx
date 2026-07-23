@@ -67,10 +67,12 @@ export function BetaFeedbackWidget() {
       {/* Fixed corner button */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-40 flex items-center gap-1.5 rounded-full border border-navy bg-navy px-4 py-2.5 text-xs font-semibold text-white shadow-lg hover:bg-navy/85 transition"
+        aria-label="β Feedback"
+        className="fixed bottom-5 right-5 z-40 flex items-center gap-1.5 rounded-full border border-navy bg-navy px-3 sm:px-4 py-2.5 text-xs font-semibold text-white shadow-lg hover:bg-navy/85 transition"
       >
         <span className="text-sm leading-none">💬</span>
-        <span>β Feedback</span>
+        {/* モバイルではアイコンのみ表示し、コンテンツへの被りを最小化 */}
+        <span className="hidden sm:inline">β Feedback</span>
       </button>
 
       {open && (
