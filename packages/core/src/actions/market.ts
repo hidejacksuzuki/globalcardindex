@@ -108,6 +108,22 @@ export async function getMarketboard(
 
 const MIN_OBS_7D      = 5;    // 候補とする最低 7d 観測数
 const CANDIDATE_LIMIT = 300;  // 最大候補数
+const MIN_REF_OBS_7D  = 3;    // change7d の基準値を採用する最低の参照窓観測数
+
+// 週次で中央値がこの範囲を超える変化は、実質的に市場の値動きではなく
+// 別カード混入や参照価格の破綻（データ品質問題）に由来する。急騰/急落
+// ランキング等のヘッドラインから除外する（change7d を null 化）。
+// 根本原因（誤マッチ汚染）は収集マッチング精度の改善で対処予定。
+const MAX_PLAUSIBLE_GAIN_7D =  300;
+const MIN_PLAUSIBLE_LOSS_7D = -80;
+
+/** 数値配列の中央値。空なら null */
+function median(nums: number[]): number | null {
+  if (nums.length === 0) return null;
+  const s = [...nums].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 === 1 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
 
 export type MarketCard = {
   cardId:      string;
@@ -170,22 +186,47 @@ async function fetchCandidates(): Promise<MarketCard[]> {
     orderBy: { observedAt: "desc" },
     select:  { cardId: true, price: true, currency: true, observedAt: true, capturedAt: true },
   });
-  const latestMap   = new Map<string, { price: number; currency: string }>();
-  const count24hMap = new Map<string, number>();
+  const latestMap        = new Map<string, { price: number; currency: string }>();
+  const count24hMap      = new Map<string, number>();
+  const recentPricesMap  = new Map<string, number[]>();
   for (const p of recentPrices) {
     if (!latestMap.has(p.cardId)) latestMap.set(p.cardId, { price: p.price, currency: p.currency });
     if (p.capturedAt >= ago24h) count24hMap.set(p.cardId, (count24hMap.get(p.cardId) ?? 0) + 1);
+    const arr = recentPricesMap.get(p.cardId) ?? [];
+    arr.push(p.price);
+    recentPricesMap.set(p.cardId, arr);
+  }
+  // change7d の分子は直近7日の「中央値」を使う（単一の最新価格が釣り出品や
+  // 別コンディション安値だと ±数百% に爆発するため）。表示用 latestPrice は
+  // 従来どおり最新の単一価格を用いる。
+  const recentMedianMap = new Map<string, number>();
+  for (const [cid, arr] of recentPricesMap) {
+    const m = median(arr);
+    if (m !== null && m > 0) recentMedianMap.set(cid, m);
   }
 
   // Q3: 7日前以前の価格（change7d 分母）
+  // 以前は参照窓の「単一の最新価格」を分母にしていたため、その1点が釣り出品や
+  // 別コンディションの安値だと change7d が ±数百% に爆発し、急騰/急落ランキングが
+  // 薄データ由来のノイズで埋まっていた。参照窓の「中央値」を分母に使い、かつ
+  // 最低 MIN_REF_OBS_7D 件の参照観測がある場合のみ基準値を採用する。
   const historyPrices = await prisma.price.findMany({
     where:   { cardId: { in: candidateIds }, ...activeBase, observedAt: { lte: ago7d, gte: ago37d } },
     orderBy: { observedAt: "desc" },
     select:  { cardId: true, price: true },
   });
-  const price7dMap = new Map<string, number>();
+  const refPricesMap = new Map<string, number[]>();
   for (const p of historyPrices) {
-    if (!price7dMap.has(p.cardId)) price7dMap.set(p.cardId, p.price);
+    const arr = refPricesMap.get(p.cardId) ?? [];
+    arr.push(p.price);
+    refPricesMap.set(p.cardId, arr);
+  }
+  const price7dMap = new Map<string, number>();
+  for (const [cid, arr] of refPricesMap) {
+    if (arr.length >= MIN_REF_OBS_7D) {
+      const m = median(arr);
+      if (m !== null && m > 0) price7dMap.set(cid, m);
+    }
   }
 
   // Q4: カードメタデータ（非表示・削除済みを除外）
@@ -206,11 +247,19 @@ async function fetchCandidates(): Promise<MarketCard[]> {
     const count7d    = count7dMap.get(cid)   ?? 0;
     const avgTrust   = trustMap.get(cid)     ?? 50;
 
+    // change7d は「直近中央値 vs 参照窓中央値」で算出（両端を中央値化して
+    // 単一外れ値によるノイズを抑える）。change7dAbs は表示の一貫性のため
+    // 中央値差で表す。
+    const recentMed = recentMedianMap.get(cid) ?? null;
     let change7d: number | null = null;
     let change7dAbs: number | null = null;
-    if (latest !== null && old7d !== null && old7d > 0) {
-      change7dAbs = latest.price - old7d;
-      change7d    = (change7dAbs / old7d) * 100;
+    if (recentMed !== null && old7d !== null && old7d > 0) {
+      const pct = ((recentMed - old7d) / old7d) * 100;
+      // 妥当性ガード: 実質ありえない極端値はデータ品質問題なのでランキングから除外
+      if (pct <= MAX_PLAUSIBLE_GAIN_7D && pct >= MIN_PLAUSIBLE_LOSS_7D) {
+        change7dAbs = recentMed - old7d;
+        change7d    = pct;
+      }
     }
 
     results.push({

@@ -57,6 +57,14 @@ export default async function HomePage({ params }: { params: { locale: Locale } 
   const series      = history.map((h) => h.value).reverse();
   const lastUpdated = snapshot ? formatDateTime(snapshot.calculatedAt, params.locale) : null;
 
+  // GCI Index ウィジェットの変化率は、デイリーリキャップ本文と同じ「前日比」
+  // (recap.index.change24h) に統一する。以前はウィジェットが snapshot.changeRate
+  // (直前計算比) を出しており、リキャップ本文の「前日比 +X%」と別数字になって
+  // 矛盾して見えていた。前日データが無い場合のみ直前計算比にフォールバック。
+  const idxChange24h = recap?.index?.change24h ?? null;
+  const idxChange    = idxChange24h ?? snapshot?.changeRate ?? 0;
+  const idxChangeLbl = idxChange24h !== null ? "前日比" : "直前比";
+
   return (
     <div className="space-y-0">
 
@@ -124,9 +132,10 @@ export default async function HomePage({ params }: { params: { locale: Locale } 
                 <>
                   <div className="flex items-baseline gap-2">
                     <p className="text-3xl font-bold text-navy tabular-nums">{snapshot.value.toFixed(1)}</p>
-                    <span className={`text-sm font-semibold ${snapshot.changeRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {snapshot.changeRate >= 0 ? '+' : ''}{snapshot.changeRate.toFixed(2)}%
+                    <span className={`text-sm font-semibold ${idxChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {idxChange >= 0 ? '+' : ''}{idxChange.toFixed(2)}%
                     </span>
+                    <span className="text-[10px] text-navy/35">{idxChangeLbl}</span>
                   </div>
                   {series.length > 1 && <MiniSparkline data={series} />}
                   <div className="flex gap-2 flex-wrap">
