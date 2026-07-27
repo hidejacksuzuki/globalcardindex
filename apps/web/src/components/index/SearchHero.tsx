@@ -97,7 +97,7 @@ export function SearchHero({ lastUpdated }: Props) {
               href="/portfolio"
               className="border border-white/30 text-white px-6 py-3 text-sm font-semibold rounded-sm hover:bg-white/10 transition"
             >
-              マイカードを作る
+              マイカードを登録する
             </Link>
           </div>
 
