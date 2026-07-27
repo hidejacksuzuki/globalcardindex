@@ -393,26 +393,8 @@ export default async function CardSlugPage({
         </section>
       )}
 
-      {/* 内部リンク: 価格履歴ページへ */}
-      {/* Retention CTA */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        {/* Newsletter nudge */}
-        <div className="rounded border border-navy/10 bg-white p-5 flex flex-col gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-navy/40">アラート通知</p>
-            <p className="mt-1 text-sm font-medium text-navy">価格変動をメールで受け取る</p>
-            <p className="mt-0.5 text-xs text-navy/50">
-              15%以上の変動があった週に自動アラートを配信します。
-            </p>
-          </div>
-          <Link
-            href="/newsletter"
-            className="inline-flex items-center gap-1.5 rounded border border-navy/20 px-3 py-1.5 text-xs font-medium text-navy/70 transition hover:border-navy hover:text-navy self-start"
-          >
-            Newsletter 登録 →
-          </Link>
-        </div>
-
+      {/* Retention CTA — Newsletter はβ期間は非表示。カードリクエストのみ表示 */}
+      <div>
         {/* Card request */}
         <div className="rounded border border-navy/10 bg-white p-5 flex flex-col gap-3">
           <div>
