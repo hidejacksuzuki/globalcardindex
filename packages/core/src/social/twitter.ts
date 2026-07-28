@@ -16,6 +16,23 @@ import { createHmac, randomBytes } from "crypto";
 import type { DailyRecap }         from "../actions/recap";
 
 // ----------------------------------------------------------------
+// UTM — X 投稿リンクに付与して Vercel Analytics で流入を計測する
+// ----------------------------------------------------------------
+
+/**
+ * X 投稿用リンクに UTM パラメータを付与する。
+ * SNS 経由は t.co でリファラーが隠れるため、UTM を付けることで
+ * Vercel Analytics の「UTM Parameters」で X 由来の流入を分離できる。
+ *
+ * @param url      サイト内リンク（例: https://gci-index.com/cards/xxx）
+ * @param campaign 投稿枠の識別子（例: "x-morning" / "x-noon" / "x-evening"）
+ */
+export function withUtm(url: string, campaign: string): string {
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}utm_source=x&utm_medium=social&utm_campaign=${campaign}`;
+}
+
+// ----------------------------------------------------------------
 // 型
 // ----------------------------------------------------------------
 

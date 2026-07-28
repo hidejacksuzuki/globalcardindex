@@ -5,6 +5,7 @@ import {
   postTweet,
   uploadOGImageFromUrl,
   checkTwitterEnv,
+  withUtm,
 } from "@gci/core";
 import {
   getDailyRecap,
@@ -96,7 +97,7 @@ async function handle(req: NextRequest) {
     gainersCount: gainersAll.length,
     losersCount:  losersAll.length,
     updatedCount: updateStats.updatedCardsCount,
-    url:          `${baseUrlForText}/daily/${targetDate}`,
+    url:          withUtm(`${baseUrlForText}/daily/${targetDate}`, "x-morning"),
   });
 
   if (isPreview) {

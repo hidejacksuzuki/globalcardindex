@@ -4,6 +4,7 @@ import {
   buildEveningTweetPreview,
   postTweet,
   checkTwitterEnv,
+  withUtm,
 } from "@gci/core";
 import {
   getDailyRecap,
@@ -58,7 +59,7 @@ async function handle(req: NextRequest) {
     updatedCount: stats.updatedCardsCount,
     newCount:     stats.newCardsCount,
     newCards:     stats.newCards,
-    url:          `${baseUrl}/cards`,
+    url:          withUtm(`${baseUrl}/cards`, "x-evening"),
   });
 
   if (isPreview || isDry) {

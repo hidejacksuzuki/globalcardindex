@@ -4,6 +4,7 @@ import {
   buildNoonTweetPreview,
   postTweet,
   checkTwitterEnv,
+  withUtm,
 } from "@gci/core";
 import {
   getDailyRecap,
@@ -63,7 +64,7 @@ async function handle(req: NextRequest) {
     return NextResponse.json({ ok: true, skipped: true, reason: "no_gainer" });
   }
 
-  const url = top.slug ? `${baseUrl}/cards/${top.slug}` : `${baseUrl}/cards`;
+  const url = withUtm(top.slug ? `${baseUrl}/cards/${top.slug}` : `${baseUrl}/cards`, "x-noon");
 
   const preview = buildNoonTweetPreview({
     cardName:  top.cardName,
