@@ -3,14 +3,10 @@
 import { useState, useRef } from "react";
 import { useRouter }         from "next/navigation";
 import Link                  from "next/link";
+import { useT }              from "@/i18n/context";
 
+// カード名は固有名詞（DB上の検索語）のためロケール共通
 const POPULAR = ["ピカチュウ", "リーリエ", "ブラッキー", "ナンジャモ", "ミモザ"];
-
-const FEATURES = [
-  { icon: "📈", title: "Price Tracking",  body: "実売データから推定相場と価格推移を毎日更新" },
-  { icon: "🗂", title: "マイカード",       body: "保有カードの評価額・含み損益を自動で追跡" },
-  { icon: "🔥", title: "Market Trends",   body: "急騰・急落ランキングと市場全体の動きを可視化" },
-];
 
 type Props = {
   lastUpdated?: string | null;
@@ -20,6 +16,13 @@ export function SearchHero({ lastUpdated }: Props) {
   const [query, setQuery] = useState("");
   const inputRef          = useRef<HTMLInputElement>(null);
   const router            = useRouter();
+  const t                 = useT().hero;
+
+  const features = [
+    { icon: "📈", title: t.feature1Title, body: t.feature1Body },
+    { icon: "🗂", title: t.feature2Title, body: t.feature2Body },
+    { icon: "🔥", title: t.feature3Title, body: t.feature3Body },
+  ];
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,10 +46,10 @@ export function SearchHero({ lastUpdated }: Props) {
               Public Beta
             </span>
             <h1 className="text-3xl sm:text-5xl font-bold text-white leading-tight tracking-tight">
-              トレカ市場を、<br className="sm:hidden" />透明に。
+              {t.title1}<br className="sm:hidden" />{t.title2}
             </h1>
             <p className="text-base text-white/70 leading-relaxed">
-              あなたのカードの最新相場を追跡。現在β版として提供中です。
+              {t.subtitle}
             </p>
           </div>
 
@@ -59,7 +62,7 @@ export function SearchHero({ lastUpdated }: Props) {
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="カード名・セット名・カード番号で検索"
+                placeholder={t.searchPlaceholder}
                 className="w-full bg-white/10 border border-white/20 pl-9 pr-4 py-3 text-sm text-white placeholder-white/30 outline-none focus:border-white/50 focus:bg-white/15 transition rounded-sm"
               />
             </div>
@@ -67,13 +70,13 @@ export function SearchHero({ lastUpdated }: Props) {
               type="submit"
               className="bg-[#2b6ef5] hover:bg-[#1d5cd4] text-white px-5 py-3 text-sm font-semibold transition rounded-sm shrink-0"
             >
-              検索
+              {t.searchButton}
             </button>
           </form>
 
           {/* Popular chips */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] uppercase tracking-widest text-white/30">人気の検索:</span>
+            <span className="text-[10px] uppercase tracking-widest text-white/30">{t.popularLabel}</span>
             {POPULAR.map((label) => (
               <button
                 key={label}
@@ -91,19 +94,19 @@ export function SearchHero({ lastUpdated }: Props) {
               href="/cards"
               className="bg-white text-navy px-6 py-3 text-sm font-semibold rounded-sm hover:bg-white/90 transition"
             >
-              カードを探す
+              {t.ctaBrowse}
             </Link>
             <Link
               href="/portfolio"
               className="border border-white/30 text-white px-6 py-3 text-sm font-semibold rounded-sm hover:bg-white/10 transition"
             >
-              マイカードを登録する
+              {t.ctaPortfolio}
             </Link>
           </div>
 
           {/* 3 features */}
           <div className="grid sm:grid-cols-3 gap-3 pt-2">
-            {FEATURES.map(({ icon, title, body }) => (
+            {features.map(({ icon, title, body }) => (
               <div key={title} className="border border-white/10 bg-white/5 rounded-sm px-4 py-3">
                 <p className="text-sm font-semibold text-white">
                   <span className="mr-1.5">{icon}</span>{title}
@@ -117,10 +120,10 @@ export function SearchHero({ lastUpdated }: Props) {
         {/* Right — stats badge */}
         <div className="hidden lg:flex flex-col items-end gap-3">
           <div className="border border-white/15 bg-white/5 rounded-sm px-5 py-4 text-right space-y-1">
-            <p className="text-[10px] uppercase tracking-widest text-white/30">市場データは毎日更新</p>
+            <p className="text-[10px] uppercase tracking-widest text-white/30">{t.statsDaily}</p>
             {lastUpdated && (
               <>
-                <p className="text-[10px] text-white/30">最終更新</p>
+                <p className="text-[10px] text-white/30">{t.statsLastUpdated}</p>
                 <p className="text-xs text-white/60 tabular-nums">{lastUpdated}</p>
               </>
             )}

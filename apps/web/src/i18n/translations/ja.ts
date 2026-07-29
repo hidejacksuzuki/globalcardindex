@@ -1,4 +1,19 @@
 export const ja = {
+  header: {
+    navCards:       'カード検索',
+    navMarket:      'マーケット',
+    navRanking:     'ランキング',
+    navPortfolio:   'マイカード',
+    navInsights:    'インサイト',
+    navNews:        'ニュース',
+    myPage:         'マイページ',
+    login:          'ログイン',
+    signup:         '新規登録',
+    signupShort:    '登録',
+    menuOpen:       'メニューを開く',
+    menuClose:      'メニューを閉じる',
+  },
+
   nav: {
     games:       'ゲーム',
     daily:       'Daily',
@@ -75,6 +90,25 @@ export const ja = {
     footerCtaTitle:  'Market Intelligence',
     footerCtaBody:   '市場データを毎日受け取る',
     footerCtaX:      'X でフォローする',
+  },
+
+  hero: {
+    title1:            'トレカ市場を、',
+    title2:            '透明に。',
+    subtitle:          'あなたのカードの最新相場を追跡。現在β版として提供中です。',
+    searchPlaceholder: 'カード名・セット名・カード番号で検索',
+    searchButton:      '検索',
+    popularLabel:      '人気の検索:',
+    ctaBrowse:         'カードを探す',
+    ctaPortfolio:      'マイカードを登録する',
+    feature1Title:     'Price Tracking',
+    feature1Body:      '実売データから推定相場と価格推移を毎日更新',
+    feature2Title:     'マイカード',
+    feature2Body:      '保有カードの評価額・含み損益を自動で追跡',
+    feature3Title:     'Market Trends',
+    feature3Body:      '急騰・急落ランキングと市場全体の動きを可視化',
+    statsDaily:        '市場データは毎日更新',
+    statsLastUpdated:  '最終更新',
   },
 
   confidence: {

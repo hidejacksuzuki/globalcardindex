@@ -13,12 +13,12 @@ export async function Header() {
 
   const navLinks = [
     // モバイルではヘッダー幅が375pxに収まらないため隠す（ドロワーメニュー内にあり機能は維持）
-    { href: '/cards',       label: 'カード検索',   desktop: 'hidden sm:inline' },
-    { href: '/marketboard', label: 'マーケット',   desktop: 'hidden md:inline' },
-    { href: '/trending',    label: 'ランキング',   desktop: 'hidden md:inline' },
-    { href: '/portfolio',   label: 'マイカード',   desktop: 'hidden sm:inline' },
-    { href: '/indices',     label: 'インサイト',   desktop: 'hidden lg:inline' },
-    { href: '/daily',       label: 'ニュース',     desktop: 'hidden lg:inline' },
+    { href: '/cards',       label: t.header.navCards,     desktop: 'hidden sm:inline' },
+    { href: '/marketboard', label: t.header.navMarket,    desktop: 'hidden md:inline' },
+    { href: '/trending',    label: t.header.navRanking,   desktop: 'hidden md:inline' },
+    { href: '/portfolio',   label: t.header.navPortfolio, desktop: 'hidden sm:inline' },
+    { href: '/indices',     label: t.header.navInsights,  desktop: 'hidden lg:inline' },
+    { href: '/daily',       label: t.header.navNews,      desktop: 'hidden lg:inline' },
   ];
 
   return (
@@ -55,7 +55,7 @@ export async function Header() {
               href="/account"
               className="hidden sm:inline-flex items-center gap-1.5 border border-navy bg-navy px-3 py-1.5 text-xs font-semibold text-white hover:bg-navy/80 transition"
             >
-              マイページ
+              {t.header.myPage}
             </Link>
           ) : (
             <div className="hidden sm:flex items-center gap-2">
@@ -63,13 +63,13 @@ export async function Header() {
                 href="/login"
                 className="border border-navy/20 px-3 py-1.5 text-xs text-navy/60 hover:border-navy hover:text-navy transition"
               >
-                ログイン
+                {t.header.login}
               </Link>
               <Link
                 href="/login"
                 className="border border-navy bg-navy px-3 py-1.5 text-xs font-semibold text-white hover:bg-navy/80 transition"
               >
-                新規登録
+                {t.header.signup}
               </Link>
             </div>
           )}

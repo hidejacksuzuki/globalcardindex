@@ -1,4 +1,19 @@
 export const en = {
+  header: {
+    navCards:       'Cards',
+    navMarket:      'Market',
+    navRanking:     'Rankings',
+    navPortfolio:   'My Cards',
+    navInsights:    'Insights',
+    navNews:        'News',
+    myPage:         'My Page',
+    login:          'Log in',
+    signup:         'Sign up',
+    signupShort:    'Sign up',
+    menuOpen:       'Open menu',
+    menuClose:      'Close menu',
+  },
+
   nav: {
     games:       'Games',
     daily:       'Daily',
@@ -75,6 +90,25 @@ export const en = {
     footerCtaTitle:  'Market Intelligence',
     footerCtaBody:   'Get daily market data delivered to you',
     footerCtaX:      'Follow on X',
+  },
+
+  hero: {
+    title1:            'The card market,',
+    title2:            'made transparent.',
+    subtitle:          'Track the latest market prices of your cards. Now in public beta.',
+    searchPlaceholder: 'Search by card name, set, or card number',
+    searchButton:      'Search',
+    popularLabel:      'Popular searches:',
+    ctaBrowse:         'Browse cards',
+    ctaPortfolio:      'Add your cards',
+    feature1Title:     'Price Tracking',
+    feature1Body:      'Estimated prices and history, updated daily from real sales data',
+    feature2Title:     'My Cards',
+    feature2Body:      'Automatically track the value and P/L of your collection',
+    feature3Title:     'Market Trends',
+    feature3Body:      'Top gainers, losers, and market-wide movements at a glance',
+    statsDaily:        'Market data updated daily',
+    statsLastUpdated:  'Last updated',
   },
 
   confidence: {

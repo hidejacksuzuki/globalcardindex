@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link                     from "next/link";
 import { usePathname }          from "next/navigation";
+import { useT }                 from "@/i18n/context";
 
 type NavLink = { href: string; label: string; desktop?: string };
 
@@ -14,6 +15,7 @@ type Props = {
 export function MobileMenu({ links, userId }: Props) {
   const [open,    setOpen]    = useState(false);
   const pathname              = usePathname();
+  const t                     = useT();
 
   useEffect(() => { setOpen(false); }, [pathname]);
   useEffect(() => {
@@ -25,7 +27,7 @@ export function MobileMenu({ links, userId }: Props) {
     <>
       <button
         onClick={() => setOpen((v) => !v)}
-        aria-label={open ? "メニューを閉じる" : "メニューを開く"}
+        aria-label={open ? t.header.menuClose : t.header.menuOpen}
         className="flex flex-col justify-center items-center w-8 h-8 gap-1.5"
       >
         <span className={`block w-5 h-px bg-navy transition-all ${open ? "rotate-45 translate-y-[4px]" : ""}`} />
@@ -64,15 +66,15 @@ export function MobileMenu({ links, userId }: Props) {
           <div className="px-5 pt-4 mt-2 border-t border-navy/5 space-y-2">
             {userId ? (
               <Link href="/account" className="block w-full text-center border border-navy/15 px-3 py-2 text-xs text-navy/60 hover:text-navy hover:border-navy/40 transition">
-                マイページ
+                {t.header.myPage}
               </Link>
             ) : (
               <div className="flex gap-2">
                 <Link href="/login" className="flex-1 text-center border border-navy/15 px-3 py-2 text-xs text-navy/60 hover:text-navy transition">
-                  ログイン
+                  {t.header.login}
                 </Link>
                 <Link href="/login" className="flex-1 text-center border border-navy bg-navy px-3 py-2 text-xs font-semibold text-white hover:bg-navy/80 transition">
-                  登録
+                  {t.header.signupShort}
                 </Link>
               </div>
             )}
