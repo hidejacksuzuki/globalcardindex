@@ -3,13 +3,23 @@ import { prisma } from "@gci/db";
 // ----------------------------------------------------------------
 // Stale Detection
 //
-// N 時間以上 capturedAt が更新されていない Price を stale とみなし
-// isStale = true にフラグを立てる。
+// 「収集が止まっているカード」の価格を指数計算から自動除外する仕組み。
+// N 時間以上 収集されていないカードの Price に isStale = true を立てる。
 //
-// 「収集が止まっているカード」を指数計算から自動除外するための仕組み。
+// 判定基準は Card.updatedAt（収集ハートビート）。
+// updatePrices は 1 カード処理するたびに、新しい価格が取れたかどうかに
+// かかわらず Card.updatedAt を更新する（jobs/updatePrices.ts のローテーション用）。
+// つまり「最後にそのカードを収集しに行った時刻」であり、収集の生死を正しく表す。
+//
+// ※ 以前は max(Price.capturedAt)（＝最後に新しい価格行が入った時刻）で
+//    判定していたが、Price は fingerprint で重複排除されるため、同じ出品を
+//    再収集しても行は増えない。結果この指標は「直近に新規取引が発生したか」を
+//    測っており、数週間売れないカード（トレカでは普通）が収集正常でも stale に
+//    落ちていた。2026-07-29 の実測では stale 判定 704 カード全てが
+//    「収集は 48h 以内に回っている」もので、誤判定率 100% だった。
 // ----------------------------------------------------------------
 
-export const DEFAULT_STALE_HOURS = 48; // 48 時間更新なし → stale
+export const DEFAULT_STALE_HOURS = 48; // 48 時間収集されていない → stale
 
 export type StaleDetectionResult = {
   flagged:   number; // 今回 stale にしたレコード数
@@ -17,35 +27,30 @@ export type StaleDetectionResult = {
 };
 
 /**
- * markStaleprices
+ * markStalePrices
  *
- * - `staleHours` 以上前に capturedAt が止まっているカードの価格を isStale=true に
- * - 最近更新があるカードの価格は isStale=false に戻す（自動回復）
+ * - `staleHours` 以上収集されていないカード（Card.updatedAt が古い）の価格を isStale=true に
+ * - 収集が回っているカードの価格は isStale=false に戻す（自動回復）
  */
 export async function markStalePrices(
   staleHours: number = DEFAULT_STALE_HOURS,
 ): Promise<StaleDetectionResult> {
   const threshold = new Date(Date.now() - staleHours * 60 * 60 * 1000);
 
-  // ── カードごとの最新 capturedAt を集計 ──
-  // capturedAt が threshold より古いカードを stale とみなす
-  const cardGroups = await prisma.price.groupBy({
-    by:      ["cardId"],
-    _max:    { capturedAt: true },
-  });
+  // ── 収集ハートビート（Card.updatedAt）で stale / fresh を振り分け ──
+  const [staleCards, freshCards] = await Promise.all([
+    prisma.card.findMany({
+      where:  { updatedAt: { lt:  threshold } },
+      select: { id: true },
+    }),
+    prisma.card.findMany({
+      where:  { updatedAt: { gte: threshold } },
+      select: { id: true },
+    }),
+  ]);
 
-  const staleCardIds:   string[] = [];
-  const freshCardIds:   string[] = [];
-
-  for (const g of cardGroups) {
-    const latest = g._max.capturedAt;
-    if (!latest) continue;
-    if (latest < threshold) {
-      staleCardIds.push(g.cardId);
-    } else {
-      freshCardIds.push(g.cardId);
-    }
-  }
+  const staleCardIds = staleCards.map((c) => c.id);
+  const freshCardIds = freshCards.map((c) => c.id);
 
   // ── stale フラグを立てる ──
   const flagResult = staleCardIds.length > 0
@@ -71,14 +76,15 @@ export async function markStalePrices(
 
 /**
  * getStaleCards
- * stale なカードの一覧を返す（管理画面・アラート用）
+ * stale なカード（＝収集が止まっているカード）の一覧を返す（管理画面・アラート用）。
+ * markStalePrices と同じ基準（Card.updatedAt）で判定する。
  */
 export async function getStaleCards() {
   const threshold = new Date(Date.now() - DEFAULT_STALE_HOURS * 60 * 60 * 1000);
 
-  return prisma.price.groupBy({
-    by:     ["cardId"],
-    _max:   { capturedAt: true },
-    having: { capturedAt: { _max: { lt: threshold } } },
+  return prisma.card.findMany({
+    where:   { updatedAt: { lt: threshold } },
+    select:  { id: true, name: true, setName: true, updatedAt: true },
+    orderBy: { updatedAt: "asc" },
   });
 }
