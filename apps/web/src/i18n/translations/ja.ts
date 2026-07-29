@@ -244,6 +244,69 @@ export const ja = {
     title:       '利用規約',
   },
 
+  cardDetail: {
+    // メタデータ
+    metaPriceLabel:   '最新価格',
+    metaTitleSuffix:  '相場',
+    metaDescription:  ' の市場相場。{set} 収録。{count} 件の価格データから算出した最新値・変動率を掲載。',
+    // 統計
+    statLatestPrice:  '最新価格',
+    statChange7d:     '7日変動',
+    statChange30d:    '30日変動',
+    statObservations: '観測件数',
+    // Portfolio CTA
+    loginToAdd:       'ログインしてマイカードに追加',
+    // 空状態
+    emptyTitle:       'このカードの価格データはまだ収集中です',
+    emptyBody1:       '市場での取引が確認され次第、推定相場・価格推移を表示します。',
+    emptyBody2:       'ウォッチに追加しておくと、データが揃ったときに見つけやすくなります。',
+    emptyOtherCards:  'の他のカード →',
+    emptyBrowseCards: '価格データのあるカードを探す →',
+    // 推定相場
+    estTitle:         '推定相場',
+    estTooltip:       '複数マーケットの実売データ（落札・売却済み）を集計し、外れ値を除いて算出した推定価格帯です。最安値・中央値・最高値で相場のレンジを示します。',
+    estWatchers:      '人がウォッチ中',
+    estHolders:       '人が保有',
+    estMin:           '最安値',
+    estMedian:        '中央値',
+    estMax:           '最高値',
+    estCount:         '観測件数',
+    estCountUnit:     '件',
+    estUpdated:       '更新',
+    estMethodNote:    '※ 実際の落札・売却データ直近60件の信頼スコア上位から算出。外れ値・古いデータは除外済み。',
+    // 直近の価格データ
+    recentTitle:      '直近の価格データ',
+    recentSold:       '落札',
+    recentObserved:   '観測',
+    // 価格推移
+    chartTitle:       '価格推移',
+    chartAllHistory:  '全履歴を見る →',
+    // Card Index
+    indexTitle:       'Card Index',
+    indexReference:   '参考値',
+    indexNote:        '上の推定相場を長期の窓で平滑化した補助指標です。価格そのものではなく、算出方法・対象期間が異なるため件数や変化率は上の数字と一致しません。',
+    indexValue:       '指数値',
+    indexValueTooltip: '基準値1000からの相対的な価格水準を表す指数です。1000より大きいほど基準時点より高く、複数の観測を長期の窓で平滑化して算出します。',
+    indexChange:      '指数の前回比',
+    indexSamples:     '指数サンプル数',
+    indexConfidence:  '信頼度',
+    indexLowDataNote: '※ データ数が少ないため「参考値」として表示しています。精度向上のため価格データ収集を継続中です。',
+    // カードリクエスト
+    requestLabel:     'カードリクエスト',
+    requestTitle:     '追跡してほしいカードがある？',
+    requestBody:      '別バージョン・他ゲームのカードもリクエストできます。',
+    // 信頼度ツールチップ
+    confHigh:         '信頼度 高: サンプル数が十分で価格のばらつきも小さく、相場として信頼できます。',
+    confMed:          '信頼度 中: サンプルはあるものの数がやや少ない、または価格にばらつきがあります。参考程度に。',
+    confLow:          '信頼度 低: サンプルが少なく相場が定まっていません。参考値としてご覧ください。',
+    confFallback:     '相場の信頼度',
+    // 相対時刻
+    timeMinutesAgo:   '分前',
+    timeHoursAgo:     '時間前',
+    timeDaysAgo:      '日前',
+    timeMonthsAgo:    'ヶ月前',
+  },
+
   search: {
     placeholder: '検索',
     clear:       'クリア',

@@ -17,8 +17,12 @@ import { getCardListingPhotos }  from "@gci/core";
 import { isInPortfolio }         from "@gci/core";
 import { auth }                  from "@/auth";
 import { safeJsonLd }            from "@/lib/jsonLd";
+import { getServerTranslations, getLocale } from "@/i18n/server";
+import type { Translations }     from "@/i18n";
 
 export const dynamic = "force-dynamic";
+
+const SITE_ORIGIN = "https://gci-index.com";
 
 // ----------------------------------------------------------------
 // Metadata
@@ -31,13 +35,21 @@ export async function generateMetadata({
   const card = await getCardBySlug(params.slug);
   if (!card) return {};
 
+  const locale = getLocale();
+  const t      = getServerTranslations().cardDetail;
+
   const priceStr = card.latestPrice !== null && card.currency
-    ? ` 最新価格 ${formatPrice(card.latestPrice, card.currency)}`
+    ? ` — ${t.metaPriceLabel} ${formatPrice(card.latestPrice, card.currency)}`
     : "";
 
-  const title       = `${card.name} (${card.setName}) 相場${priceStr} | Global Card Index`;
-  const description = `${card.name} ${card.rarity}・${card.condition} の市場相場。${card.setName} 収録。${card.priceCount} 件の価格データから算出した最新値・変動率を掲載。`;
-  const url         = `https://gci-index.com/cards/${card.slug}`;
+  const title       = `${card.name} (${card.setName}) ${t.metaTitleSuffix}${priceStr} | Global Card Index`;
+  const description = `${card.name} ${card.rarity} · ${card.condition}${t.metaDescription
+    .replace("{set}", card.setName)
+    .replace("{count}", String(card.priceCount))}`;
+
+  const jaUrl = `${SITE_ORIGIN}/cards/${card.slug}`;
+  const enUrl = `${SITE_ORIGIN}/en/cards/${card.slug}`;
+  const url   = locale === "en" ? enUrl : jaUrl;
 
   return {
     title,
@@ -54,7 +66,10 @@ export async function generateMetadata({
       title,
       description,
     },
-    alternates: { canonical: url },
+    alternates: {
+      canonical: url,
+      languages: { ja: jaUrl, en: enUrl, "x-default": jaUrl },
+    },
   };
 }
 
@@ -69,6 +84,7 @@ export default async function CardSlugPage({
   const card = await getCardBySlug(params.slug);
   if (!card) notFound();
 
+  const t    = getServerTranslations().cardDetail;
   const game = card.game ? getGame(card.game) : null;
 
   // セッション取得 — ログイン済みなら DB watchlist で確認、匿名なら cookie で確認
@@ -145,7 +161,7 @@ export default async function CardSlugPage({
 
         <dl className="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-4">
           <Stat
-            label="最新価格"
+            label={t.statLatestPrice}
             value={
               card.latestPrice !== null && card.currency
                 ? formatPrice(card.latestPrice, card.currency)
@@ -153,7 +169,7 @@ export default async function CardSlugPage({
             }
           />
           <Stat
-            label="7日変動"
+            label={t.statChange7d}
             value={card.change7d !== null ? `${card.change7d > 0 ? "+" : ""}${card.change7d.toFixed(1)}%` : "—"}
             colorClass={
               card.change7d === null ? "text-navy" :
@@ -161,14 +177,14 @@ export default async function CardSlugPage({
             }
           />
           <Stat
-            label="30日変動"
+            label={t.statChange30d}
             value={card.change30d !== null ? `${card.change30d > 0 ? "+" : ""}${card.change30d.toFixed(1)}%` : "—"}
             colorClass={
               card.change30d === null ? "text-navy" :
               card.change30d > 0 ? "text-gold-700" : card.change30d < 0 ? "text-red-600" : "text-navy"
             }
           />
-          <Stat label="観測件数" value={card.priceCount.toLocaleString()} />
+          <Stat label={t.statObservations} value={card.priceCount.toLocaleString()} />
         </dl>
 
         {/* ── Portfolio CTA ───────────────────────── */}
@@ -186,7 +202,7 @@ export default async function CardSlugPage({
               className="inline-flex items-center gap-1.5 border border-navy/20 px-3 py-1.5 text-xs uppercase tracking-widest text-navy/50 hover:border-navy hover:text-navy transition"
             >
               <span className="text-base leading-none">+</span>
-              <span>ログインしてマイカードに追加</span>
+              <span>{t.loginToAdd}</span>
             </Link>
           )}
         </div>
@@ -197,10 +213,10 @@ export default async function CardSlugPage({
         <section className="border border-navy/10 bg-white p-8 text-center space-y-4">
           <p className="text-3xl">📊</p>
           <div className="space-y-1">
-            <p className="text-sm font-medium text-navy">このカードの価格データはまだ収集中です</p>
+            <p className="text-sm font-medium text-navy">{t.emptyTitle}</p>
             <p className="text-xs text-navy/50 leading-relaxed">
-              市場での取引が確認され次第、推定相場・価格推移を表示します。<br />
-              ウォッチに追加しておくと、データが揃ったときに見つけやすくなります。
+              {t.emptyBody1}<br />
+              {t.emptyBody2}
             </p>
           </div>
           <div className="flex items-center justify-center gap-2 flex-wrap pt-1">
@@ -208,13 +224,13 @@ export default async function CardSlugPage({
               href={`/sets/${encodeURIComponent(card.setName)}`}
               className="border border-navy/20 px-4 py-2 text-xs text-navy/70 hover:border-navy hover:text-navy transition"
             >
-              {card.setName} の他のカード →
+              {card.setName} {t.emptyOtherCards}
             </Link>
             <Link
               href="/cards"
               className="border border-navy/20 px-4 py-2 text-xs text-navy/70 hover:border-navy hover:text-navy transition"
             >
-              価格データのあるカードを探す →
+              {t.emptyBrowseCards}
             </Link>
           </div>
         </section>
@@ -229,52 +245,52 @@ export default async function CardSlugPage({
           <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
             <div className="flex items-center gap-3">
               <h2
-                title="複数マーケットの実売データ（落札・売却済み）を集計し、外れ値を除いて算出した推定価格帯です。最安値・中央値・最高値で相場のレンジを示します。"
+                title={t.estTooltip}
                 className="text-xs uppercase tracking-widest text-navy/50 cursor-help"
               >
-                推定相場
+                {t.estTitle}
               </h2>
               {cardIndex?.confidence && (
-                <ConfidenceBadge confidence={cardIndex.confidence} />
+                <ConfidenceBadge confidence={cardIndex.confidence} t={t} />
               )}
             </div>
             {/* 熱量バッジ */}
             <div className="flex items-center gap-3 text-[11px] text-navy/45">
               {engagement.watchers > 0 && (
                 <span className="inline-flex items-center gap-1">
-                  <span>☆</span>{engagement.watchers}人がウォッチ中
+                  <span>☆</span>{engagement.watchers}{t.estWatchers}
                 </span>
               )}
               {engagement.holders > 0 && (
                 <span className="inline-flex items-center gap-1">
-                  <span>🗂</span>{engagement.holders}人が保有
+                  <span>🗂</span>{engagement.holders}{t.estHolders}
                 </span>
               )}
             </div>
           </div>
           <dl className="grid grid-cols-2 gap-6 sm:grid-cols-4">
             <div>
-              <dt className="text-xs uppercase tracking-widest text-navy/40">最安値</dt>
+              <dt className="text-xs uppercase tracking-widest text-navy/40">{t.estMin}</dt>
               <dd className="mt-1 text-lg tabular-nums text-navy">
                 {card.minPrice !== null ? formatPrice(card.minPrice, card.currency) : "—"}
               </dd>
             </div>
             <div>
-              <dt className="text-xs uppercase tracking-widest text-navy/40">中央値</dt>
+              <dt className="text-xs uppercase tracking-widest text-navy/40">{t.estMedian}</dt>
               <dd className="mt-1 text-xl font-semibold tabular-nums text-navy">
                 {card.medianPrice !== null ? formatPrice(card.medianPrice, card.currency) : "—"}
               </dd>
             </div>
             <div>
-              <dt className="text-xs uppercase tracking-widest text-navy/40">最高値</dt>
+              <dt className="text-xs uppercase tracking-widest text-navy/40">{t.estMax}</dt>
               <dd className="mt-1 text-lg tabular-nums text-navy">
                 {card.maxPrice !== null ? formatPrice(card.maxPrice, card.currency) : "—"}
               </dd>
             </div>
             <div>
-              <dt className="text-xs uppercase tracking-widest text-navy/40">観測件数</dt>
+              <dt className="text-xs uppercase tracking-widest text-navy/40">{t.estCount}</dt>
               <dd className="mt-1 text-lg tabular-nums text-navy/60">
-                {card.priceCount.toLocaleString()} 件
+                {card.priceCount.toLocaleString()}{t.estCountUnit && ` ${t.estCountUnit}`}
               </dd>
             </div>
           </dl>
@@ -282,11 +298,11 @@ export default async function CardSlugPage({
           <div className="mt-4 border-t border-navy/5 pt-3 flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-4 text-[11px] text-navy/50">
               {card.lastObservedAt && (
-                <span>更新: {relativeTime(card.lastObservedAt)}</span>
+                <span>{t.estUpdated}: {relativeTime(card.lastObservedAt, t)}</span>
               )}
             </div>
             <p className="text-[11px] text-navy/35">
-              ※ 実際の落札・売却データ直近60件の信頼スコア上位から算出。外れ値・古いデータは除外済み。
+              {t.estMethodNote}
             </p>
           </div>
         </section>
@@ -295,16 +311,16 @@ export default async function CardSlugPage({
       {/* 直近の取引・価格観測 */}
       {engagement.recentSales.length > 0 && card.currency && (
         <section className="border border-navy/10 bg-white p-6">
-          <h2 className="text-xs uppercase tracking-widest text-navy/50 mb-4">直近の価格データ</h2>
+          <h2 className="text-xs uppercase tracking-widest text-navy/50 mb-4">{t.recentTitle}</h2>
           <ul className="divide-y divide-navy/5">
             {engagement.recentSales.map((s, i) => (
               <li key={i} className="flex items-center justify-between py-2.5 text-sm">
-                <span className="text-navy/50 text-xs">{relativeTime(s.observedAt)}</span>
+                <span className="text-navy/50 text-xs">{relativeTime(s.observedAt, t)}</span>
                 <span className="inline-flex items-center gap-2">
                   {s.sold ? (
-                    <span className="rounded bg-green-50 border border-green-200 px-1.5 py-0.5 text-[10px] text-green-700">落札</span>
+                    <span className="rounded bg-green-50 border border-green-200 px-1.5 py-0.5 text-[10px] text-green-700">{t.recentSold}</span>
                   ) : (
-                    <span className="rounded bg-navy/5 border border-navy/10 px-1.5 py-0.5 text-[10px] text-navy/50">観測</span>
+                    <span className="rounded bg-navy/5 border border-navy/10 px-1.5 py-0.5 text-[10px] text-navy/50">{t.recentObserved}</span>
                   )}
                   <span className="tabular-nums font-medium text-navy">{formatPrice(s.price, s.currency)}</span>
                 </span>
@@ -318,12 +334,12 @@ export default async function CardSlugPage({
       {priceHistory.length >= 2 && (
         <section className="border border-navy/10 bg-white p-6">
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-xs uppercase tracking-widest text-navy/50">価格推移</h2>
+            <h2 className="text-xs uppercase tracking-widest text-navy/50">{t.chartTitle}</h2>
             <Link
               href={`/cards/${card.id}/history`}
               className="text-[11px] text-navy/40 hover:text-navy transition underline underline-offset-2"
             >
-              全履歴を見る →
+              {t.chartAllHistory}
             </Link>
           </div>
           <PriceChart points={priceHistory} />
@@ -334,35 +350,35 @@ export default async function CardSlugPage({
       {showIndex && cardIndex && (
         <section className="border border-navy/10 bg-white p-6">
           <div className="flex items-center gap-3 mb-1">
-            <h2 className="text-xs uppercase tracking-widest text-navy/50">Card Index</h2>
+            <h2 className="text-xs uppercase tracking-widest text-navy/50">{t.indexTitle}</h2>
             {isLowConf && (
               <span className="rounded bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-600 border border-red-200">
-                参考値
+                {t.indexReference}
               </span>
             )}
             {isMedConf && (
               <span className="rounded bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 border border-amber-200">
-                参考値
+                {t.indexReference}
               </span>
             )}
           </div>
           <p className="mb-4 text-[11px] text-navy/40 leading-relaxed">
-            上の推定相場を長期の窓で平滑化した補助指標です。価格そのものではなく、算出方法・対象期間が異なるため件数や変化率は上の数字と一致しません。
+            {t.indexNote}
           </p>
           <dl className="grid grid-cols-2 gap-6 sm:grid-cols-4">
             <div>
               <dt
-                title="基準値1000からの相対的な価格水準を表す指数です。1000より大きいほど基準時点より高く、複数の観測を長期の窓で平滑化して算出します。"
+                title={t.indexValueTooltip}
                 className="text-xs uppercase tracking-widest text-navy/50 cursor-help"
               >
-                指数値
+                {t.indexValue}
               </dt>
               <dd className="mt-1 text-lg font-semibold tabular-nums text-navy">
                 {cardIndex.value.toFixed(1)}
               </dd>
             </div>
             <div>
-              <dt className="text-xs uppercase tracking-widest text-navy/50">指数の前回比</dt>
+              <dt className="text-xs uppercase tracking-widest text-navy/50">{t.indexChange}</dt>
               <dd className={`mt-1 text-lg tabular-nums ${
                 cardIndex.changeRate > 0 ? "text-gold-700" :
                 cardIndex.changeRate < 0 ? "text-red-600" :
@@ -373,21 +389,21 @@ export default async function CardSlugPage({
               </dd>
             </div>
             <div>
-              <dt className="text-xs uppercase tracking-widest text-navy/50">指数サンプル数</dt>
+              <dt className="text-xs uppercase tracking-widest text-navy/50">{t.indexSamples}</dt>
               <dd className="mt-1 text-lg tabular-nums text-navy/60">
                 {cardIndex.sampleCount ?? "—"}
               </dd>
             </div>
             <div>
-              <dt className="text-xs uppercase tracking-widest text-navy/50">信頼度</dt>
+              <dt className="text-xs uppercase tracking-widest text-navy/50">{t.indexConfidence}</dt>
               <dd className="mt-1">
-                <ConfidenceBadge confidence={cardIndex.confidence} />
+                <ConfidenceBadge confidence={cardIndex.confidence} t={t} />
               </dd>
             </div>
           </dl>
           {(isLowConf || isMedConf) && (
             <p className="mt-4 text-[11px] text-navy/40 border-t border-navy/5 pt-3">
-              ※ データ数が少ないため「参考値」として表示しています。精度向上のため価格データ収集を継続中です。
+              {t.indexLowDataNote}
             </p>
           )}
         </section>
@@ -398,10 +414,10 @@ export default async function CardSlugPage({
         {/* Card request */}
         <div className="rounded border border-navy/10 bg-white p-5 flex flex-col gap-3">
           <div>
-            <p className="text-xs uppercase tracking-widest text-navy/40">カードリクエスト</p>
-            <p className="mt-1 text-sm font-medium text-navy">追跡してほしいカードがある？</p>
+            <p className="text-xs uppercase tracking-widest text-navy/40">{t.requestLabel}</p>
+            <p className="mt-1 text-sm font-medium text-navy">{t.requestTitle}</p>
             <p className="mt-0.5 text-xs text-navy/50">
-              別バージョン・他ゲームのカードもリクエストできます。
+              {t.requestBody}
             </p>
           </div>
           <CardRequestButton className="self-start" />
@@ -416,7 +432,7 @@ export default async function CardSlugPage({
             "@context": "https://schema.org",
             "@type":    "Product",
             name:       card.name,
-            description: `${card.name} ${card.rarity}・${card.condition} — ${card.setName}`,
+            description: `${card.name} ${card.rarity} · ${card.condition} — ${card.setName}`,
             url:        `https://gci-index.com/cards/${card.slug}`,
             ...(card.latestPrice !== null && card.currency
               ? {
@@ -440,15 +456,17 @@ export default async function CardSlugPage({
 // Sub components
 // ----------------------------------------------------------------
 
-function relativeTime(iso: string): string {
+type CardDetailT = Translations["cardDetail"];
+
+function relativeTime(iso: string, t: CardDetailT): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const min    = Math.floor(diffMs / 60_000);
-  if (min < 60)      return `${Math.max(min, 1)}分前`;
+  if (min < 60)      return `${Math.max(min, 1)}${t.timeMinutesAgo}`;
   const hours = Math.floor(min / 60);
-  if (hours < 24)    return `${hours}時間前`;
+  if (hours < 24)    return `${hours}${t.timeHoursAgo}`;
   const days = Math.floor(hours / 24);
-  if (days < 30)     return `${days}日前`;
-  return `${Math.floor(days / 30)}ヶ月前`;
+  if (days < 30)     return `${days}${t.timeDaysAgo}`;
+  return `${Math.floor(days / 30)}${t.timeMonthsAgo}`;
 }
 
 function Stat({
@@ -468,14 +486,13 @@ function Stat({
   );
 }
 
-const CONFIDENCE_TOOLTIP: Record<string, string> = {
-  HIGH: "信頼度 高: サンプル数が十分で価格のばらつきも小さく、相場として信頼できます。",
-  MED:  "信頼度 中: サンプルはあるものの数がやや少ない、または価格にばらつきがあります。参考程度に。",
-  LOW:  "信頼度 低: サンプルが少なく相場が定まっていません。参考値としてご覧ください。",
-};
-
-function ConfidenceBadge({ confidence }: { confidence: string | null }) {
+function ConfidenceBadge({ confidence, t }: { confidence: string | null; t: CardDetailT }) {
   if (!confidence) return <span className="text-sm text-navy/30">—</span>;
+  const tooltips: Record<string, string> = {
+    HIGH: t.confHigh,
+    MED:  t.confMed,
+    LOW:  t.confLow,
+  };
   const styles: Record<string, string> = {
     HIGH: "bg-green-100 text-green-700",
     MED:  "bg-amber-100 text-amber-700",
@@ -483,7 +500,7 @@ function ConfidenceBadge({ confidence }: { confidence: string | null }) {
   };
   return (
     <span
-      title={CONFIDENCE_TOOLTIP[confidence] ?? "相場の信頼度"}
+      title={tooltips[confidence] ?? t.confFallback}
       className={`inline-block cursor-help rounded px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${styles[confidence] ?? "bg-navy/10 text-navy/50"}`}
     >
       {confidence}

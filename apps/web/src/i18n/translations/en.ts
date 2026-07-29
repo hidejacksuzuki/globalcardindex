@@ -244,6 +244,69 @@ export const en = {
     title:       'Terms of Service',
   },
 
+  cardDetail: {
+    // Metadata
+    metaPriceLabel:   'Latest price',
+    metaTitleSuffix:  'Price Guide',
+    metaDescription:  ' market price guide. From {set}. Latest value and price changes calculated from {count} price observations.',
+    // Stats
+    statLatestPrice:  'Latest Price',
+    statChange7d:     '7d Change',
+    statChange30d:    '30d Change',
+    statObservations: 'Observations',
+    // Portfolio CTA
+    loginToAdd:       'Log in to add to My Cards',
+    // Empty state
+    emptyTitle:       'Price data for this card is still being collected',
+    emptyBody1:       'Estimated market price and price history will appear once trades are observed.',
+    emptyBody2:       'Add it to your watchlist so it is easy to find once data is available.',
+    emptyOtherCards:  '— other cards →',
+    emptyBrowseCards: 'Browse cards with price data →',
+    // Estimated market price
+    estTitle:         'Estimated Market Price',
+    estTooltip:       'An estimated price range aggregated from actual sold data (auctions and marketplace sales) across multiple markets, with outliers removed. Min, median, and max show the market range.',
+    estWatchers:      ' watching',
+    estHolders:       ' holding',
+    estMin:           'Min',
+    estMedian:        'Median',
+    estMax:           'Max',
+    estCount:         'Observations',
+    estCountUnit:     '',
+    estUpdated:       'Updated',
+    estMethodNote:    '* Calculated from the top trust-scored entries of the latest 60 sold records. Outliers and stale data excluded.',
+    // Recent price data
+    recentTitle:      'Recent Price Data',
+    recentSold:       'Sold',
+    recentObserved:   'Listed',
+    // Price chart
+    chartTitle:       'Price History',
+    chartAllHistory:  'View full history →',
+    // Card Index
+    indexTitle:       'Card Index',
+    indexReference:   'Reference',
+    indexNote:        'A supplementary indicator that smooths the estimated market price over a longer window. It is not a price itself — the method and period differ, so counts and change rates will not match the figures above.',
+    indexValue:       'Index Value',
+    indexValueTooltip: 'An index of relative price level against a base value of 1000. Higher than 1000 means above the base period, smoothed over a long window of observations.',
+    indexChange:      'Change vs Prev',
+    indexSamples:     'Index Samples',
+    indexConfidence:  'Confidence',
+    indexLowDataNote: '* Shown as reference due to limited data. We are continuously collecting more price data to improve accuracy.',
+    // Card request
+    requestLabel:     'Card Request',
+    requestTitle:     'Want us to track another card?',
+    requestBody:      'You can request other versions or cards from other games.',
+    // Confidence tooltips
+    confHigh:         'High confidence: enough samples with low price variance — a reliable market estimate.',
+    confMed:          'Medium confidence: some samples but slightly few, or prices vary. Treat as a guide.',
+    confLow:          'Low confidence: few samples; the market price is not yet established. Reference only.',
+    confFallback:     'Market price confidence',
+    // Relative time
+    timeMinutesAgo:   'm ago',
+    timeHoursAgo:     'h ago',
+    timeDaysAgo:      'd ago',
+    timeMonthsAgo:    'mo ago',
+  },
+
   search: {
     placeholder: 'Search',
     clear:       'Clear',
