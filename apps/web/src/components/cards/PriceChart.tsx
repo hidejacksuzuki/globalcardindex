@@ -2,13 +2,14 @@
 
 import { useState, useMemo } from "react";
 import type { PricePoint }   from "@gci/core";
+import { useT }              from "@/i18n/context";
 
 type Period = "7d" | "30d" | "90d";
 
-const PERIODS: { key: Period; label: string; days: number }[] = [
-  { key: "7d",  label: "7日",  days: 7  },
-  { key: "30d", label: "30日", days: 30 },
-  { key: "90d", label: "90日", days: 90 },
+const PERIOD_DAYS: { key: Period; days: number }[] = [
+  { key: "7d",  days: 7  },
+  { key: "30d", days: 30 },
+  { key: "90d", days: 90 },
 ];
 
 // SVG canvas constants
@@ -63,9 +64,9 @@ function hasEnough(points: PricePoint[], days: number): boolean {
  * までしか無いカードで空チャートを出さないため）。
  */
 function pickInitialPeriod(points: PricePoint[], preferred: Period): Period {
-  const daysOf = (k: Period) => PERIODS.find((p) => p.key === k)!.days;
+  const daysOf = (k: Period) => PERIOD_DAYS.find((p) => p.key === k)!.days;
   if (hasEnough(points, daysOf(preferred))) return preferred;
-  for (const { key } of PERIODS) {
+  for (const { key } of PERIOD_DAYS) {
     if (hasEnough(points, daysOf(key))) return key;
   }
   return "90d";
@@ -73,9 +74,16 @@ function pickInitialPeriod(points: PricePoint[], preferred: Period): Period {
 
 export function PriceChart({ points, defaultPeriod = "30d" }: Props) {
   const [period, setPeriod] = useState<Period>(() => pickInitialPeriod(points, defaultPeriod));
+  const t = useT().cardDetail;
+
+  const periods: { key: Period; label: string }[] = [
+    { key: "7d",  label: t.chart7d  },
+    { key: "30d", label: t.chart30d },
+    { key: "90d", label: t.chart90d },
+  ];
 
   const filtered = useMemo(() => {
-    const days    = PERIODS.find((p) => p.key === period)!.days;
+    const days    = PERIOD_DAYS.find((p) => p.key === period)!.days;
     const cutoff  = new Date(Date.now() - days * 86_400_000);
     return points.filter((p) => new Date(p.date) >= cutoff);
   }, [points, period]);
@@ -141,7 +149,7 @@ export function PriceChart({ points, defaultPeriod = "30d" }: Props) {
     <div>
       {/* Period tabs */}
       <div className="flex items-center gap-1 mb-4">
-        {PERIODS.map(({ key, label }) => (
+        {periods.map(({ key, label }) => (
           <button
             key={key}
             onClick={() => setPeriod(key)}
@@ -159,14 +167,14 @@ export function PriceChart({ points, defaultPeriod = "30d" }: Props) {
       {/* Chart */}
       {!geo ? (
         <div className="flex items-center justify-center h-28 text-sm text-navy/40 border border-dashed border-navy/10">
-          この期間のデータが不足しています
+          {t.chartNoData}
         </div>
       ) : (
         <svg
           viewBox={`0 0 ${W} ${H}`}
           className="w-full"
           style={{ height: 180, display: "block" }}
-          aria-label="価格推移チャート"
+          aria-label={t.chartAria}
         >
           {/* Y-axis grid lines + labels */}
           {geo.yTicks.map(({ value, y }, i) => (
@@ -227,7 +235,7 @@ export function PriceChart({ points, defaultPeriod = "30d" }: Props) {
 
       {/* Sample count note */}
       <p className="mt-1 text-right text-[10px] text-navy/30">
-        {filtered.length} 件のデータ
+        {filtered.length} {t.chartDataCount}
       </p>
     </div>
   );

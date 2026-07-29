@@ -13,6 +13,7 @@
  */
 
 import { useState } from "react";
+import { useT }     from "@/i18n/context";
 
 type Photo = {
   imageUrl:   string;
@@ -20,30 +21,32 @@ type Photo = {
   listingUrl: string | null;
 };
 
-const SOURCE_LABEL: Record<string, string> = {
-  mercari_sold:         "Mercari",
-  mercari_listing:      "Mercari",
-  mercari:              "Mercari",
-  yahoo_auction_closed: "ヤフオク",
-  yahoo_auction_active: "ヤフオク",
-  yahuoku:              "ヤフオク",
-  ebay:                 "eBay",
-};
-
-function label(source: string): string {
-  return SOURCE_LABEL[source] ?? source;
+/** ヤフオクのみロケール依存（en では "Yahoo Auctions"）。他はブランド名共通。 */
+function sourceLabel(source: string, yahooLabel: string): string {
+  const map: Record<string, string> = {
+    mercari_sold:         "Mercari",
+    mercari_listing:      "Mercari",
+    mercari:              "Mercari",
+    yahoo_auction_closed: yahooLabel,
+    yahoo_auction_active: yahooLabel,
+    yahuoku:              yahooLabel,
+    ebay:                 "eBay",
+  };
+  return map[source] ?? source;
 }
 
 export function ListingPhotoStrip({ photos }: { photos: Photo[] }) {
   // 失効（404）した画像 URL を覚えて表示から外す
   const [dead, setDead] = useState<Set<string>>(new Set());
+  const t       = useT().cardDetail;
+  const label   = (source: string) => sourceLabel(source, t.sourceYahoo);
   const visible = photos.filter((p) => !dead.has(p.imageUrl));
 
   if (visible.length === 0) return null;
 
   return (
     <section className="border border-navy/10 bg-white p-6">
-      <h2 className="text-xs uppercase tracking-widest text-navy/50 mb-4">実際の出品写真</h2>
+      <h2 className="text-xs uppercase tracking-widest text-navy/50 mb-4">{t.photosTitle}</h2>
 
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
         {visible.map((p) => {
@@ -51,7 +54,7 @@ export function ListingPhotoStrip({ photos }: { photos: Photo[] }) {
             // eslint-disable-next-line @next/next/no-img-element -- 意図的に最適化せず表示のみ（再ホスト回避）
             <img
               src={p.imageUrl}
-              alt={`${label(p.source)} の出品写真`}
+              alt={`${label(p.source)}${t.photosAlt}`}
               loading="lazy"
               referrerPolicy="no-referrer"
               onError={() =>
@@ -88,8 +91,7 @@ export function ListingPhotoStrip({ photos }: { photos: Photo[] }) {
       </div>
 
       <p className="mt-3 text-[10px] leading-relaxed text-navy/35">
-        画像は各出品者およびマーケットプレイス（Mercari / ヤフオク / eBay 等）に帰属します。
-        Global Card Index は価格情報の識別補助として、出品ページの画像を参照表示しています。
+        {t.photosAttribution}
       </p>
     </section>
   );

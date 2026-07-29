@@ -12,6 +12,7 @@
  */
 
 import { useState } from "react";
+import { useT }     from "@/i18n/context";
 
 type Props = {
   defaultName?: string;
@@ -28,6 +29,7 @@ export function CardRequestButton({ defaultName = "", className = "" }: Props) {
   const [rarity,    setRarity]    = useState("");
   const [reqBy,     setReqBy]     = useState("");
   const [note,      setNote]      = useState("");
+  const t = useT().cardRequest;
   const [errorMsg,  setErrorMsg]  = useState("");
 
   const open  = () => { setState("open"); setErrorMsg(""); };
@@ -59,11 +61,11 @@ export function CardRequestButton({ defaultName = "", className = "" }: Props) {
       if (json.ok) {
         setState("success");
       } else {
-        setErrorMsg(json.error ?? "送信に失敗しました。");
+        setErrorMsg(json.error ?? t.errSubmit);
         setState("error");
       }
     } catch {
-      setErrorMsg("ネットワークエラーが発生しました。");
+      setErrorMsg(t.errNetwork);
       setState("error");
     }
   };
@@ -71,7 +73,7 @@ export function CardRequestButton({ defaultName = "", className = "" }: Props) {
   if (state === "success") {
     return (
       <span className={`inline-flex items-center gap-1.5 text-xs text-green-700 ${className}`}>
-        <span>✓</span> リクエストを送信しました。ありがとうございます！
+        <span>✓</span> {t.sent}
       </span>
     );
   }
@@ -83,7 +85,7 @@ export function CardRequestButton({ defaultName = "", className = "" }: Props) {
         onClick={open}
         className={`inline-flex items-center gap-1.5 rounded border border-navy/20 px-3 py-1.5 text-xs text-navy/60 transition hover:border-navy/40 hover:text-navy ${className}`}
       >
-        <span>＋</span> このカードをリクエスト
+        <span>＋</span> {t.openBtn}
       </button>
 
       {/* Modal backdrop */}
@@ -96,15 +98,15 @@ export function CardRequestButton({ defaultName = "", className = "" }: Props) {
             {/* Header */}
             <div className="mb-4 flex items-start justify-between">
               <div>
-                <h2 className="text-base font-semibold text-navy">カード追加リクエスト</h2>
+                <h2 className="text-base font-semibold text-navy">{t.modalTitle}</h2>
                 <p className="mt-0.5 text-xs text-navy/50">
-                  追跡してほしいカードをリクエストできます。
+                  {t.modalDesc}
                 </p>
               </div>
               <button
                 onClick={close}
                 className="text-navy/30 hover:text-navy/60 transition text-lg leading-none"
-                aria-label="閉じる"
+                aria-label={t.close}
               >
                 ×
               </button>
@@ -114,7 +116,7 @@ export function CardRequestButton({ defaultName = "", className = "" }: Props) {
               {/* Name (required) */}
               <div>
                 <label className="mb-1 block text-[11px] uppercase tracking-widest text-navy/50">
-                  カード名 <span className="text-red-400">*</span>
+                  {t.fieldName} <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -122,7 +124,7 @@ export function CardRequestButton({ defaultName = "", className = "" }: Props) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   maxLength={120}
-                  placeholder="例: リザードン ex"
+                  placeholder={t.phName}
                   className="w-full rounded border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy/60"
                 />
               </div>
@@ -131,32 +133,32 @@ export function CardRequestButton({ defaultName = "", className = "" }: Props) {
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="mb-1 block text-[11px] uppercase tracking-widest text-navy/50">
-                    セット名
+                    {t.fieldSet}
                   </label>
                   <input
                     type="text"
                     value={setName_}
                     onChange={(e) => setSetName(e.target.value)}
                     maxLength={80}
-                    placeholder="例: SV4a シャイニー"
+                    placeholder={t.phSet}
                     className="w-full rounded border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy/60"
                   />
                 </div>
                 <div>
                   <label className="mb-1 block text-[11px] uppercase tracking-widest text-navy/50">
-                    ゲーム
+                    {t.fieldGame}
                   </label>
                   <select
                     value={game}
                     onChange={(e) => setGame(e.target.value)}
                     className="w-full rounded border border-navy/20 bg-white px-3 py-2 text-sm text-navy outline-none focus:border-navy/60"
                   >
-                    <option value="">未指定</option>
-                    <option value="pokemon">ポケカ</option>
-                    <option value="onepiece">ワンピース</option>
-                    <option value="yugioh">遊戯王</option>
+                    <option value="">{t.gameNone}</option>
+                    <option value="pokemon">{t.gamePokemon}</option>
+                    <option value="onepiece">{t.gameOnepiece}</option>
+                    <option value="yugioh">{t.gameYugioh}</option>
                     <option value="mtg">MTG</option>
-                    <option value="other">その他</option>
+                    <option value="other">{t.gameOther}</option>
                   </select>
                 </div>
               </div>
@@ -164,14 +166,14 @@ export function CardRequestButton({ defaultName = "", className = "" }: Props) {
               {/* Rarity */}
               <div>
                 <label className="mb-1 block text-[11px] uppercase tracking-widest text-navy/50">
-                  レアリティ
+                  {t.fieldRarity}
                 </label>
                 <input
                   type="text"
                   value={rarity}
                   onChange={(e) => setRarity(e.target.value)}
                   maxLength={40}
-                  placeholder="例: SAR, SR, PSR"
+                  placeholder={t.phRarity}
                   className="w-full rounded border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy/60"
                 />
               </div>
@@ -179,14 +181,14 @@ export function CardRequestButton({ defaultName = "", className = "" }: Props) {
               {/* Note */}
               <div>
                 <label className="mb-1 block text-[11px] uppercase tracking-widest text-navy/50">
-                  備考・理由
+                  {t.fieldNote}
                 </label>
                 <textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   maxLength={400}
                   rows={2}
-                  placeholder="任意。追加してほしい理由など。"
+                  placeholder={t.phNote}
                   className="w-full resize-none rounded border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy/60"
                 />
               </div>
@@ -194,14 +196,14 @@ export function CardRequestButton({ defaultName = "", className = "" }: Props) {
               {/* Requested by */}
               <div>
                 <label className="mb-1 block text-[11px] uppercase tracking-widest text-navy/50">
-                  お名前（任意・匿名可）
+                  {t.fieldFrom}
                 </label>
                 <input
                   type="text"
                   value={reqBy}
                   onChange={(e) => setReqBy(e.target.value)}
                   maxLength={60}
-                  placeholder="Discord名など"
+                  placeholder={t.phFrom}
                   className="w-full rounded border border-navy/20 px-3 py-2 text-sm text-navy outline-none focus:border-navy/60"
                 />
               </div>
@@ -220,14 +222,14 @@ export function CardRequestButton({ defaultName = "", className = "" }: Props) {
                   onClick={close}
                   className="rounded border border-navy/20 px-4 py-2 text-xs text-navy/60 transition hover:bg-navy/5"
                 >
-                  キャンセル
+                  {t.cancel}
                 </button>
                 <button
                   type="submit"
                   disabled={state === "submitting" || !name.trim()}
                   className="rounded border border-navy bg-navy px-4 py-2 text-xs font-medium text-white transition hover:bg-navy/90 disabled:opacity-40"
                 >
-                  {state === "submitting" ? "送信中…" : "リクエスト送信"}
+                  {state === "submitting" ? t.submitting : t.submit}
                 </button>
               </div>
             </form>

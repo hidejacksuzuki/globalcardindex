@@ -13,6 +13,7 @@ import { useState, useTransition }                        from "react";
 import { addToWatchlist, removeFromWatchlist }            from "@gci/core";
 import { addToUserWatchlist, removeFromUserWatchlist }    from "@gci/core";
 import { trackWatchlist }                                 from "@/components/analytics/PlausibleAnalytics";
+import { useT }                                           from "@/i18n/context";
 
 type Props = {
   cardId:    string;
@@ -24,6 +25,7 @@ type Props = {
 export function WatchButton({ cardId, slug, isWatched: initialWatched, userId }: Props) {
   const [watched,   setWatched]   = useState(initialWatched);
   const [isPending, startTransition] = useTransition();
+  const t = useT().cardDetail;
 
   const toggle = () => {
     const next = !watched;
@@ -57,7 +59,7 @@ export function WatchButton({ cardId, slug, isWatched: initialWatched, userId }:
     <button
       onClick={toggle}
       disabled={isPending}
-      aria-label={watched ? "ウォッチリストから削除" : "ウォッチリストに追加"}
+      aria-label={watched ? t.watchAriaRemove : t.watchAriaAdd}
       className={[
         "inline-flex items-center gap-1.5 rounded-sm border px-3 py-1.5",
         "text-xs uppercase tracking-widest transition-all",
@@ -68,7 +70,7 @@ export function WatchButton({ cardId, slug, isWatched: initialWatched, userId }:
       ].join(" ")}
     >
       <span className="text-base leading-none">{watched ? "★" : "☆"}</span>
-      <span>{watched ? "ウォッチ中" : "ウォッチ"}</span>
+      <span>{watched ? t.watchAdded : t.watchAdd}</span>
     </button>
   );
 }
