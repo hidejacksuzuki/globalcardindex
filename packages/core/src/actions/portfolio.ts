@@ -61,7 +61,7 @@ export async function getPortfolio(userId: string): Promise<PortfolioItem[]> {
           id: true, name: true, setName: true, rarity: true, condition: true,
           game: true, slug: true,
           prices: {
-            where:   { isOutlier: false, isStale: false },
+            where:   { isOutlier: false },
             orderBy: { observedAt: "desc" },
             take:    1,
             select:  { price: true, currency: true },

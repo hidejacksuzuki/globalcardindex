@@ -154,7 +154,7 @@ async function computeSignals(cardId: string): Promise<{
   const activeWhere = {
     cardId,
     isOutlier:  false,
-    isStale:    false,
+    // stale(収集停止)でも最後の既知価格は表示する。指数計算のみ除外する（indexCalculator）。
     trustScore: { gte: TRUST_THRESHOLD },
   };
 

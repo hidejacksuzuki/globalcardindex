@@ -98,7 +98,7 @@ export async function listCards(
     const grouped = await prisma.price.groupBy({
       by:      ["cardId"],
       // 外れ値・stale を除外（¥9,999,999 のような釣り出品がソート上位を汚染するため）
-      where:   { cardId: { in: matchIds }, isOutlier: false, isStale: false },
+      where:   { cardId: { in: matchIds }, isOutlier: false },
       _max:    { price: true },
       orderBy: [{ _max: { price: order } }],
     });

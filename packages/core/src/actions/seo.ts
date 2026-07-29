@@ -34,7 +34,7 @@ export async function getGameStats(game: string): Promise<GameStats | null> {
       prices: {
         where: {
           isOutlier:  false,
-          isStale:    false,
+          // stale(収集停止)でも最後の既知価格は表示する。指数計算のみ除外する（indexCalculator）。
           trustScore: { gte: TRUST_THRESHOLD },
         },
         orderBy: { observedAt: "desc" },
@@ -136,7 +136,7 @@ export async function getSetStats(rawSetNameSlug: string): Promise<SetStats | nu
       prices: {
         where: {
           isOutlier:  false,
-          isStale:    false,
+          // stale(収集停止)でも最後の既知価格は表示する。指数計算のみ除外する（indexCalculator）。
           trustScore: { gte: TRUST_THRESHOLD },
         },
         orderBy: { observedAt: "desc" },
@@ -218,7 +218,7 @@ export async function getCardBySlug(rawSlug: string): Promise<CardSeoDetail | nu
       prices: {
         where: {
           isOutlier:  false,
-          isStale:    false,
+          // stale(収集停止)でも最後の既知価格は表示する。指数計算のみ除外する（indexCalculator）。
           trustScore: { gte: TRUST_THRESHOLD },
         },
         orderBy: { observedAt: "desc" },
@@ -303,7 +303,7 @@ export async function getCardPriceHistory(
       cardId,
       observedAt: { gte: since },
       isOutlier:  false,
-      isStale:    false,
+      // stale(収集停止)でも最後の既知価格は表示する。指数計算のみ除外する（indexCalculator）。
       trustScore: { gte: TRUST_THRESHOLD },
     },
     orderBy: { observedAt: "desc" },
@@ -363,7 +363,7 @@ export async function getCardSourceStats(cardId: string): Promise<CardSourceStat
     where: {
       cardId,
       isOutlier:  false,
-      isStale:    false,
+      // stale(収集停止)でも最後の既知価格は表示する。指数計算のみ除外する（indexCalculator）。
       trustScore: { gte: TRUST_THRESHOLD },
     },
     orderBy: { capturedAt: "desc" },
@@ -436,7 +436,7 @@ export async function getCardEngagement(cardId: string): Promise<CardEngagement>
       where: {
         cardId,
         isOutlier:  false,
-        isStale:    false,
+        // stale(収集停止)でも最後の既知価格は表示する。指数計算のみ除外する（indexCalculator）。
         trustScore: { gte: TRUST_THRESHOLD },
       },
       orderBy: { observedAt: "desc" },

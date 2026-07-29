@@ -86,7 +86,7 @@ export async function getUserWatchlistCards(userId: string): Promise<UserWatchli
     where:   {
       cardId:    { in: cardIds },
       isOutlier: false,
-      isStale:   false,
+      // stale(収集停止)でも最後の既知価格は表示する。指数計算のみ除外する（indexCalculator）。
       trustScore: { gte: TRUST_THRESHOLD },
     },
     orderBy: { observedAt: "desc" },
