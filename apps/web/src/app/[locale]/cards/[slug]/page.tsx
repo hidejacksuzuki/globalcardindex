@@ -87,6 +87,11 @@ export default async function CardSlugPage({
   const t    = getServerTranslations().cardDetail;
   const game = card.game ? getGame(card.game) : null;
 
+  // JSON-LD の URL は generateMetadata の canonical と一致させる（ロケール別）
+  const canonicalUrl = getLocale() === "en"
+    ? `${SITE_ORIGIN}/en/cards/${card.slug}`
+    : `${SITE_ORIGIN}/cards/${card.slug}`;
+
   // セッション取得 — ログイン済みなら DB watchlist で確認、匿名なら cookie で確認
   const session  = await auth();
   const userId   = session?.user?.id ?? null;
@@ -424,7 +429,17 @@ export default async function CardSlugPage({
         </div>
       </div>
 
-      {/* JSON-LD */}
+      {/*
+        JSON-LD — 相場データを表す Product。
+        注意:
+          - GCI はカードを販売していないため availability(InStock) は出さない。
+            実際に在庫を持つ販売者ではないのに在庫ありと宣言するのは誤情報になる。
+          - review / aggregateRating は実体（レビュー・評価）を持たないため出さない。
+            Search Console が「推奨項目なし」と警告するが、存在しない評価を
+            マークアップする方がガイドライン違反として遥かに重い。
+          - 価格は単一の Offer ではなく、収集済みの最安値〜最高値と観測件数を
+            AggregateOffer で表現する（実データに忠実かつリッチな表現）。
+      */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -433,15 +448,16 @@ export default async function CardSlugPage({
             "@type":    "Product",
             name:       card.name,
             description: `${card.name} ${card.rarity} · ${card.condition} — ${card.setName}`,
-            url:        `https://gci-index.com/cards/${card.slug}`,
-            ...(card.latestPrice !== null && card.currency
+            url:        canonicalUrl,
+            ...(card.minPrice !== null && card.maxPrice !== null && card.currency
               ? {
                   offers: {
-                    "@type":         "Offer",
-                    priceCurrency:   card.currency,
-                    price:           card.latestPrice.toFixed(0),
-                    availability:    "https://schema.org/InStock",
-                    url:             `https://gci-index.com/cards/${card.slug}`,
+                    "@type":       "AggregateOffer",
+                    priceCurrency: card.currency,
+                    lowPrice:      card.minPrice.toFixed(0),
+                    highPrice:     card.maxPrice.toFixed(0),
+                    offerCount:    card.priceCount,
+                    url:           canonicalUrl,
                   },
                 }
               : {}),
