@@ -10,6 +10,7 @@ import type { MarketCard } from "@gci/core";
 import { getGame }       from "@gci/core";
 import { PriceCell, PriceChangeCell } from "@/components/market/PriceCell";
 import { CardThumb }     from "@/components/cards/CardThumb";
+import { getServerTranslations } from "@/i18n/server";
 
 export type TrendMode = "trending" | "gainers" | "losers" | "volume";
 
@@ -21,12 +22,13 @@ type Props = {
 
 export function TrendTable({ cards, mode, thumbs = {} }: Props) {
   if (cards.length === 0) {
+    const t = getServerTranslations().trendTable;
     return (
       <div className="border border-navy/10 bg-white p-12 text-center">
         <p className="text-3xl">📊</p>
-        <p className="mt-3 text-sm font-medium text-navy">データがまだありません</p>
+        <p className="mt-3 text-sm font-medium text-navy">{t.emptyTitle}</p>
         <p className="mt-1 text-xs text-navy/50">
-          価格データが蓄積されると自動で表示されます。
+          {t.emptyBody}
         </p>
       </div>
     );

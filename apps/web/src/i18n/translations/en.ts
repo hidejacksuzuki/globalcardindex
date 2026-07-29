@@ -195,6 +195,11 @@ export const en = {
     ctaSite:     'Explore the site',
   },
 
+  trendTable: {
+    emptyTitle: 'No data yet',
+    emptyBody:  'This will populate automatically as price data accumulates.',
+  },
+
   trending: {
     title:       'Trending',
     description: 'Cards with surging trading volume and price movement.',

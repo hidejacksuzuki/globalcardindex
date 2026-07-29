@@ -200,6 +200,11 @@ export const ja = {
     description: '取引量・変動率が急増しているカード。',
   },
 
+  trendTable: {
+    emptyTitle: 'データがまだありません',
+    emptyBody:  '価格データが蓄積されると自動で表示されます。',
+  },
+
   gainers: {
     title:       '値上がりランキング',
     description: '直近30日で最も値上がりしたカード。',
