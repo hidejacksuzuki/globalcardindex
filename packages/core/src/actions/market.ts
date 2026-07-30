@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma }          from "@gci/db";
+import { prisma, Prisma } from "@gci/db";
 import {
   aggregatePrices,
   DEFAULT_WINDOW_DAYS,
@@ -25,45 +25,58 @@ export async function getMarketboard(
   const windowDays = opts.windowDays ?? DEFAULT_WINDOW_DAYS;
   const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
 
+  // パフォーマンス改修 (2026-07-30):
+  // 以前は include: { prices: take 200 } で「各カード最大200件×全カラム」を
+  // 取得しており（実測 約4.6万行・30秒超）、表示に必要な
+  // 「最新1件・30日窓の price/trustScore・件数・最新Index」だけを
+  // それぞれ1クエリで取る形に分解した。応答形式は不変。
   const cards = await prisma.card.findMany({
     where: { ...buildCardSearchWhere(opts.search), isVisible: true, deletedAt: null },
-    include: {
-      prices: { orderBy: { observedAt: "desc" }, take: 200 },
-    },
+    select: { id: true, name: true, setName: true, rarity: true, condition: true },
   });
+  if (cards.length === 0) return [];
 
-  // Week 19: join per-card IndexValues in one batch query
   const cardIds = cards.map((c) => c.id);
-  const indexRows = await prisma.indexValue.findMany({
-    where:   { cardId: { in: cardIds } },
-    orderBy: { calculatedAt: "desc" },
-    select: {
-      cardId:      true,
-      value:       true,
-      changeRate:  true,
-      sampleCount: true,
-      confidence:  true,
-    },
-  });
-  // Keep latest per card
-  const indexMap = new Map<string, typeof indexRows[0]>();
-  for (const r of indexRows) {
-    if (r.cardId && !indexMap.has(r.cardId)) indexMap.set(r.cardId, r);
+  const idList  = Prisma.join(cardIds);
+
+  const [latestRows, countRows, windowRows, indexRows] = await Promise.all([
+    // ① 各カードの最新価格1件（cardId+observedAt の複合インデックスを利用）
+    prisma.$queryRaw<{ cardId: string; price: number; currency: string; observedAt: Date }[]>`
+      SELECT DISTINCT ON ("cardId") "cardId", "price", "currency", "observedAt"
+      FROM "Price" WHERE "cardId" IN (${idList})
+      ORDER BY "cardId", "observedAt" DESC`,
+    // ② 価格データ件数（dataPoints 表示用）
+    prisma.price.groupBy({
+      by: ["cardId"],
+      where: { cardId: { in: cardIds } },
+      _count: { _all: true },
+    }),
+    // ③ 変動率のベースライン計算に使う30日窓の価格（必要3カラムのみ）
+    prisma.price.findMany({
+      where:  { cardId: { in: cardIds }, observedAt: { gte: since } },
+      select: { cardId: true, price: true, trustScore: true },
+    }),
+    // ④ 各カードの最新 IndexValue 1件
+    prisma.$queryRaw<{ cardId: string; value: number; changeRate: number; sampleCount: number | null; confidence: string | null }[]>`
+      SELECT DISTINCT ON ("cardId") "cardId", "value", "changeRate", "sampleCount", "confidence"
+      FROM "IndexValue" WHERE "cardId" IN (${idList})
+      ORDER BY "cardId", "calculatedAt" DESC`,
+  ]);
+
+  const latestMap = new Map(latestRows.map((r) => [r.cardId, r]));
+  const countMap  = new Map(countRows.map((r) => [r.cardId, r._count._all]));
+  const indexMap  = new Map(indexRows.map((r) => [r.cardId, r]));
+  const windowMap = new Map<string, { price: number; trustScore: number }[]>();
+  for (const r of windowRows) {
+    const arr = windowMap.get(r.cardId);
+    if (arr) arr.push(r); else windowMap.set(r.cardId, [r]);
   }
 
   const rows: MarketboardRow[] = cards.map((card) => {
-    const dataPoints = card.prices.length;
-    const latest = card.prices[0] ?? null;
-    const windowPrices = card.prices.filter((p) => p.observedAt >= since);
+    const latest       = latestMap.get(card.id) ?? null;
+    const windowPrices = windowMap.get(card.id) ?? [];
     const baseline =
-      windowPrices.length > 0
-        ? aggregatePrices(
-            windowPrices.map((p) => ({
-              price: p.price,
-              trustScore: p.trustScore,
-            })),
-          )
-        : null;
+      windowPrices.length > 0 ? aggregatePrices(windowPrices) : null;
 
     const changeRate =
       latest && baseline && baseline !== 0
@@ -81,7 +94,7 @@ export async function getMarketboard(
       latestPrice: latest ? latest.price : null,
       currency: latest ? latest.currency : null,
       changeRate,
-      dataPoints,
+      dataPoints: countMap.get(card.id) ?? 0,
       lastObservedAt: latest ? latest.observedAt.toISOString() : null,
       // Week 19: index quality fields
       indexValue:  idx?.value       ?? null,
