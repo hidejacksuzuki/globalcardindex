@@ -1,6 +1,7 @@
 "use server";
 
-import { prisma, Prisma } from "@gci/db";
+import { unstable_cache }  from "next/cache";
+import { prisma } from "@gci/db";
 import {
   aggregatePrices,
   DEFAULT_WINDOW_DAYS,
@@ -19,47 +20,70 @@ export type GetMarketboardOptions = {
   order?: MarketSortOrder;
 };
 
+/** キャッシュTTL（秒）。収集は10分毎・指数再計算は毎時のため5分で十分新鮮。 */
+const MARKETBOARD_CACHE_SECONDS = 300;
+
 export async function getMarketboard(
   opts: GetMarketboardOptions = {},
 ): Promise<MarketboardRow[]> {
-  const windowDays = opts.windowDays ?? DEFAULT_WINDOW_DAYS;
+  // ソートはリクエスト毎にJSで行い、重いデータ取得だけを search/windowDays を
+  // キーにキャッシュ共有する（ページ・APIの全ソートバリエーションで共通）。
+  const rows = await cachedMarketboardRows(
+    opts.search ?? "",
+    opts.windowDays ?? DEFAULT_WINDOW_DAYS,
+  );
+  return sortRows([...rows], opts.sort ?? null, opts.order ?? "desc");
+}
+
+const cachedMarketboardRows = unstable_cache(
+  fetchMarketboardRows,
+  ["marketboard-rows"],
+  { revalidate: MARKETBOARD_CACHE_SECONDS },
+);
+
+// パフォーマンス改修 (2026-07-30):
+// 以前は include: { prices: take 200 } で「各カード最大200件×全カラム」を
+// 取得しており（実測 約4.6万行・30秒超）、表示に必要な
+// 「最新1件・30日窓の price/trustScore・件数・最新Index」だけを
+// それぞれ1クエリで取る形に分解した。応答形式は不変。
+async function fetchMarketboardRows(
+  search: string,
+  windowDays: number,
+): Promise<MarketboardRow[]> {
   const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
 
-  // パフォーマンス改修 (2026-07-30):
-  // 以前は include: { prices: take 200 } で「各カード最大200件×全カラム」を
-  // 取得しており（実測 約4.6万行・30秒超）、表示に必要な
-  // 「最新1件・30日窓の price/trustScore・件数・最新Index」だけを
-  // それぞれ1クエリで取る形に分解した。応答形式は不変。
   const cards = await prisma.card.findMany({
-    where: { ...buildCardSearchWhere(opts.search), isVisible: true, deletedAt: null },
+    where: { ...buildCardSearchWhere(search || undefined), isVisible: true, deletedAt: null },
     select: { id: true, name: true, setName: true, rarity: true, condition: true },
   });
   if (cards.length === 0) return [];
 
-  const cardIds = cards.map((c) => c.id);
-  const idList  = Prisma.join(cardIds);
-
+  // 注意: ここの raw SQL にはパラメータを一切埋め込まない。
+  // Next(webpack) のバンドルでは Prisma.join が返す Sql がモジュール二重化で
+  // 別インスタンス判定になり、ID配列が jsonb として渡って
+  // 「operator does not exist: text = jsonb」で落ちる。
+  // 対象カードは全カードの大半（検索時のみ絞られる）なので、
+  // 全表 DISTINCT ON（数百行）で取り、JS側でカード集合に絞る。
   const [latestRows, countRows, windowRows, indexRows] = await Promise.all([
     // ① 各カードの最新価格1件（cardId+observedAt の複合インデックスを利用）
     prisma.$queryRaw<{ cardId: string; price: number; currency: string; observedAt: Date }[]>`
       SELECT DISTINCT ON ("cardId") "cardId", "price", "currency", "observedAt"
-      FROM "Price" WHERE "cardId" IN (${idList})
+      FROM "Price"
       ORDER BY "cardId", "observedAt" DESC`,
     // ② 価格データ件数（dataPoints 表示用）
     prisma.price.groupBy({
       by: ["cardId"],
-      where: { cardId: { in: cardIds } },
       _count: { _all: true },
     }),
     // ③ 変動率のベースライン計算に使う30日窓の価格（必要3カラムのみ）
     prisma.price.findMany({
-      where:  { cardId: { in: cardIds }, observedAt: { gte: since } },
+      where:  { observedAt: { gte: since } },
       select: { cardId: true, price: true, trustScore: true },
     }),
     // ④ 各カードの最新 IndexValue 1件
     prisma.$queryRaw<{ cardId: string; value: number; changeRate: number; sampleCount: number | null; confidence: string | null }[]>`
       SELECT DISTINCT ON ("cardId") "cardId", "value", "changeRate", "sampleCount", "confidence"
-      FROM "IndexValue" WHERE "cardId" IN (${idList})
+      FROM "IndexValue" WHERE "cardId" IS NOT NULL
       ORDER BY "cardId", "calculatedAt" DESC`,
   ]);
 
@@ -104,7 +128,7 @@ export async function getMarketboard(
     };
   });
 
-  return sortRows(rows, opts.sort ?? null, opts.order ?? "desc");
+  return rows;
 }
 
 // ================================================================

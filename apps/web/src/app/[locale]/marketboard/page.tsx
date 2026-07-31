@@ -1,4 +1,5 @@
 import Link            from 'next/link';
+import { unstable_cache } from 'next/cache';
 import { getMarketboard, getCardThumbnails, MARKET_SORT_KEYS } from '@gci/core';
 import { SearchBar }   from '@/components/ui/SearchBar';
 import { Disclaimer }  from '@/components/common/Disclaimer';
@@ -23,6 +24,26 @@ function parseOrder(o: string | undefined): MarketSortOrder {
   return o === 'asc' ? 'asc' : 'desc';
 }
 
+/**
+ * ページデータの取得を5分キャッシュ（収集10分毎・指数毎時のため十分新鮮）。
+ * サムネイル取得（3テーブル横断・実測 約7秒）が重いため、行データと合わせて
+ * 検索語・ソート・セクション単位でまとめてキャッシュする。
+ */
+const getMarketboardPageData = unstable_cache(
+  async (q: string, sort: MarketSortKey | null, order: MarketSortOrder, section: string) => {
+    const rows = await getMarketboard({ search: q || undefined, sort, order });
+
+    const reliable  = rows.filter((r) => r.confidence === 'HIGH' || r.confidence === 'MED');
+    const reference = rows.filter((r) => r.confidence !== 'HIGH' && r.confidence !== 'MED');
+
+    const activeRows = section === 'reliable' ? reliable : reference;
+    const thumbs     = await getCardThumbnails(activeRows.map((r) => r.cardId)).catch(() => ({}));
+    return { rows, reliable, reference, thumbs };
+  },
+  ['marketboard-page-data'],
+  { revalidate: 300 },
+);
+
 export default async function MarketboardPage({ params, searchParams }: Props) {
   const t       = getTranslations(params.locale);
   const m       = t.marketboard;
@@ -31,13 +52,10 @@ export default async function MarketboardPage({ params, searchParams }: Props) {
   const order   = parseOrder(searchParams.order);
   const section = searchParams.section === 'reference' ? 'reference' : 'reliable';
 
-  const rows = await getMarketboard({ search: q, sort, order });
-
-  const reliable  = rows.filter((r) => r.confidence === 'HIGH' || r.confidence === 'MED');
-  const reference = rows.filter((r) => r.confidence !== 'HIGH' && r.confidence !== 'MED');
+  const { rows, reliable, reference, thumbs } =
+    await getMarketboardPageData(q ?? '', sort, order, section);
 
   const activeRows = section === 'reliable' ? reliable : reference;
-  const thumbs     = await getCardThumbnails(activeRows.map((r) => r.cardId)).catch(() => ({}));
   const updatedAt  = rows.length > 0
     ? rows.map((r) => r.lastObservedAt).filter(Boolean).sort().at(-1)
     : null;

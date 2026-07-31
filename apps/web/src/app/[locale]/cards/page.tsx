@@ -3,6 +3,7 @@
  */
 
 import Link             from 'next/link';
+import { unstable_cache } from 'next/cache';
 import { listCards, getCardThumbnails } from '@gci/core';
 import { SearchBar }    from '@/components/ui/SearchBar';
 import { CardThumb }    from '@/components/cards/CardThumb';
@@ -18,6 +19,36 @@ export const dynamic = 'force-dynamic';
 
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE     = 100;
+
+/**
+ * 一覧データの取得を5分キャッシュする（収集は10分毎・指数は毎時のため十分新鮮）。
+ * ソート・ページ番号・検索語はキャッシュキーに含まれる（unstable_cache は引数を
+ * キーに含める）。ロケール・通貨は表示層の変換のみでデータに影響しないため含めない。
+ */
+const getCardsPageData = unstable_cache(
+  async (q: string, sort: CardSortKey, order: SortOrder, page: number, pageSize: number) => {
+    const result  = await listCards({ search: q || undefined, sort, order, page, pageSize, onlyWithPrices: true });
+    const cardIds = result.cards.map((c) => c.id);
+    const [thumbs, indexRows] = await Promise.all([
+      getCardThumbnails(cardIds).catch(() => ({} as Record<string, string>)),
+      prisma.indexValue.findMany({
+        where:   { cardId: { in: cardIds } },
+        orderBy: { calculatedAt: 'desc' },
+        select: {
+          cardId:       true,
+          value:        true,
+          sampleCount:  true,
+          outlierCount: true,
+          confidence:   true,
+          changeRate:   true,
+        },
+      }),
+    ]);
+    return { result, thumbs, indexRows };
+  },
+  ['cards-page-data'],
+  { revalidate: 300 },
+);
 
 type Props = {
   params: { locale: Locale };
@@ -70,23 +101,8 @@ export default async function CardsPage({ params, searchParams }: Props) {
   );
 
   // 価格データが1件もないカードは一覧に出さない（β feedback: スカスカ感の解消）
-  const result = await listCards({ search: q, sort, order, page, pageSize, onlyWithPrices: true });
+  const { result, thumbs, indexRows } = await getCardsPageData(q ?? '', sort, order, page, pageSize);
   const { cards, totalCount, totalPages } = result;
-
-  const cardIds = cards.map((c) => c.id);
-  const thumbs  = await getCardThumbnails(cardIds).catch(() => ({} as Record<string, string>));
-  const indexRows = await prisma.indexValue.findMany({
-    where:   { cardId: { in: cardIds } },
-    orderBy: { calculatedAt: 'desc' },
-    select: {
-      cardId:       true,
-      value:        true,
-      sampleCount:  true,
-      outlierCount: true,
-      confidence:   true,
-      changeRate:   true,
-    },
-  });
 
   const indexMap = new Map<string, typeof indexRows[0]>();
   for (const row of indexRows) {
