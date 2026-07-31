@@ -1,18 +1,27 @@
 import type { Metadata }   from 'next';
 import { notFound }         from 'next/navigation';
+import { unstable_cache }   from 'next/cache';
 import { getDailyRecapByDate, getRecentRecapDates } from '@gci/core';
 import { RecapView }        from '@/components/market/RecapView';
 import type { Locale }      from '@/i18n/config';
 
-// ビルド時プリレンダーはしない（2026-07-08）。以前は直近90日分を静的生成して
-// いたが、多数ページの同時プリレンダーが getGameStats 等の重いクエリと競合し、
-// Supabase の接続プールを枯渇させてビルドが不安定だった。dynamicParams（既定
-// true）により各日付は初回アクセスでオンデマンド生成し revalidate でキャッシュする。
-export async function generateStaticParams() {
-  return [];
-}
+// 障害修正 (2026-07-31): 以前は revalidate=86400 の ISR にしていたが、
+// [locale] レイアウトが cookies()（ロケール・認証）を読むため、本番の
+// オンデマンド静的生成が DYNAMIC_SERVER_USAGE で必ず 500 になっていた
+// （dev は常に動的レンダリングのため再現しない）。
+// ページは動的レンダリングとし、データ取得側を unstable_cache でキャッシュする。
+export const dynamic = 'force-dynamic';
 
-export const revalidate = 86400;
+const cachedRecapByDate = unstable_cache(
+  (date: string) => getDailyRecapByDate(date),
+  ['daily-recap-by-date'],
+  { revalidate: 3600 },
+);
+const cachedRecapDates = unstable_cache(
+  () => getRecentRecapDates(30),
+  ['daily-recap-dates'],
+  { revalidate: 3600 },
+);
 
 export async function generateMetadata({
   params,
@@ -20,7 +29,7 @@ export async function generateMetadata({
   params: { locale: Locale; date: string };
 }): Promise<Metadata> {
   const isEn = params.locale === 'en';
-  const snap  = await getDailyRecapByDate(params.date);
+  const snap  = await cachedRecapByDate(params.date);
   if (!snap) return {};
 
   const displayDate = new Date(params.date + 'T00:00:00+09:00').toLocaleDateString(
@@ -48,8 +57,8 @@ export default async function DailyArchivePage({
   if (!/^\d{4}-\d{2}-\d{2}$/.test(params.date)) notFound();
 
   const [snap, archiveDates] = await Promise.all([
-    getDailyRecapByDate(params.date),
-    getRecentRecapDates(30),
+    cachedRecapByDate(params.date),
+    cachedRecapDates(),
   ]);
 
   if (!snap) notFound();
