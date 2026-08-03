@@ -49,6 +49,16 @@ const nextConfig = {
 
   async redirects() {
     return [
+      // www → 裸ドメインへ 308 恒久リダイレクト (2026-08-03)
+      // 両ホストが 200 を返す二重配信状態だと Google から重複コンテンツに見え
+      // 評価が分散する。canonical・サイトマップは gci-index.com を指しているため
+      // ホストもそちらへ統一する。
+      {
+        source:      "/:path*",
+        has:         [{ type: "host", value: "www.gci-index.com" }],
+        destination: "https://gci-index.com/:path*",
+        permanent:   true,
+      },
       // Legacy root paths — redirect to /ja/* so old bookmarks still work
       // The middleware handles this for most cases; these are belt-and-suspenders.
       {
