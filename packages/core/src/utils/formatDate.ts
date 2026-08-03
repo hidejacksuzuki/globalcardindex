@@ -5,6 +5,8 @@
  * Defaults to "ja-JP" for backward compatibility.
  */
 
+const FALLBACK_LOCALE = "ja-JP";
+
 function normalizeLocale(locale: string): string {
   const map: Record<string, string> = {
     ja: "ja-JP",
@@ -12,29 +14,49 @@ function normalizeLocale(locale: string): string {
     ko: "ko-KR",
     zh: "zh-CN",
   };
-  return map[locale] ?? locale;
+  const candidate = map[locale] ?? locale;
+  try {
+    // "favicon.ico" 等、BCP 47 として不正なタグは RangeError を投げる
+    Intl.DateTimeFormat.supportedLocalesOf(candidate);
+    return candidate;
+  } catch {
+    return FALLBACK_LOCALE;
+  }
 }
 
 export function formatDate(value: string | Date, locale = "ja-JP"): string {
   const d = typeof value === "string" ? new Date(value) : value;
   if (Number.isNaN(d.getTime())) return "-";
-  return d.toLocaleDateString(normalizeLocale(locale), {
-    year:  "numeric",
-    month: "2-digit",
-    day:   "2-digit",
-  });
+  try {
+    return d.toLocaleDateString(normalizeLocale(locale), {
+      year:  "numeric",
+      month: "2-digit",
+      day:   "2-digit",
+    });
+  } catch {
+    return d.toLocaleDateString(FALLBACK_LOCALE, {
+      year: "numeric", month: "2-digit", day: "2-digit",
+    });
+  }
 }
 
 export function formatDateTime(value: string | Date, locale = "ja-JP"): string {
   const d = typeof value === "string" ? new Date(value) : value;
   if (Number.isNaN(d.getTime())) return "-";
-  return d.toLocaleString(normalizeLocale(locale), {
-    year:   "numeric",
-    month:  "2-digit",
-    day:    "2-digit",
-    hour:   "2-digit",
-    minute: "2-digit",
-  });
+  try {
+    return d.toLocaleString(normalizeLocale(locale), {
+      year:   "numeric",
+      month:  "2-digit",
+      day:    "2-digit",
+      hour:   "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return d.toLocaleString(FALLBACK_LOCALE, {
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit",
+    });
+  }
 }
 
 /** Short relative label: "Today", "Yesterday", or a formatted date. */

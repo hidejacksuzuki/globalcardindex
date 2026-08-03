@@ -34,7 +34,7 @@ export async function generateMetadata({
 
   const title       = `${game.name} 相場・価格指数 | Global Card Index`;
   const description = game.description;
-  const url         = `https://gci-index.com/games/${game.slug}`;
+  const url         = `https://www.gci-index.com/games/${game.slug}`;
 
   return {
     title,
@@ -159,7 +159,7 @@ export default async function GamePage({
             "@type":      "WebPage",
             name:         `${game.name} 相場・価格指数`,
             description:  game.description,
-            url:          `https://gci-index.com/games/${game.slug}`,
+            url:          `https://www.gci-index.com/games/${game.slug}`,
             publisher: {
               "@type": "Organization",
               name:    "Global Card Index",

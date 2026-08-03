@@ -22,7 +22,7 @@ import type { Translations }     from "@/i18n";
 
 export const dynamic = "force-dynamic";
 
-const SITE_ORIGIN = "https://gci-index.com";
+const SITE_ORIGIN = "https://www.gci-index.com";
 
 // ----------------------------------------------------------------
 // Metadata

@@ -23,7 +23,7 @@ type Group = {
   count: number;
 };
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://gci-index.com";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://www.gci-index.com";
 
 const GAME_LABEL: Record<string, string> = {
   pokemon:  "ポケカ",

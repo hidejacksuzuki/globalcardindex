@@ -15,7 +15,8 @@ import {
 import { SearchHero }    from '@/components/index/SearchHero';
 import { CardThumb }     from '@/components/cards/CardThumb';
 import { Disclaimer }    from '@/components/common/Disclaimer';
-import { getTranslations } from '@/i18n';
+import { getTranslations, isValidLocale } from '@/i18n';
+import { notFound }      from 'next/navigation';
 import { auth }          from '@/auth';
 import type { Locale }   from '@/i18n/config';
 import type { MarketCard, GameSnapshot, PortfolioSummary, IndexSnapshot } from '@gci/core';
@@ -32,6 +33,10 @@ const GAME_META: Record<string, { label: string; color: string; bar: string }> =
 };
 
 export default async function HomePage({ params }: { params: { locale: Locale } }) {
+  // layout の isValidLocale チェックとは並行レンダリングされるため、page 側でも弾く
+  // （favicon.ico 等の非ロケール文字列が [locale] に入ると formatDateTime が落ちる）
+  if (!isValidLocale(params.locale)) notFound();
+
   const t = getTranslations(params.locale);
 
   const session = await auth().catch(() => null);

@@ -18,7 +18,7 @@
  * }
  *
  * Uptime monitor config (example — UptimeRobot):
- *   URL:             https://gci-index.com/api/v1/health
+ *   URL:             https://www.gci-index.com/api/v1/health
  *   Type:            HTTP(s)
  *   Keyword:         "ok":true
  *   Interval:        5 minutes

@@ -9,7 +9,7 @@
  *   AUTH_RESEND_KEY      — Resend API key (reuses RESEND_API_KEY if not set)
  *   RESEND_FROM_EMAIL    — sender address
  *   DATABASE_URL         — PostgreSQL connection string
- *   NEXT_PUBLIC_BASE_URL — e.g. https://gci-index.com
+ *   NEXT_PUBLIC_BASE_URL — e.g. https://www.gci-index.com
  */
 
 import NextAuth                from "next-auth";
@@ -17,7 +17,7 @@ import Resend                  from "next-auth/providers/resend";
 import { PrismaAdapter }       from "@auth/prisma-adapter";
 import { prisma }              from "@gci/db";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://gci-index.com";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://www.gci-index.com";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),

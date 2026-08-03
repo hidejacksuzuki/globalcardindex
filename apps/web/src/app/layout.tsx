@@ -7,7 +7,7 @@ import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'latin-ext'] });
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://gci-index.com';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.gci-index.com';
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
