@@ -80,11 +80,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const card = await prisma.card.findUnique({
     where:  { id: body.cardId },
-    select: { id: true, name: true, rarity: true, setName: true },
+    select: {
+      id: true, name: true, rarity: true, setName: true,
+      aliases: { where: { locale: "ja" }, select: { name: true } },
+    },
   });
   if (!card) {
     return NextResponse.json({ ok: false, error: "card not found" }, { status: 404 });
   }
+  const jaAliases = card.aliases.map((a) => a.name);
 
   const isClosed = (body.mode ?? "closed") === "closed";
   const source   = isClosed ? "yahoo_auction_closed" : "yahoo_auction_active";
@@ -96,7 +100,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const { matchScore, trustScore } = calcAuctionScore(
       item.title,
-      { name: card.name, rarity: card.rarity, setName: card.setName },
+      { name: card.name, rarity: card.rarity, setName: card.setName, aliases: jaAliases },
       isClosed,
       item.bidCount,
     );

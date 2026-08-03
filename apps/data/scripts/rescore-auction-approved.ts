@@ -11,10 +11,12 @@
  *      残存 approved 行から url+price 重複排除（srv:yah: fingerprint）で再構築（冪等）
  *   3. per-card 指数を再計算。データ不足化したら古い IndexValue を削除
  *
- * 対象外（スキップして報告のみ）:
- *   - 英語名など識別トークンが JP タイトルと照合不能なカード
- *     （全行不一致になるが正当出品の可能性があるため。恒久対処は CardAlias に
- *       日本語名を登録して照合に使う — 別タスク）
+ * 英語名カードの扱い（2026-08 CardAlias 対応）:
+ *   - CardAlias(locale:"ja") を持つカードは、エイリアス（日本語名）も含めて
+ *     auctionIdentityHit で判定する（例 "Sylveon ex" は "ニンフィアex" で照合）
+ *   - ja エイリアスを持たない英語名カードは従来どおりスキップ
+ *     （MTG 等はヤフオクでも英語名表記が通例で name 照合が機能しているため、
+ *       エイリアス登録が済むまで誤 reject リスクを避けて保留）
  *
  * cleanup-auction-mismatches（全件混入カード専用）の一般化版。
  * 部分汚染カード（正当行と混入行が混在）も正しく処理できる。
@@ -39,15 +41,20 @@ const LIMIT = Number(args.find((a) => a.startsWith("--limit="))?.slice(8) ?? "0"
 
 const isAscii = (s: string) => /^[\x00-\x7f]+$/.test(s);
 
-type CardMeta = { id: string; name: string; setName: string; rarity: string };
+type CardMeta = { id: string; name: string; setName: string; rarity: string; jaAliases: string[] };
 
 async function main() {
   console.log(`モード: ${APPLY ? "★APPLY（本番書き込み）" : "DRY-RUN（書き込みなし）"}`);
 
   const cardList = await prisma.card.findMany({
-    select: { id: true, name: true, setName: true, rarity: true },
+    select: {
+      id: true, name: true, setName: true, rarity: true,
+      aliases: { where: { locale: "ja" }, select: { name: true } },
+    },
   });
-  const cardMeta = new Map<string, CardMeta>(cardList.map((c) => [c.id, c]));
+  const cardMeta = new Map<string, CardMeta>(
+    cardList.map((c) => [c.id, { ...c, jaAliases: c.aliases.map((a) => a.name) }]),
+  );
 
   // id カーソルでページングし、カード別に不一致行を集計（statement timeout 回避）
   const PAGE = 5000;
@@ -69,13 +76,14 @@ async function main() {
     for (const r of batch) {
       const c = cardMeta.get(r.cardId);
       if (!c) continue;
-      if (isAscii(c.name)) {
+      // 英語名かつ ja エイリアス未登録のカードは判定不能のためスキップ
+      if (isAscii(c.name) && c.jaAliases.length === 0) {
         skippedEn.set(c.id, (skippedEn.get(c.id) ?? 0) + 1);
         continue;
       }
       let e = perCard.get(c.id);
       if (!e) { e = { card: c, badIds: [], goodCount: 0, samples: [] }; perCard.set(c.id, e); }
-      if (auctionIdentityHit(r.title, c.name, c.setName)) e.goodCount++;
+      if (auctionIdentityHit(r.title, c.name, c.setName, c.jaAliases)) e.goodCount++;
       else {
         e.badIds.push(r.id);
         if (e.samples.length < 2) e.samples.push(r.title);

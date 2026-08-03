@@ -45,14 +45,22 @@ export async function updatePrices(options?: {
   const cards = await prisma.card.findMany({
     orderBy: { updatedAt: "asc" },
     take:    batchSize,
-    select:  { id: true, name: true, rarity: true, setName: true, condition: true },
+    select:  {
+      id: true, name: true, rarity: true, setName: true, condition: true,
+      // 日本語エイリアス（英語名カードの検索・照合用）
+      aliases: { where: { locale: "ja" }, select: { name: true } },
+    },
   });
 
   for (const card of cards) {
     result.processed++;
+    const jaAliases = card.aliases.map((a) => a.name);
 
     try {
-      const { keyword } = buildYahooAuctionUrls(card.name, card.rarity, card.setName, card.condition);
+      const { keyword } = buildYahooAuctionUrls(
+        card.name, card.rarity, card.setName, card.condition,
+        jaAliases[0],
+      );
 
       if (dryRun) {
         await prisma.card.update({ where: { id: card.id }, data: { updatedAt: new Date() } });
@@ -64,7 +72,7 @@ export async function updatePrices(options?: {
       for (const item of items) {
         const { matchScore, trustScore } = calcAuctionScore(
           item.title,
-          { name: card.name, rarity: card.rarity, setName: card.setName, condition: card.condition },
+          { name: card.name, rarity: card.rarity, setName: card.setName, condition: card.condition, aliases: jaAliases },
           true,
           item.bidCount,
         );

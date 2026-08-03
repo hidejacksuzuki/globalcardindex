@@ -29,15 +29,21 @@ export function buildYahooAuctionActiveSearchUrl(keyword: string): string {
   return buildYahooAuctionSearchUrl(keyword);
 }
 
-/** カード情報から両方のURLをまとめて生成 */
-export function buildYahooAuctionUrls(name: string, rarity: string, setName: string, condition?: string): {
+/**
+ * カード情報から両方のURLをまとめて生成。
+ * jaAlias を渡すと検索キーワードのカード名部分にエイリアス（日本語名）を使う。
+ * 英語名カード（例 "Sylveon ex"）はヤフオクの日本語出品にヒットしないため、
+ * 日本語エイリアス（例 "ニンフィアex"）で検索する。
+ */
+export function buildYahooAuctionUrls(name: string, rarity: string, setName: string, condition?: string, jaAlias?: string): {
   keyword:   string;
   activeUrl: string;
   closedUrl: string;
 } {
   // PSA/BGS 等のグレーディング条件はキーワードに含める
   const condTag = condition && /^(PSA|BGS|ARS)\d/i.test(condition) ? ` ${condition}` : "";
-  const keyword = `${name} ${rarity} ${setName}${condTag}`.trim();
+  const searchName = jaAlias?.trim() || name;
+  const keyword = `${searchName} ${rarity} ${setName}${condTag}`.trim();
   return {
     keyword,
     activeUrl: buildYahooAuctionSearchUrl(keyword),
@@ -125,14 +131,28 @@ export function extractCardNumber(setName: string): string | null {
 
 /**
  * タイトルが対象カード本人を指しているかの同一性判定。
- *   1. カード名の識別トークンが全て含まれる、または
+ *   1. カード名（または別名エイリアス）の識別トークンが全て含まれる、または
  *   2. setName がカード番号（例 "207/XY-P"）を含み、それがタイトルにも含まれる
  * プロモ等では「ポンチョを着たピカチュウ 207/XY-P」のようにキャラ修飾
  * （リザードン/レックウザ）をタイトルに書かず番号で区別する慣習があるため、
  * 番号一致も本人確認として扱う（eBay 採点の cardNumber 一致と同じ発想）。
+ *
+ * aliases には CardAlias(locale:"ja") の日本語名を渡す。Card.name が英語
+ * （例 "Sylveon ex"）のカードは日本語タイトルと構造的に照合できないため、
+ * 日本語エイリアス（例 "ニンフィアex"）での一致を本人確認として扱う。
  */
-export function auctionIdentityHit(title: string, name: string, setName: string): boolean {
+export function auctionIdentityHit(
+  title: string,
+  name: string,
+  setName: string,
+  aliases?: string[],
+): boolean {
   if (nameMatchesTitle(title, name)) return true;
+  if (aliases) {
+    for (const a of aliases) {
+      if (a && nameMatchesTitle(title, a)) return true;
+    }
+  }
   const num = extractCardNumber(setName);
   if (num && normalizeForName(title).includes(normalizeForName(num))) return true;
   return false;
@@ -143,6 +163,8 @@ export type AuctionScoringTarget = {
   rarity:     string;
   setName:    string;
   condition?: string;
+  /** CardAlias(locale:"ja") の日本語名。英語名カードの照合に使う */
+  aliases?:   string[];
 };
 
 export type AuctionScoringResult = {
@@ -161,8 +183,8 @@ export function calcAuctionScore(
   const reasons: string[] = [];
   let score     = 0;
 
-  // +35: card name match（識別トークン照合 or カード番号一致で本人確認）
-  const nameHit = !!target.name && auctionIdentityHit(title, target.name, target.setName);
+  // +35: card name match（識別トークン照合 or 日本語エイリアス or カード番号一致で本人確認）
+  const nameHit = !!target.name && auctionIdentityHit(title, target.name, target.setName, target.aliases);
   if (nameHit) {
     score += 35; reasons.push("カード名一致 +35");
   }
