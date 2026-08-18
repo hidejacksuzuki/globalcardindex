@@ -18,6 +18,8 @@ export type GetMarketboardOptions = {
   windowDays?: number;
   sort?: MarketSortKey | null;
   order?: MarketSortOrder;
+  /** ゲームで絞る（例 "pokemon"）。ゲーム別ハブページ用 */
+  game?: string;
 };
 
 /** キャッシュTTL（秒）。収集は10分毎・指数再計算は毎時のため5分で十分新鮮。 */
@@ -26,11 +28,12 @@ const MARKETBOARD_CACHE_SECONDS = 300;
 export async function getMarketboard(
   opts: GetMarketboardOptions = {},
 ): Promise<MarketboardRow[]> {
-  // ソートはリクエスト毎にJSで行い、重いデータ取得だけを search/windowDays を
+  // ソートはリクエスト毎にJSで行い、重いデータ取得だけを search/windowDays/game を
   // キーにキャッシュ共有する（ページ・APIの全ソートバリエーションで共通）。
   const rows = await cachedMarketboardRows(
     opts.search ?? "",
     opts.windowDays ?? DEFAULT_WINDOW_DAYS,
+    opts.game ?? "",
   );
   return sortRows([...rows], opts.sort ?? null, opts.order ?? "desc");
 }
@@ -49,11 +52,17 @@ const cachedMarketboardRows = unstable_cache(
 async function fetchMarketboardRows(
   search: string,
   windowDays: number,
+  game: string,
 ): Promise<MarketboardRow[]> {
   const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
 
   const cards = await prisma.card.findMany({
-    where: { ...buildCardSearchWhere(search || undefined), isVisible: true, deletedAt: null },
+    where: {
+      ...buildCardSearchWhere(search || undefined),
+      ...(game ? { game } : {}),
+      isVisible: true,
+      deletedAt: null,
+    },
     select: { id: true, name: true, setName: true, rarity: true, condition: true },
   });
   if (cards.length === 0) return [];

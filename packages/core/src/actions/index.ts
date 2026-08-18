@@ -3,6 +3,7 @@ export * from "./admin";
 export * from "./cards";
 export * from "./indexValue";
 export * from "./market";
+export * from "./gameIndex";
 export * from "./newsletter";
 export * from "./recap";
 export * from "./seo";

@@ -279,6 +279,26 @@ export const en = {
     description: 'Supported game list.',
   },
 
+  gameHub: {
+    indexTitle:      'Index',
+    indexTooltip:    'A relative price index calculated from real sales data for this game. The 30-day average at the start of collection is set to 1000.',
+    indexPreparing:  'The index will appear once the baseline period has enough data',
+    avgPrice:        'Avg price (30d window)',
+    change24h:       '24h',
+    change7d:        '7d',
+    change30d:       '30d',
+    samples:         'Samples',
+    trackedCards:    'Tracked cards',
+    confidence:      'Confidence',
+    gainersTitle:    'Top 5 Gainers',
+    losersTitle:     'Top 5 Losers',
+    boardTitle:      'Marketboard',
+    boardNote:       'All tracked cards in this game — latest price, 30d change and index.',
+    viewAllBoard:    'View the full marketboard →',
+    noMovers:        'Not enough recent movement data.',
+    setsTitle:       'Sets',
+  },
+
   terms: {
     title:       'Terms of Service',
   },

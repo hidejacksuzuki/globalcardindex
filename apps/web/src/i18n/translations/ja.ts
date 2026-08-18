@@ -279,6 +279,26 @@ export const ja = {
     description: '対応ゲーム一覧。',
   },
 
+  gameHub: {
+    indexTitle:      '指数',                     // 「ポケモンカード指数」のように nameJa と連結
+    indexTooltip:    'このゲームの実売データから算出した相対価格指数。収集開始時点の30日平均を1000とした水準です。',
+    indexPreparing:  '指数は基準期間のデータ蓄積後に表示されます',
+    avgPrice:        '平均価格（30日窓）',
+    change24h:       '前日比',
+    change7d:        '7日比',
+    change30d:       '30日比',
+    samples:         'サンプル数',
+    trackedCards:    '追跡カード',
+    confidence:      '信頼度',
+    gainersTitle:    '値上がり Top5',
+    losersTitle:     '値下がり Top5',
+    boardTitle:      'マーケットボード',
+    boardNote:       'このゲームの追跡カード一覧（最新価格・30日変動・指数）。',
+    viewAllBoard:    '全体のマーケットボードを見る →',
+    noMovers:        '直近の変動データが不足しています。',
+    setsTitle:       'Sets',
+  },
+
   terms: {
     title:       '利用規約',
   },
