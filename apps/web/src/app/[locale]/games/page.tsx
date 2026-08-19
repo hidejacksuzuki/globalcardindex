@@ -33,7 +33,7 @@ export default function GamesPage({ params }: { params: { locale: Locale } }) {
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        {GAMES.map((game) => (
+        {GAMES.filter((game) => !game.hidden).map((game) => (
           <Link
             key={game.slug}
             href={`/games/${game.slug}`}

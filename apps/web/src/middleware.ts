@@ -20,8 +20,19 @@ import { LOCALE_COOKIE } from '@/i18n/config';
 
 const BYPASS_PREFIXES = ['/api/', '/_next/', '/favicon', '/robots', '/sitemap', '/feed.xml'];
 
+/**
+ * Next.js の metadata route（opengraph-image / twitter-image）は非 locale ツリー
+ * （app/games/[slug]/opengraph-image.tsx 等）で配信される。locale リライトすると
+ * app/[locale]/ 側に該当ルートがなく 404 になる（本番で実際に発生していた）ため
+ * バイパスする。
+ */
+function isMetadataRoute(pathname: string): boolean {
+  const last = pathname.split('/').pop() ?? '';
+  return last.startsWith('opengraph-image') || last.startsWith('twitter-image');
+}
+
 function shouldBypass(pathname: string): boolean {
-  return BYPASS_PREFIXES.some((p) => pathname.startsWith(p));
+  return BYPASS_PREFIXES.some((p) => pathname.startsWith(p)) || isMetadataRoute(pathname);
 }
 
 /**
@@ -106,7 +117,11 @@ export async function middleware(req: NextRequest) {
   //    （?sort= ?q= ?page= 等がすべて落ちるバグの修正）
   const rewriteUrl = new URL(rewritePath, req.url);
   rewriteUrl.search = req.nextUrl.search;
-  const response = NextResponse.rewrite(rewriteUrl);
+  // レイアウトがパスに応じてクローム（GCIヘッダー等）を切り替えられるよう、
+  // リライト後のパスをリクエストヘッダーで渡す（layout では usePathname が使えない）
+  const reqHeaders = new Headers(req.headers);
+  reqHeaders.set('x-gci-path', rewritePath);
+  const response = NextResponse.rewrite(rewriteUrl, { request: { headers: reqHeaders } });
 
   // 4. Persist locale in cookie
   response.cookies.set(LOCALE_COOKIE, locale, {

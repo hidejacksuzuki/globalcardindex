@@ -241,6 +241,6 @@ export default async function Image() {
         </div>
       </div>
     </div>,
-    { ...size, fonts },
+    { ...size, ...(fonts.length > 0 ? { fonts } : {}) },
   );
 }

@@ -11,6 +11,7 @@ import { formatPrice }      from "@gci/core";
 import type { MarketboardRow } from "@gci/core";
 import { MarketTable }      from "@/components/market/MarketTable";
 import { PriceCell }        from "@/components/market/PriceCell";
+import { Disclaimer }       from "@/components/common/Disclaimer";
 import { getTranslations }  from "@/i18n";
 import type { Locale }      from "@/i18n/config";
 import { safeJsonLd }            from "@/lib/jsonLd";
@@ -69,6 +70,9 @@ export async function generateMetadata({
   const jaUrl = `${SITE_ORIGIN}/games/${game.slug}`;
   const enUrl = `${SITE_ORIGIN}/en/games/${game.slug}`;
   const url   = isEn ? enUrl : jaUrl;
+  // metadata route は非 locale ツリー（app/games/[slug]/opengraph-image.tsx）で
+  // 配信されるため URL を明示する（middleware がバイパスして到達させる）
+  const ogImage = `${SITE_ORIGIN}/games/${game.slug}/opengraph-image`;
 
   return {
     title,
@@ -79,11 +83,13 @@ export async function generateMetadata({
       url,
       siteName: "Global Card Index",
       type:     "website",
+      images:   [{ url: ogImage, width: 1200, height: 630 }],
     },
     twitter: {
-      card:        "summary",
+      card:        "summary_large_image",
       title,
       description,
+      images:      [ogImage],
     },
     alternates: {
       canonical: url,
@@ -110,26 +116,61 @@ export default async function GamePage({
 
   const { stats, gameIndex, rows, gainers, losers, thumbs } = await getGameHubData(params.slug);
 
-  return (
-    <div className="space-y-8">
-      {/* パンくず */}
-      <nav className="text-xs uppercase tracking-widest text-navy/50">
-        <Link href="/games" className="transition hover:text-navy">
-          ← Games
-        </Link>
-      </nav>
+  // X シェア（intent リンク。クライアントJS不要）
+  const pageUrl   = `${SITE_ORIGIN}${isEn ? "/en" : ""}/games/${game.slug}`;
+  const shareText =
+    gameIndex && gameIndex.value !== null
+      ? `${gameName} ${h.indexTitle} ${gameIndex.value.toFixed(1)}` +
+        (gameIndex.change30d !== null
+          ? `（30d ${gameIndex.change30d > 0 ? "+" : ""}${gameIndex.change30d.toFixed(1)}%）`
+          : "") +
+        ` ${game.xHashtag}`
+      : `${gameName} | Global Card Index ${game.xHashtag}`;
+  const shareHref = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(pageUrl)}`;
 
-      {/* ヘッダー */}
-      <header className="border border-navy/10 bg-white p-8">
-        <div className="flex items-center gap-3">
-          <span className="text-4xl">{game.emoji}</span>
-          <div>
-            <p className="text-xs uppercase tracking-widest text-navy/50">{isEn ? game.nameJa : game.name}</p>
-            <h1 className="mt-0.5 text-3xl font-semibold text-navy">{gameName}</h1>
+  return (
+    <div className="min-h-screen">
+      {/* ── ゲーム独自ヘッダー（GCI 共通ヘッダーは layout 側で非表示） ── */}
+      <header className="sticky top-0 z-40 border-b border-navy/10 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-6">
+          <Link href={`/games/${game.slug}`} className="flex min-w-0 items-center gap-2">
+            <span className="text-2xl">{game.emoji}</span>
+            <span className="truncate font-bold text-navy">{gameName}</span>
+            <span className={`hidden text-[10px] font-semibold uppercase tracking-widest sm:inline ${game.color}`}>
+              {h.indexTitle}
+            </span>
+          </Link>
+          <div className="flex shrink-0 items-center gap-3">
+            <a
+              href={shareHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-sm bg-black px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-black/80"
+            >
+              𝕏 {h.shareOnX}
+            </a>
+            <Link href="/" className="text-[11px] text-navy/40 transition hover:text-navy">
+              {h.gciHome} →
+            </Link>
           </div>
         </div>
-        <p className="mt-4 max-w-2xl text-sm text-navy/60">{isEn ? game.descriptionEn : game.description}</p>
       </header>
+
+      {/* ── ヒーロー（ゲームカラー帯） ── */}
+      <section className={`${game.bgColor} border-b border-navy/10`}>
+        <div className="mx-auto max-w-6xl px-6 py-12">
+          <p className="text-xs uppercase tracking-widest text-navy/50">{isEn ? game.nameJa : game.name}</p>
+          <h1 className="mt-1 text-4xl font-bold text-navy">{gameName}</h1>
+          <p className="mt-3 max-w-2xl text-sm text-navy/60">{isEn ? game.descriptionEn : game.description}</p>
+          {game.hidden && (
+            <p className="mt-4 inline-block border border-navy/15 bg-white/70 px-3 py-1.5 text-xs text-navy/60">
+              {h.dataCollecting}
+            </p>
+          )}
+        </div>
+      </section>
+
+      <main className="mx-auto max-w-6xl space-y-8 px-6 py-10">
 
       {/* ゲーム別指数ウィジェット */}
       {gameIndex && gameIndex.sampleCount > 0 && (
@@ -235,6 +276,28 @@ export default async function GamePage({
           </div>
         </section>
       )}
+
+      </main>
+
+      {/* ── 独立フッター ── */}
+      <footer className="border-t border-navy/10 bg-white">
+        <div className="mx-auto max-w-6xl space-y-4 px-6 py-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-navy/40">
+            <p>
+              {h.poweredBy}{" "}
+              <Link href="/" className="underline underline-offset-2 transition hover:text-navy">
+                Global Card Index
+              </Link>
+            </p>
+            <nav className="flex gap-4">
+              <Link href="/games" className="transition hover:text-navy">Games</Link>
+              <Link href="/marketboard" className="transition hover:text-navy">Marketboard</Link>
+              <Link href="/terms" className="transition hover:text-navy">Terms</Link>
+            </nav>
+          </div>
+          <Disclaimer variant="footer" />
+        </div>
+      </footer>
 
       {/* 構造化データ (JSON-LD) */}
       <script

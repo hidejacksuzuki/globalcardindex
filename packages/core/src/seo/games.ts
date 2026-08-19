@@ -13,7 +13,14 @@ export type GameConfig = {
   color:       string;   // Tailwind テキスト色クラス（ブランドカラー）
   bgColor:     string;   // Tailwind 背景色クラス
   emoji:       string;   // 代表絵文字
+  xHashtag:    string;   // X シェア用ハッシュタグ e.g. "#ポケカ"
+  hidden?:     boolean;  // トップ・一覧から隠す（データ不足時。ハブページ自体は残る）
 };
+
+/** トップ・一覧に掲載するゲーム（hidden を除外） */
+export function getVisibleGames(): GameConfig[] {
+  return GAMES.filter((g) => !g.hidden);
+}
 
 export const GAMES: GameConfig[] = [
   {
@@ -25,6 +32,7 @@ export const GAMES: GameConfig[] = [
     color:       "text-yellow-600",
     bgColor:     "bg-yellow-50",
     emoji:       "⚡",
+    xHashtag:    "#ポケカ",
   },
   {
     slug:        "onepiece",
@@ -35,6 +43,7 @@ export const GAMES: GameConfig[] = [
     color:       "text-red-600",
     bgColor:     "bg-red-50",
     emoji:       "⚓",
+    xHashtag:    "#ワンピカード",
   },
   {
     slug:        "yugioh",
@@ -45,6 +54,7 @@ export const GAMES: GameConfig[] = [
     color:       "text-purple-600",
     bgColor:     "bg-purple-50",
     emoji:       "🃏",
+    xHashtag:    "#遊戯王",
   },
   {
     slug:        "mtg",
@@ -55,6 +65,8 @@ export const GAMES: GameConfig[] = [
     color:       "text-blue-600",
     bgColor:     "bg-blue-50",
     emoji:       "✨",
+    xHashtag:    "#MTG",
+    hidden:      true,  // 売買データ不足（サンプル僅少）のためトップ・一覧から非掲載
   },
 ];
 
@@ -63,7 +75,7 @@ export function getGame(slug: string): GameConfig | undefined {
   return GAMES.find((g) => g.slug === slug);
 }
 
-/** すべての slug を返す（generateStaticParams 用） */
+/** 掲載中ゲームの slug を返す（sitemap / generateStaticParams 用。hidden は除外） */
 export function getGameSlugs(): string[] {
-  return GAMES.map((g) => g.slug);
+  return GAMES.filter((g) => !g.hidden).map((g) => g.slug);
 }

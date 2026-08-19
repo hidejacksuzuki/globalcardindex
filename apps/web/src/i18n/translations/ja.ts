@@ -296,6 +296,10 @@ export const ja = {
     boardNote:       'このゲームの追跡カード一覧（最新価格・30日変動・指数）。',
     viewAllBoard:    '全体のマーケットボードを見る →',
     noMovers:        '直近の変動データが不足しています。',
+    shareOnX:        'Xでポスト',
+    gciHome:         'GCIトップへ',
+    poweredBy:       'Powered by',
+    dataCollecting:  'このゲームは売買データを収集中です。サンプル数が少ないため、指数は参考値としてご覧ください。',
     setsTitle:       'Sets',
   },
 

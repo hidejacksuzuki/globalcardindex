@@ -40,7 +40,7 @@ export default async function Image({ params }: { params: { date: string } }) {
           {params.date} — No data
         </span>
       </div>,
-      { ...size, fonts },
+      { ...size, ...(fonts.length > 0 ? { fonts } : {}) },
     );
   }
 
@@ -149,6 +149,6 @@ export default async function Image({ params }: { params: { date: string } }) {
         </div>
       </div>
     </div>,
-    { ...size, fonts },
+    { ...size, ...(fonts.length > 0 ? { fonts } : {}) },
   );
 }

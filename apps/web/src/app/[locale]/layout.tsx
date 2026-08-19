@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound }        from 'next/navigation';
+import { headers }         from 'next/headers';
 import { Header }          from '@/components/layout/Header';
 import { Disclaimer }      from '@/components/common/Disclaimer';
 import { BetaFeedbackWidget } from '@/components/feedback/BetaFeedbackWidget';
@@ -40,6 +41,30 @@ export default function LocaleLayout({
   const locale = params.locale as Locale;
   const t      = getTranslations(locale);
   const htmlLang = locale === 'ja' ? 'ja' : 'en';
+
+  // ゲーム別ハブ（/games/[slug]）は「サイト内サイト」として独立デザインにするため、
+  // GCI 共通ヘッダー・フッター・main ラッパーを外す。パスは middleware が
+  // x-gci-path ヘッダーで渡す（サーバーレイアウトでは usePathname が使えない）。
+  const path = headers().get('x-gci-path') ?? '';
+  const isGameHub = new RegExp(`^/(?:${locales.join('|')})/games/[^/]+$`).test(path);
+
+  if (isGameHub) {
+    return (
+      <I18nProvider locale={locale} translations={t}>
+        <CurrencyProvider>
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `document.documentElement.lang="${htmlLang}"`,
+            }}
+          />
+          <PlausibleAnalytics />
+          {children}
+          <BetaFeedbackWidget />
+          <Analytics />
+        </CurrencyProvider>
+      </I18nProvider>
+    );
+  }
 
   return (
     <I18nProvider locale={locale} translations={t}>

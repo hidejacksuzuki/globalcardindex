@@ -61,7 +61,7 @@ export default async function Image({
           Game not found
         </span>
       </div>,
-      { ...size, fonts },
+      { ...size, ...(fonts.length > 0 ? { fonts } : {}) },
     );
   }
 
@@ -257,6 +257,6 @@ export default async function Image({
         </div>
       )}
     </div>,
-    { ...size, fonts },
+    { ...size, ...(fonts.length > 0 ? { fonts } : {}) },
   );
 }

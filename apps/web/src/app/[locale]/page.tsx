@@ -26,11 +26,15 @@ import type { MarketCard, GameSnapshot, PortfolioSummary, IndexSnapshot } from '
 
 export const dynamic = 'force-dynamic';
 
+// トップに掲載するゲーム（hidden = データ不足ゲームを除外）
+const VISIBLE_GAMES = GAMES.filter((g) => !g.hidden);
+const HIDDEN_GAME_SLUGS = new Set(GAMES.filter((g) => g.hidden).map((g) => g.slug));
+
 // ゲーム別指数はオンザフライ計算（getGameIndex）のため、ハブページと同じく
 // unstable_cache で10分キャッシュしてトップページの応答を守る
 const getHomeGameIndexes = unstable_cache(
-  async () => Promise.all(GAMES.map((g) => getGameIndex(g.slug).catch(() => null))),
-  ['home-game-indexes'],
+  async () => Promise.all(VISIBLE_GAMES.map((g) => getGameIndex(g.slug).catch(() => null))),
+  ['home-game-indexes-v2'],
   { revalidate: 600 },
 );
 
@@ -62,7 +66,7 @@ export default async function HomePage({ params }: { params: { locale: Locale } 
       getTopLosers(5).catch(() => []),
       getTrendingCards(5).catch(() => []),
       getGameSnapshots().catch(() => []),
-      getHomeGameIndexes().catch(() => GAMES.map(() => null)),
+      getHomeGameIndexes().catch(() => VISIBLE_GAMES.map(() => null)),
       getDailyRecap().catch(() => null),
       userId ? getPortfolioSummary(userId).catch(() => null) : Promise.resolve(null),
     ]);
@@ -96,8 +100,8 @@ export default async function HomePage({ params }: { params: { locale: Locale } 
             <p className="text-xs font-semibold uppercase tracking-widest text-navy/60">Games</p>
             <Link href="/games" className="text-xs text-navy/40 hover:text-navy transition">すべてを見る →</Link>
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-navy/5">
-            {GAMES.map((game, i) => {
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-navy/5">
+            {VISIBLE_GAMES.map((game, i) => {
               const idx = gameIndexes[i];
               const gameName = params.locale === 'en' ? game.name : game.nameJa;
               const pct = idx?.change30d ?? null;
@@ -213,7 +217,7 @@ export default async function HomePage({ params }: { params: { locale: Locale } 
             <div className="px-6 py-5 space-y-3">
               <p className="text-[10px] uppercase tracking-widest text-navy/40">ゲーム別指数</p>
               <div className="space-y-3">
-                {gameSnapshots.map((g) => {
+                {gameSnapshots.filter((g) => !HIDDEN_GAME_SLUGS.has(g.game)).map((g) => {
                   const meta    = GAME_META[g.game];
                   const pct     = g.change7d;
                   const pos     = pct >= 0;

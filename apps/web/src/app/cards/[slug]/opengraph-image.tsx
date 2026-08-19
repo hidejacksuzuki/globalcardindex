@@ -58,7 +58,7 @@ export default async function Image({
           Card not found
         </span>
       </div>,
-      { ...size, fonts },
+      { ...size, ...(fonts.length > 0 ? { fonts } : {}) },
     );
   }
 
@@ -252,6 +252,6 @@ export default async function Image({
         </span>
       </div>
     </div>,
-    { ...size, fonts },
+    { ...size, ...(fonts.length > 0 ? { fonts } : {}) },
   );
 }

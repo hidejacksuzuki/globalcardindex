@@ -296,6 +296,10 @@ export const en = {
     boardNote:       'All tracked cards in this game — latest price, 30d change and index.',
     viewAllBoard:    'View the full marketboard →',
     noMovers:        'Not enough recent movement data.',
+    shareOnX:        'Post on X',
+    gciHome:         'GCI Home',
+    poweredBy:       'Powered by',
+    dataCollecting:  'Data collection for this game is still ramping up. The index is based on a small sample — treat it as indicative only.',
     setsTitle:       'Sets',
   },
 
