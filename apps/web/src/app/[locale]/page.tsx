@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { unstable_cache } from 'next/cache';
 import {
   getLatestIndex,
   getIndexHistory,
@@ -7,6 +8,8 @@ import {
   getTopLosers,
   getTrendingCards,
   getGameSnapshots,
+  getGameIndex,
+  GAMES,
   getDailyRecap,
   getPortfolioSummary,
   getCardThumbnails,
@@ -22,6 +25,14 @@ import type { Locale }   from '@/i18n/config';
 import type { MarketCard, GameSnapshot, PortfolioSummary, IndexSnapshot } from '@gci/core';
 
 export const dynamic = 'force-dynamic';
+
+// ゲーム別指数はオンザフライ計算（getGameIndex）のため、ハブページと同じく
+// unstable_cache で10分キャッシュしてトップページの応答を守る
+const getHomeGameIndexes = unstable_cache(
+  async () => Promise.all(GAMES.map((g) => getGameIndex(g.slug).catch(() => null))),
+  ['home-game-indexes'],
+  { revalidate: 600 },
+);
 
 // ── Game meta ─────────────────────────────────────────────────────────────────
 const GAME_META: Record<string, { label: string; color: string; bar: string }> = {
@@ -42,7 +53,7 @@ export default async function HomePage({ params }: { params: { locale: Locale } 
   const session = await auth().catch(() => null);
   const userId  = session?.user?.id ?? null;
 
-  const [snapshot, history, stats, gainers, losers, trending, gameSnapshots, recap, portfolioSummary] =
+  const [snapshot, history, stats, gainers, losers, trending, gameSnapshots, gameIndexes, recap, portfolioSummary] =
     await Promise.all([
       getLatestIndex(),
       getIndexHistory(30),
@@ -51,6 +62,7 @@ export default async function HomePage({ params }: { params: { locale: Locale } 
       getTopLosers(5).catch(() => []),
       getTrendingCards(5).catch(() => []),
       getGameSnapshots().catch(() => []),
+      getHomeGameIndexes().catch(() => GAMES.map(() => null)),
       getDailyRecap().catch(() => null),
       userId ? getPortfolioSummary(userId).catch(() => null) : Promise.resolve(null),
     ]);
@@ -77,6 +89,47 @@ export default async function HomePage({ params }: { params: { locale: Locale } 
       <SearchHero lastUpdated={lastUpdated} />
 
       <div className="space-y-6 pt-6">
+
+        {/* ── Games（ゲーム別ハブ導線＋ゲーム別指数） ─────────────── */}
+        <section className="border border-navy/10 bg-white">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-navy/5">
+            <p className="text-xs font-semibold uppercase tracking-widest text-navy/60">Games</p>
+            <Link href="/games" className="text-xs text-navy/40 hover:text-navy transition">すべてを見る →</Link>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-navy/5">
+            {GAMES.map((game, i) => {
+              const idx = gameIndexes[i];
+              const gameName = params.locale === 'en' ? game.name : game.nameJa;
+              const pct = idx?.change30d ?? null;
+              const pos = (pct ?? 0) >= 0;
+              return (
+                <Link
+                  key={game.slug}
+                  href={`/games/${game.slug}`}
+                  className="block bg-white p-5 hover:bg-navy/[0.02] transition group"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{game.emoji}</span>
+                    <p className="text-sm font-semibold text-navy truncate group-hover:text-navy/80">{gameName}</p>
+                  </div>
+                  <div className="mt-3 flex items-baseline gap-2">
+                    <p className={`text-2xl font-bold tabular-nums ${game.color}`}>
+                      {idx && idx.value !== null ? idx.value.toFixed(1) : '—'}
+                    </p>
+                    {pct !== null && (
+                      <span className={`text-xs font-semibold tabular-nums ${pos ? 'text-green-600' : 'text-red-600'}`}>
+                        {pos ? '+' : ''}{pct.toFixed(1)}%
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-[10px] text-navy/40">
+                    {idx ? `${t.gameHub.change30d} / ${idx.cardCount} ${t.gameHub.trackedCards}` : 'データ準備中'}
+                  </p>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
 
         {/* ── Portfolio Summary ──────────────────────────────────── */}
         {userId && portfolioSummary && (
