@@ -45,6 +45,9 @@ jobs:
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       BACKUP_DIR: ${{ github.workspace }}/backups
+      # secrets コンテキストは if: で使えないため、存在チェック用に env へ写す
+      S3_BUCKET: ${{ secrets.S3_BUCKET }}
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
 
     steps:
       # ── 1. Checkout (needed for scripts/backup.sh) ──────────────────────────
@@ -94,7 +97,7 @@ jobs:
 
       # ── 6. (Optional) Upload to S3-compatible bucket ─────────────────────────
       - name: Upload to S3
-        if: ${{ secrets.S3_BUCKET != '' }}
+        if: ${{ env.S3_BUCKET != '' }}
         env:
           AWS_ACCESS_KEY_ID:     ${{ secrets.S3_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
@@ -135,7 +138,7 @@ jobs:
           | **Size** | $SIZE |
           | **Tables** | $TABLES |
           | **Retention** | 30 days (GitHub artifact) |
-          | **S3** | ${{ secrets.S3_BUCKET != '' && 'uploaded' || 'not configured' }} |
+          | **S3** | ${{ env.S3_BUCKET != '' && 'uploaded' || 'not configured' }} |
           EOF
           else
             echo "## GCI DB Backup — FAILED" >> "$GITHUB_STEP_SUMMARY"
@@ -143,9 +146,8 @@ jobs:
 
       # ── 8. Discord notification on failure ───────────────────────────────────
       - name: Notify Discord on failure
-        if: failure() && secrets.DISCORD_WEBHOOK_URL != ''
+        if: ${{ failure() && env.DISCORD_WEBHOOK_URL != '' }}
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           curl -s -X POST "$DISCORD_WEBHOOK_URL" \
