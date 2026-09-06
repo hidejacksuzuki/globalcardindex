@@ -18,7 +18,7 @@ import { LOCALE_COOKIE } from '@/i18n/config';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const BYPASS_PREFIXES = ['/api/', '/_next/', '/favicon', '/robots', '/sitemap', '/feed.xml'];
+const BYPASS_PREFIXES = ['/api/', '/_next/', '/favicon', '/robots', '/sitemap', '/feed.xml', '/admin/'];
 
 /**
  * Next.js の metadata route（opengraph-image / twitter-image）は非 locale ツリー
