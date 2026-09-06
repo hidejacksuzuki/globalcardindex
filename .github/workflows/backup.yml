@@ -67,7 +67,9 @@ jobs:
             sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends postgresql-client-17
-          pg_dump --version
+          # ランナー標準の 16 より 17 を優先させる（以降の全ステップに適用）
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+          /usr/lib/postgresql/17/bin/pg_dump --version
 
       # ── 3. Run pg_dump via shared script ────────────────────────────────────
       - name: Run backup
