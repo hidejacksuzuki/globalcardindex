@@ -58,7 +58,8 @@ jobs:
       - name: Install pg_dump
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends postgresql-client
+          # サーバーは PostgreSQL 17 (Supabase) — メジャーバージョン一致が必須
+          sudo apt-get install -y --no-install-recommends postgresql-client-17
           pg_dump --version
 
       # ── 3. Run pg_dump via shared script ────────────────────────────────────
