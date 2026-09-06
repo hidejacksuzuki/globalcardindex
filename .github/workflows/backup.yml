@@ -57,8 +57,15 @@ jobs:
       # ── 2. Install postgresql-client ────────────────────────────────────────
       - name: Install pg_dump
         run: |
+          # サーバーは PostgreSQL 17 (Supabase) — メジャーバージョン一致が必須。
+          # Ubuntu 標準リポジトリに 17 は無いため PGDG リポジトリを追加する
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] \
+            http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | \
+            sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
           sudo apt-get update -qq
-          # サーバーは PostgreSQL 17 (Supabase) — メジャーバージョン一致が必須
           sudo apt-get install -y --no-install-recommends postgresql-client-17
           pg_dump --version
 
