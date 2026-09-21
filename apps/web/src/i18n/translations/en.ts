@@ -162,6 +162,8 @@ export const en = {
     colSamples:        'Samples',
     colLatest:         'Latest',
     colChange30d:      'Δ 30d',
+    setFilterLabel: 'Filter by set',
+    setFilterAll: 'All sets',
   },
 
   cards: {

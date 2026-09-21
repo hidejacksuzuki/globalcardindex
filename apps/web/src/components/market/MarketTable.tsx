@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import Link   from 'next/link';
 import { useCurrency, formatCurrency, type Currency } from '@/lib/currency';
 import { useLocale } from '@/i18n/context';
@@ -18,6 +19,8 @@ type TableLabels = {
   colSamples:     string;
   colLatest:      string;
   colChange30d:   string;
+  setFilterLabel?: string;
+  setFilterAll?:   string;
 };
 
 type Props = {
@@ -36,6 +39,15 @@ export function MarketTable({ rows, sort = null, order = 'desc', query, locale =
   const loc          = locale || ctxLocale;
   const l            = labels ?? defaultLabels;
 
+  // セット（ボックス）ごとの絞り込み。行数の多い順に並べる
+  const [selectedSet, setSelectedSet] = useState('');
+  const setOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const r of rows) counts.set(r.setName, (counts.get(r.setName) ?? 0) + 1);
+    return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'ja'));
+  }, [rows]);
+  const visibleRows = selectedSet ? rows.filter((r) => r.setName === selectedSet) : rows;
+
   if (rows.length === 0) {
     return (
       <p className="border border-navy/10 bg-white p-6 text-sm text-navy/50">
@@ -45,6 +57,25 @@ export function MarketTable({ rows, sort = null, order = 'desc', query, locale =
   }
 
   return (
+    <div>
+      {setOptions.length > 1 && (
+        <div className="mb-3 flex flex-wrap items-center justify-end gap-2 text-xs">
+          <label htmlFor="set-filter" className="text-navy/50">
+            {l.setFilterLabel ?? defaultLabels.setFilterLabel}
+          </label>
+          <select
+            id="set-filter"
+            value={selectedSet}
+            onChange={(e) => setSelectedSet(e.target.value)}
+            className="max-w-[280px] border border-navy/20 bg-white px-2 py-1.5 text-xs text-navy"
+          >
+            <option value="">{l.setFilterAll ?? defaultLabels.setFilterAll} ({rows.length})</option>
+            {setOptions.map(([name, n]) => (
+              <option key={name} value={name}>{name} ({n})</option>
+            ))}
+          </select>
+        </div>
+      )}
     <div className="overflow-x-auto border border-navy/10 bg-white">
       <table className="min-w-full divide-y divide-navy/10 text-sm">
         <thead className="bg-navy/5 text-left text-[10px] uppercase tracking-widest text-navy/50">
@@ -61,11 +92,12 @@ export function MarketTable({ rows, sort = null, order = 'desc', query, locale =
           </tr>
         </thead>
         <tbody className="divide-y divide-navy/5">
-          {rows.map((row) => (
+          {visibleRows.map((row) => (
             <MarketRow key={row.cardId} row={row} currency={currency} locale={loc} thumb={thumbs[row.cardId]} />
           ))}
         </tbody>
       </table>
+    </div>
     </div>
   );
 }
@@ -163,4 +195,6 @@ const defaultLabels: TableLabels = {
   colSamples:     'Samples',
   colLatest:      'Latest',
   colChange30d:   'Δ 30d',
+  setFilterLabel: 'Set',
+  setFilterAll:   'All sets',
 };

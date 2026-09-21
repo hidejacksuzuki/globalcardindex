@@ -162,6 +162,8 @@ export const ja = {
     colSamples:        'Samples',
     colLatest:         'Latest',
     colChange30d:      'Δ 30d',
+    setFilterLabel: 'セットで絞り込み',
+    setFilterAll: 'すべてのセット',
   },
 
   cards: {
