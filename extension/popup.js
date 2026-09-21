@@ -324,6 +324,16 @@ btnCollectAuto.addEventListener("click", async () => {
       <div class="result-row mt8"><span>照合できず除外</span><span>${data.unmatched} 件</span></div>
       <div class="result-row mt8"><span>重複スキップ</span><span>${data.skipped} 件</span></div>
       ${rows ? '<hr style="margin:8px 0;border:none;border-top:1px solid #eee">' + rows : ""}
+      ${(data.unmatchedTitles || []).length ? `
+        <details style="margin-top:8px">
+          <summary style="cursor:pointer;font-size:11px;color:#a67c00">
+            ⚠ 照合できなかった商品（カード未登録の可能性）: ${data.unmatchedTitles.length}件
+          </summary>
+          <div style="max-height:120px;overflow-y:auto;margin-top:4px">
+            ${data.unmatchedTitles.map((t) => `<div style="font-size:10px;color:#888;padding:1px 0;border-bottom:1px solid #f3f3f3">${esc(t)}</div>`).join("")}
+          </div>
+          <p style="font-size:10px;color:#999;margin-top:4px">↑ ここに繰り返し出るカードは GCI に未登録です。カード追加すれば次回から取り込めます。</p>
+        </details>` : ""}
     `;
     autoResultBox.style.display = "block";
   } catch (err) {

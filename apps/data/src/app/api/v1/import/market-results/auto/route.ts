@@ -96,6 +96,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   let saved = 0, autoApproved = 0, pending = 0, unmatched = 0, skipped = 0;
+  const unmatchedTitles: string[] = [];
   const perCard = new Map<string, { name: string; setName: string; rarity: string; condition: string; saved: number; autoApproved: number }>();
 
   for (const item of body.items.slice(0, 300)) {
@@ -112,7 +113,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // 1. 名前が含まれるカードだけに候補を絞る
     const normTitle = looseNorm(item.title);
     const candidates = cardsNorm.filter((c) => normTitle.includes(c.normName));
-    if (candidates.length === 0) { unmatched++; continue; }
+    if (candidates.length === 0) {
+      unmatched++;
+      if (unmatchedTitles.length < 40) unmatchedTitles.push(item.title);
+      continue;
+    }
 
     // 2. 候補を採点して最良カードを選ぶ（median なしの素点で比較）
     let best: { card: (typeof cards)[number]; matchScore: number } | null = null;
@@ -133,7 +138,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       { name: best.card.name, rarity: best.card.rarity, setName: best.card.setName, condition: best.card.condition },
       median,
     );
-    if (status !== "auto_approved" && status !== "pending") { unmatched++; continue; }
+    if (status !== "auto_approved" && status !== "pending") {
+      unmatched++;
+      if (unmatchedTitles.length < 40) unmatchedTitles.push(item.title);
+      continue;
+    }
 
     try {
       await prisma.rawMarketListing.create({
@@ -186,6 +195,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   return NextResponse.json(
     {
       ok: true, saved, autoApproved, pending, unmatched, skipped,
+      unmatchedTitles,
       perCard: [...perCard.entries()]
         .map(([cardId, v]) => ({ cardId, ...v }))
         .sort((a, b) => b.saved - a.saved),
