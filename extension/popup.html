@@ -142,8 +142,15 @@
 
     <!-- Collect button -->
     <button class="btn btn-primary" id="btn-collect" disabled>
-      収集する
+      収集する（選択カードに取込）
     </button>
+    <button class="btn" id="btn-collect-auto" disabled
+      style="margin-top:8px;background:#1a1f36;color:#fff;">
+      🗂 セット一括（自動振り分け）
+    </button>
+    <p class="text-xs" style="margin-top:4px;color:#888">
+      一括: カード選択不要。ページ内の全商品をタイトル照合で各カードに自動振り分けます。
+    </p>
     <div class="progress" id="progress-text"></div>
 
     <!-- Result -->
@@ -158,6 +165,9 @@
         <span>スキップ</span><span class="result-val" id="res-skip">—</span>
       </div>
     </div>
+
+    <!-- Auto (bulk) result -->
+    <div class="result" id="auto-result" style="display:none"></div>
   </div>
 
   <!-- Settings view -->

@@ -35,6 +35,8 @@ const resultBox      = document.getElementById("result");
 const resSaved       = document.getElementById("res-saved");
 const resAuto        = document.getElementById("res-auto");
 const resSkip        = document.getElementById("res-skip");
+const btnCollectAuto = document.getElementById("btn-collect-auto");
+const autoResultBox  = document.getElementById("auto-result");
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
@@ -67,6 +69,8 @@ async function init() {
     showAlert("warn", 'status=sold_out の売切れページで開いてください。');
     return;
   }
+
+  btnCollectAuto.disabled = false;
 
   if (keyword) {
     cardSearch.value = keyword;
@@ -271,8 +275,81 @@ btnCollect.addEventListener("click", async () => {
   }
 });
 
+// ── Collect (bulk auto-assign) ───────────────────────────────────────────────
+btnCollectAuto.addEventListener("click", async () => {
+  if (!currentTab) return;
+  if (!apiKey) { showAlert("warn", "API Key が未設定です。⚙ から設定してください。"); return; }
+
+  btnCollectAuto.disabled = true;
+  btnCollectAuto.innerHTML = '<span class="spinner"></span>一括収集中...';
+  progressText.textContent = "ページを自動スクロールして商品を読み込み中...";
+  resultBox.style.display = "none";
+  autoResultBox.style.display = "none";
+
+  try {
+    const [execResult] = await chrome.scripting.executeScript({
+      target: { tabId: currentTab.id },
+      func:   scrapeMercariItems,
+    });
+    const items = execResult?.result || [];
+    if (!items.length) {
+      throw new Error("アイテムが見つかりませんでした。ページを再読み込みして試してください。");
+    }
+
+    progressText.textContent = `${items.length} 件取得 → 自動振り分け中...（少し時間がかかります）`;
+
+    const res = await fetch(`${API_BASE}/api/v1/import/market-results/auto`, {
+      method:  "POST",
+      headers: {
+        "Content-Type":  "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({ source: "mercari_sold", items }),
+    });
+    const data = await res.json();
+    if (res.status === 401) throw new Error("API Key が違います。⚙ 設定を確認してください");
+    if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+    progressText.textContent = "";
+    const rows = (data.perCard || []).slice(0, 15).map((c) => `
+      <div class="result-row mt8">
+        <span style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          ${esc(c.name)} <span style="color:#999">${esc(c.rarity)} ${esc(c.condition)}</span>
+        </span>
+        <span class="result-val">${c.saved}件(承認${c.autoApproved})</span>
+      </div>`).join("");
+    autoResultBox.innerHTML = `
+      <div class="result-row"><span>取込</span><span class="result-val">${data.saved} 件</span></div>
+      <div class="result-row mt8"><span>自動承認 / 保留</span><span class="result-val">${data.autoApproved} / ${data.pending}</span></div>
+      <div class="result-row mt8"><span>照合できず除外</span><span>${data.unmatched} 件</span></div>
+      <div class="result-row mt8"><span>重複スキップ</span><span>${data.skipped} 件</span></div>
+      ${rows ? '<hr style="margin:8px 0;border:none;border-top:1px solid #eee">' + rows : ""}
+    `;
+    autoResultBox.style.display = "block";
+  } catch (err) {
+    progressText.textContent = "";
+    showAlert("error", `エラー: ${err.message}`);
+  } finally {
+    btnCollectAuto.innerHTML = "🗂 セット一括（自動振り分け）";
+    btnCollectAuto.disabled  = false;
+  }
+});
+
 // ── Scraper (runs in Mercari page context) ────────────────────────────────────
-function scrapeMercariItems() {
+async function scrapeMercariItems() {
+  // 無限スクロールのページを自動スクロールして商品を追加読み込み（増えなくなったら打ち切り）
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const count = () => document.querySelectorAll('a[href*="/item/m"]').length;
+  let prev = -1;
+  for (let i = 0; i < 10; i++) {
+    window.scrollTo(0, document.body.scrollHeight);
+    await sleep(900);
+    const n = count();
+    if (n === prev) break;
+    prev = n;
+  }
+  window.scrollTo(0, 0);
+
   const items = [];
   const seen  = new Set();
 
