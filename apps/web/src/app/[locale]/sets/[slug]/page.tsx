@@ -4,7 +4,7 @@ import Link                from "next/link";
 import { getSetStats }     from "@gci/core";
 import { getGame }         from "@gci/core";
 import { formatPrice }     from "@gci/core";
-import { getCardThumbnails } from "@gci/core";
+import { getSetDisplayName, getCardThumbnails } from "@gci/core";
 import { CardThumb }       from "@/components/cards/CardThumb";
 import { safeJsonLd }            from "@/lib/jsonLd";
 
@@ -22,8 +22,8 @@ export async function generateMetadata({
   const stats   = await getSetStats(setName);
   if (!stats) return {};
 
-  const title       = `${stats.setName} 相場・価格一覧 | Global Card Index`;
-  const description = `${stats.setName} (${stats.cardCount}種) の市場価格データ。レアリティ・状態別の最新価格・7日間騰落率を掲載。`;
+  const title       = `${getSetDisplayName(stats.setName)} 相場・価格一覧 | Global Card Index`;
+  const description = `${getSetDisplayName(stats.setName)} (${stats.cardCount}種) の市場価格データ。レアリティ・状態別の最新価格・7日間騰落率を掲載。`;
   const url         = `https://www.gci-index.com/sets/${encodeURIComponent(stats.setName)}`;
 
   return {
@@ -74,7 +74,7 @@ export default async function SetPage({
           </>
         )}
         <span>/</span>
-        <span className="text-navy/70">{stats.setName}</span>
+        <span className="text-navy/70">{getSetDisplayName(stats.setName)}</span>
       </nav>
 
       {/* ヘッダー */}

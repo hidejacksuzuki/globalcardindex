@@ -3,6 +3,7 @@ import { notFound }         from "next/navigation";
 import Link                 from "next/link";
 import { unstable_cache }   from "next/cache";
 import { getGame } from "@gci/core";
+import { getSetDisplayName } from "@gci/core";
 import { getGameStats }     from "@gci/core";
 import { getGameIndex }     from "@gci/core";
 import { getMarketboard }   from "@gci/core";
@@ -258,7 +259,7 @@ export default async function GamePage({
                         href={`/sets/${encodeURIComponent(set.setName)}`}
                         className="font-medium text-navy hover:underline underline-offset-2"
                       >
-                        {set.setName}
+                        {getSetDisplayName(set.setName)}
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums text-navy/60">

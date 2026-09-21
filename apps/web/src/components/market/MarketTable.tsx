@@ -5,6 +5,7 @@ import Link   from 'next/link';
 import { useCurrency, formatCurrency, type Currency } from '@/lib/currency';
 import { useLocale } from '@/i18n/context';
 import { CardThumb } from '@/components/cards/CardThumb';
+import { getSetDisplayName } from '@gci/core';
 import type { MarketboardRow, MarketSortKey, MarketSortOrder } from '@gci/core';
 import type { Locale } from '@/i18n/config';
 
@@ -71,7 +72,7 @@ export function MarketTable({ rows, sort = null, order = 'desc', query, locale =
           >
             <option value="">{l.setFilterAll ?? defaultLabels.setFilterAll} ({rows.length})</option>
             {setOptions.map(([name, n]) => (
-              <option key={name} value={name}>{name} ({n})</option>
+              <option key={name} value={name}>{getSetDisplayName(name)} ({n})</option>
             ))}
           </select>
         </div>
@@ -120,7 +121,7 @@ function MarketRow({ row, currency, locale, thumb }: { row: MarketboardRow; curr
           </Link>
         </div>
       </td>
-      <td className="max-w-[120px] truncate px-4 py-3 text-xs text-navy/50">{row.setName}</td>
+      <td className="max-w-[160px] truncate px-4 py-3 text-xs text-navy/50" title={getSetDisplayName(row.setName)}>{getSetDisplayName(row.setName)}</td>
       <td className="px-4 py-3"><CondBadge condition={row.condition} /></td>
       <td className="px-4 py-3">
         {row.confidence

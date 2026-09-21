@@ -1,7 +1,7 @@
 import type { Metadata }        from "next";
 import { notFound }              from "next/navigation";
 import Link                      from "next/link";
-import { getCardBySlug, getCardPriceHistory, getCardEngagement } from "@gci/core";
+import { getSetDisplayName, getCardBySlug, getCardPriceHistory, getCardEngagement } from "@gci/core";
 import { getGame }               from "@gci/core";
 import { WatchButton }           from "@/components/watchlist/WatchButton";
 import { isWatching, isUserWatching } from "@gci/core";
@@ -42,9 +42,9 @@ export async function generateMetadata({
     ? ` — ${t.metaPriceLabel} ${formatPrice(card.latestPrice, card.currency)}`
     : "";
 
-  const title       = `${card.name} (${card.setName}) ${t.metaTitleSuffix}${priceStr} | Global Card Index`;
+  const title       = `${card.name} (${getSetDisplayName(card.setName)}) ${t.metaTitleSuffix}${priceStr} | Global Card Index`;
   const description = `${card.name} ${card.rarity} · ${card.condition}${t.metaDescription
-    .replace("{set}", card.setName)
+    .replace("{set}", getSetDisplayName(card.setName))
     .replace("{count}", String(card.priceCount))}`;
 
   const jaUrl = `${SITE_ORIGIN}/cards/${card.slug}`;
@@ -145,7 +145,7 @@ export default async function CardSlugPage({
           href={`/sets/${encodeURIComponent(card.setName)}`}
           className="transition hover:text-navy"
         >
-          {card.setName}
+          {getSetDisplayName(card.setName)}
         </Link>
         <span>/</span>
         <span className="truncate max-w-[200px] text-navy/70">{card.name}</span>
@@ -153,7 +153,7 @@ export default async function CardSlugPage({
 
       {/* カード詳細ヘッダー */}
       <header className="border border-navy/10 bg-white p-8">
-        <p className="text-xs uppercase tracking-widest text-navy/50">{card.setName}</p>
+        <p className="text-xs uppercase tracking-widest text-navy/50">{getSetDisplayName(card.setName)}</p>
         <h1 className="mt-2 text-3xl font-semibold text-navy">{card.name}</h1>
         <p className="mt-1 text-sm text-navy/60">
           {card.rarity} · {card.condition}
@@ -229,7 +229,7 @@ export default async function CardSlugPage({
               href={`/sets/${encodeURIComponent(card.setName)}`}
               className="border border-navy/20 px-4 py-2 text-xs text-navy/70 hover:border-navy hover:text-navy transition"
             >
-              {card.setName} {t.emptyOtherCards}
+              {getSetDisplayName(card.setName)} {t.emptyOtherCards}
             </Link>
             <Link
               href="/cards"
