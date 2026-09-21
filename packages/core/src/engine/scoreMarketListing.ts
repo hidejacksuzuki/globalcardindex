@@ -54,6 +54,36 @@ const PENALTY_WORDS: { word: string; matchPenalty: number; trustPenalty: number 
   { word: "サプライのみ", matchPenalty: -80, trustPenalty: -60 },
 ];
 
+/**
+ * カード名がタイトルに含まれるか（別カード誤爆ガード付き）。
+ * 「イーブイ」が「イーブイex」の出品に一致してしまう問題（2026-09-21 発見）への対策:
+ * 名前の直後に ex / V / VMAX / VSTAR / GX が続く出現は「より長い別カード名」と
+ * みなして数えない。すべての出現がそれに該当する場合のみ不一致とする。
+ */
+function nameInTitle(t: string, nameLower: string): boolean {
+  let from = 0;
+  for (;;) {
+    const i = t.indexOf(nameLower, from);
+    if (i === -1) return false;
+    const after = t.slice(i + nameLower.length, i + nameLower.length + 5);
+    // ex/GX/V/VMAX/VSTAR が直後に続く出現は別カード。名前が「…V」で終わる場合の
+    // 「VMAX/VSTAR」出品（例: リザードンV vs リザードンVMAX）は max/star の続きで検出
+    if (!/^(ex|ｅｘ|gx|max|star|v(max|star)?([^a-z]|$)|v$)/i.test(after)) return true;
+    from = i + 1;
+  }
+}
+
+/**
+ * レアリティがタイトルに含まれるか。
+ * 短い英字レアリティ（AR/SR/UR等）は前後に英字が続かない出現を要求する
+ * （「SAR」の出品に「AR」が誤ヒットしていた問題への対策）。
+ */
+function rarityInTitle(t: string, rarityLower: string): boolean {
+  if (!/^[a-z0-9]{1,4}$/.test(rarityLower)) return t.includes(rarityLower);
+  const re = new RegExp(`(?<![a-z])${rarityLower.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![a-z])`);
+  return re.test(t);
+}
+
 export function scoreMarketListing(
   input:        ScoreInput,
   card:         CardMeta,
@@ -64,8 +94,8 @@ export function scoreMarketListing(
   // ── matchScore ───────────────────────────────────────────────────
   let match = 0;
 
-  if (t.includes(card.name.toLowerCase()))               match += 40;
-  if (card.rarity && t.includes(card.rarity.toLowerCase()))  match += 25;
+  if (nameInTitle(t, card.name.toLowerCase()))           match += 40;
+  if (card.rarity && rarityInTitle(t, card.rarity.toLowerCase()))  match += 25;
   if (card.setName && t.includes(card.setName.toLowerCase())) match += 20;
 
   // グレーディング条件チェック
