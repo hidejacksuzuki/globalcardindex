@@ -1,7 +1,7 @@
 import { notFound }    from "next/navigation";
 import Link              from "next/link";
 import { getCard }       from "@gci/core";
-import { isWatching, isUserWatching } from "@gci/core";
+import { getSetDisplayName, isWatching, isUserWatching } from "@gci/core";
 import { PriceHistory }  from "@/components/cards/PriceHistory";
 import { WatchButton }   from "@/components/watchlist/WatchButton";
 import { formatDateTime } from "@gci/core";
@@ -39,7 +39,7 @@ export default async function CardHistoryPage({ params }: PageProps) {
 
       <header className="border border-navy/10 bg-white p-8">
         <p className="text-xs uppercase tracking-widest text-navy/50">
-          {card.setName}
+          {getSetDisplayName(card.setName)}
         </p>
         <h1 className="mt-2 text-3xl font-semibold text-navy">{card.name}</h1>
         <p className="mt-1 text-sm text-navy/60">

@@ -6,7 +6,7 @@
  */
 
 import { ImageResponse } from "next/og";
-import { getCardBySlug } from "@gci/core";
+import { getSetDisplayName, getCardBySlug } from "@gci/core";
 import { getGame }       from "@gci/core";
 import { loadNotoSansJP } from "@/lib/og/fonts";
 import { formatPrice }   from "@gci/core";
@@ -123,7 +123,7 @@ export default async function Image({
           color: MUTED, marginBottom: 12, display: "flex",
         }}
       >
-        {card.setName}
+        {getSetDisplayName(card.setName)}
       </div>
 
       {/* ── カード名（メイン） ───────────────────────────── */}

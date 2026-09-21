@@ -447,7 +447,7 @@ export default async function CardSlugPage({
             "@context": "https://schema.org",
             "@type":    "Product",
             name:       card.name,
-            description: `${card.name} ${card.rarity} · ${card.condition} — ${card.setName}`,
+            description: `${card.name} ${card.rarity} · ${card.condition} — ${getSetDisplayName(card.setName)}`,
             url:        canonicalUrl,
             ...(card.minPrice !== null && card.maxPrice !== null && card.currency
               ? {

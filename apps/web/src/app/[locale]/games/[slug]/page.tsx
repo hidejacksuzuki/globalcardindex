@@ -359,7 +359,7 @@ function MoverList({
               className="min-w-0 flex-1 truncate font-medium text-navy hover:underline underline-offset-2"
             >
               {r.name}
-              <span className="ml-2 text-xs font-normal text-navy/40">{r.setName}</span>
+              <span className="ml-2 text-xs font-normal text-navy/40">{getSetDisplayName(r.setName)}</span>
             </Link>
             <span className="shrink-0 tabular-nums text-navy/70">
               <PriceCell price={r.latestPrice} storedCurrency={r.currency} />

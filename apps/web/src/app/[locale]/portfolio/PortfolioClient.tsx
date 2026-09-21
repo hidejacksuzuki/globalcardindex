@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { getSetDisplayName } from "@gci/core";
 import Link                         from "next/link";
 import type { PortfolioItem }       from "@gci/core";
 import { CardThumb }                from "@/components/cards/CardThumb";
@@ -136,7 +137,7 @@ export function PortfolioClient({ items: initialItems, thumbs = {} }: Props) {
                           <span className="font-medium text-navy truncate block max-w-[200px]">{item.name}</span>
                         )}
                         <span className="text-[10px] text-navy/40 truncate block max-w-[200px]">
-                          {item.setName}
+                          {getSetDisplayName(item.setName)}
                           {item.memo ? ` · ${item.memo}` : ""}
                         </span>
                       </div>

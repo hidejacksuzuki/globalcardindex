@@ -6,6 +6,7 @@
  */
 
 import { ImageResponse }  from "next/og";
+import { getSetDisplayName } from "@gci/core";
 import { getDailyRecap }  from "@gci/core";
 import { loadNotoSansJP } from "@/lib/og/fonts";
 
@@ -145,7 +146,7 @@ export default async function Image() {
                 {topGainer.cardName}
               </span>
               <span style={{ fontSize: 12, color: MUTED, marginTop: 4, display: "flex" }}>
-                {topGainer.setName}
+                {getSetDisplayName(topGainer.setName)}
               </span>
               <span style={{ fontSize: 26, fontWeight: 700, color: GOLD, marginTop: 8, display: "flex" }}>
                 {topGainer.change7d !== null ? `+${topGainer.change7d.toFixed(1)}%` : "—"}
@@ -183,7 +184,7 @@ export default async function Image() {
                 {topLoser.cardName}
               </span>
               <span style={{ fontSize: 12, color: MUTED, marginTop: 4, display: "flex" }}>
-                {topLoser.setName}
+                {getSetDisplayName(topLoser.setName)}
               </span>
               <span style={{ fontSize: 26, fontWeight: 700, color: RED, marginTop: 8, display: "flex" }}>
                 {topLoser.change7d !== null ? `${topLoser.change7d.toFixed(1)}%` : "—"}
@@ -224,7 +225,7 @@ export default async function Image() {
                 {topSpike.cardName}
               </span>
               <span style={{ fontSize: 12, color: MUTED, marginTop: 4, display: "flex" }}>
-                {topSpike.setName}
+                {getSetDisplayName(topSpike.setName)}
               </span>
               <span
                 style={{

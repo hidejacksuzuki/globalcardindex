@@ -82,7 +82,7 @@ export default async function SetPage({
         {game && (
           <p className="text-xs uppercase tracking-widest text-navy/50">{game.name}</p>
         )}
-        <h1 className="mt-1 text-3xl font-semibold text-navy">{stats.setName}</h1>
+        <h1 className="mt-1 text-3xl font-semibold text-navy">{getSetDisplayName(stats.setName)}</h1>
         <p className="mt-1 text-sm text-navy/60">
           {stats.cardCount.toLocaleString()} 種のカード価格データ
         </p>
@@ -150,8 +150,8 @@ export default async function SetPage({
           __html: safeJsonLd({
             "@context":  "https://schema.org",
             "@type":     "ItemList",
-            name:        `${stats.setName} カード一覧`,
-            description: `${stats.setName} の市場価格データ`,
+            name:        `${getSetDisplayName(stats.setName)} カード一覧`,
+            description: `${getSetDisplayName(stats.setName)} の市場価格データ`,
             url:         `https://www.gci-index.com/sets/${encodeURIComponent(stats.setName)}`,
             numberOfItems: stats.cardCount,
           }),

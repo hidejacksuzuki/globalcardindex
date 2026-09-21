@@ -8,7 +8,7 @@
 
 import { ImageResponse } from 'next/og';
 import { auth } from '@/auth';
-import { getGame, getGameIndex, getMarketboard, formatPrice, type MarketboardRow } from '@gci/core';
+import { getSetDisplayName, getGame, getGameIndex, getMarketboard, formatPrice, type MarketboardRow } from '@gci/core';
 import { loadNotoSansJP } from '@/lib/og/fonts';
 
 export const runtime = 'nodejs';
@@ -142,7 +142,7 @@ export async function GET(req: Request) {
                 {g.name}
               </span>
               <span style={{ fontSize: 22, color: MUTED, maxWidth: 220, overflow: 'hidden', whiteSpace: 'nowrap', display: 'flex' }}>
-                {g.setName}
+                {getSetDisplayName(g.setName)}
               </span>
               <span style={{ fontSize: 28, fontWeight: 700, color: GREEN, marginLeft: 'auto', display: 'flex' }}>
                 {pct(g.changeRate)}

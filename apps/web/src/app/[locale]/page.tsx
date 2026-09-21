@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { unstable_cache } from 'next/cache';
-import {
+import { getSetDisplayName,
   getLatestIndex,
   getIndexHistory,
   getHomepageStats,
@@ -413,7 +413,7 @@ function MoverColumn({
                 <CardThumb src={thumbs[card.cardId]} char={card.cardName?.slice(0, 1) ?? '?'} />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-navy truncate group-hover:text-navy/80">{card.cardName}</p>
-                  <p className="text-[10px] text-navy/35 truncate">{card.setName}</p>
+                  <p className="text-[10px] text-navy/35 truncate">{getSetDisplayName(card.setName)}</p>
                 </div>
                 {pct !== null && (
                   <span className={`text-xs font-semibold tabular-nums shrink-0 ${pos ? 'text-green-600' : 'text-red-600'}`}>
@@ -457,7 +457,7 @@ function TrendingColumn({ cards, thumbs }: { cards: MarketCard[]; thumbs: Record
               <CardThumb src={thumbs[card.cardId]} char={card.cardName?.slice(0, 1) ?? '?'} />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-navy truncate">{card.cardName}</p>
-                <p className="text-[10px] text-navy/35 truncate">{card.setName}</p>
+                <p className="text-[10px] text-navy/35 truncate">{getSetDisplayName(card.setName)}</p>
               </div>
               <span className={`shrink-0 border px-1.5 py-0.5 text-[9px] rounded-sm ${TRENDING_COLORS[i % TRENDING_COLORS.length]}`}>
                 {TRENDING_LABELS[i % TRENDING_LABELS.length]}

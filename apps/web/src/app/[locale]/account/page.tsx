@@ -12,7 +12,7 @@ import { redirect }             from "next/navigation";
 import Link                     from "next/link";
 import { auth }                 from "@/auth";
 import { prisma }               from "@gci/db";
-import { getUserWatchlistCards } from "@gci/core";
+import { getSetDisplayName, getUserWatchlistCards } from "@gci/core";
 import { formatPrice }          from "@gci/core";
 import { SignOutButton }        from "./SignOutButton";
 import { NotifPrefsForm }       from "./NotifPrefsForm";
@@ -144,7 +144,7 @@ function WatchlistRow({ card }: { card: Awaited<ReturnType<typeof getUserWatchli
         <Link href={href} className="font-medium text-navy hover:text-gold-700 transition truncate block">
           {card.cardName}
         </Link>
-        <p className="text-xs text-navy/45 truncate">{card.rarity} · {card.setName}</p>
+        <p className="text-xs text-navy/45 truncate">{card.rarity} · {getSetDisplayName(card.setName)}</p>
       </div>
       <div className="shrink-0 text-right space-y-0.5">
         <p className="text-sm tabular-nums font-medium text-navy">

@@ -1,5 +1,5 @@
 import Link                from 'next/link';
-import {
+import { getSetDisplayName,
   getWatchlistCards,
   getCardThumbnails,
   type WatchlistCard,
@@ -96,7 +96,7 @@ export default async function WatchlistPage({ params }: { params: { locale: Loca
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-navy/50 text-xs">{card.setName}</td>
+                      <td className="px-4 py-3 text-navy/50 text-xs">{getSetDisplayName(card.setName)}</td>
                       <td className="px-4 py-3 text-right tabular-nums font-medium text-navy">
                         {card.latestPrice !== null && card.currency
                           ? formatPrice(card.latestPrice, card.currency)
@@ -174,7 +174,7 @@ function AlertCard({ card, thumb }: { card: WatchlistCard; thumb?: string }) {
             >
               {card.cardName}
             </Link>
-            <p className="text-xs text-navy/50">{card.setName} · {card.rarity}</p>
+            <p className="text-xs text-navy/50">{getSetDisplayName(card.setName)} · {card.rarity}</p>
           </div>
         </div>
         <div className="text-right shrink-0">

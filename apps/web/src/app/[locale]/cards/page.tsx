@@ -4,7 +4,7 @@
 
 import Link             from 'next/link';
 import { unstable_cache } from 'next/cache';
-import { listCards, getCardThumbnails } from '@gci/core';
+import { getSetDisplayName, listCards, getCardThumbnails } from '@gci/core';
 import { SearchBar }    from '@/components/ui/SearchBar';
 import { CardThumb }    from '@/components/cards/CardThumb';
 import type { CardSortKey, SortOrder } from '@gci/core';
@@ -278,7 +278,7 @@ export default async function CardsPage({ params, searchParams }: Props) {
                       </div>
                     </td>
                     <td className="max-w-[120px] truncate px-4 py-3 text-navy/55 text-xs hidden md:table-cell">
-                      {c.setName}
+                      {getSetDisplayName(c.setName)}
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
                       <CondBadge condition={c.condition} />
