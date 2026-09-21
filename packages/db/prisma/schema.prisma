@@ -803,6 +803,7 @@ model RawMarketListing {
   @@index([cardId])
   @@index([status])
   @@index([cardId, status])
+  @@index([cardId, capturedAt]) // サムネイル取得の DISTINCT ON 用（2026-09 性能改善）
   @@index([source])
   @@index([capturedAt])
 }

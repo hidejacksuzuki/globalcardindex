@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 
 type Props = {
   params:       { locale: Locale };
-  searchParams: { q?: string; sort?: string; order?: string; section?: string };
+  searchParams: { q?: string; sort?: string; order?: string; section?: string; page?: string };
 };
 
 function parseSort(s: string | undefined): MarketSortKey | null {
@@ -29,18 +29,33 @@ function parseOrder(o: string | undefined): MarketSortOrder {
  * サムネイル取得（3テーブル横断・実測 約7秒）が重いため、行データと合わせて
  * 検索語・ソート・セクション単位でまとめてキャッシュする。
  */
+const PAGE_SIZE = 100;
+
 const getMarketboardPageData = unstable_cache(
-  async (q: string, sort: MarketSortKey | null, order: MarketSortOrder, section: string) => {
+  async (q: string, sort: MarketSortKey | null, order: MarketSortOrder, section: string, page: number) => {
     const rows = await getMarketboard({ search: q || undefined, sort, order });
 
     const reliable  = rows.filter((r) => r.confidence === 'HIGH' || r.confidence === 'MED');
     const reference = rows.filter((r) => r.confidence !== 'HIGH' && r.confidence !== 'MED');
 
-    const activeRows = section === 'reliable' ? reliable : reference;
-    const thumbs     = await getCardThumbnails(activeRows.map((r) => r.cardId)).catch(() => ({}));
-    return { rows, reliable, reference, thumbs };
+    // ページング: 全行をHTMLに埋め込むとページが1.5MB超になり致命的に重いため、
+    // 表示は100行/ページに制限し、サムネイル取得（重い）もページ分のみに絞る
+    const sectionRows = section === 'reliable' ? reliable : reference;
+    const totalCount  = sectionRows.length;
+    const totalPages  = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+    const safePage    = Math.min(Math.max(1, page), totalPages);
+    const activeRows  = sectionRows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+    const thumbs      = await getCardThumbnails(activeRows.map((r) => r.cardId)).catch(() => ({}));
+    const lastObservedAt = rows.length > 0
+      ? rows.map((r) => r.lastObservedAt).filter(Boolean).sort().at(-1) ?? null
+      : null;
+    return {
+      activeRows, thumbs, lastObservedAt,
+      reliableCount: reliable.length, referenceCount: reference.length,
+      totalCount, totalPages, page: safePage,
+    };
   },
-  ['marketboard-page-data'],
+  ['marketboard-page-data-v2'],
   { revalidate: 300 },
 );
 
@@ -51,14 +66,12 @@ export default async function MarketboardPage({ params, searchParams }: Props) {
   const sort    = parseSort(searchParams.sort);
   const order   = parseOrder(searchParams.order);
   const section = searchParams.section === 'reference' ? 'reference' : 'reliable';
+  const reqPage = Math.max(1, parseInt(searchParams.page ?? '1', 10) || 1);
 
-  const { rows, reliable, reference, thumbs } =
-    await getMarketboardPageData(q ?? '', sort, order, section);
+  const { activeRows, thumbs, lastObservedAt, reliableCount, referenceCount, totalCount, totalPages, page } =
+    await getMarketboardPageData(q ?? '', sort, order, section, reqPage);
 
-  const activeRows = section === 'reliable' ? reliable : reference;
-  const updatedAt  = rows.length > 0
-    ? rows.map((r) => r.lastObservedAt).filter(Boolean).sort().at(-1)
-    : null;
+  const updatedAt = lastObservedAt;
 
   return (
     <div className="space-y-6">
@@ -82,19 +95,19 @@ export default async function MarketboardPage({ params, searchParams }: Props) {
       {/* Section tabs */}
       <div className="flex gap-1 border-b border-navy/10">
         <SectionTab
-          label={`${m.tabReliable} (${reliable.length})`}
+          label={`${m.tabReliable} (${reliableCount})`}
           href={buildHref({ q, sort, order, section: 'reliable' })}
           active={section === 'reliable'}
         />
         <SectionTab
-          label={`${m.tabReference} (${reference.length})`}
+          label={`${m.tabReference} (${referenceCount})`}
           href={buildHref({ q, sort, order, section: 'reference' })}
           active={section === 'reference'}
         />
       </div>
 
       {/* Reference explanation */}
-      {section === 'reference' && reference.length > 0 && (
+      {section === 'reference' && referenceCount > 0 && (
         <aside className="rounded border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
           {m.referenceNote}
         </aside>
@@ -103,7 +116,7 @@ export default async function MarketboardPage({ params, searchParams }: Props) {
       {/* Search result count */}
       {q && (
         <p className="text-xs text-navy/50">
-          {activeRows.length} {m.results}{' '}
+          {totalCount} {m.results}{' '}
           <span className="text-navy/70">&ldquo;{q}&rdquo;</span>
           {' · '}
           <a href="/marketboard" className="underline hover:text-navy">{m.clear}</a>
@@ -116,15 +129,35 @@ export default async function MarketboardPage({ params, searchParams }: Props) {
           {q ? m.noCards : m.noCardsSection}
         </p>
       ) : (
-        <MarketTable
-          rows={activeRows}
-          sort={sort}
-          order={order}
-          query={q}
-          locale={params.locale}
-          labels={m}
-          thumbs={thumbs}
-        />
+        <>
+          <MarketTable
+            rows={activeRows}
+            sort={sort}
+            order={order}
+            query={q}
+            locale={params.locale}
+            labels={m}
+            thumbs={thumbs}
+          />
+          {totalPages > 1 && (
+            <nav className="flex items-center justify-between text-xs text-navy/60">
+              <span>
+                {(page - 1) * 100 + 1}–{Math.min(page * 100, totalCount)} / {totalCount}
+              </span>
+              <div className="flex gap-2">
+                {page > 1 && (
+                  <Link href={buildHref({ q, sort, order, section, page: page - 1 })}
+                        className="border border-navy/20 px-3 py-1.5 hover:border-navy/50 transition">← 前へ</Link>
+                )}
+                <span className="px-2 py-1.5 text-navy/40">{page} / {totalPages}</span>
+                {page < totalPages && (
+                  <Link href={buildHref({ q, sort, order, section, page: page + 1 })}
+                        className="border border-navy/20 px-3 py-1.5 hover:border-navy/50 transition">次へ →</Link>
+                )}
+              </div>
+            </nav>
+          )}
+        </>
       )}
 
       <Disclaimer variant="banner" />
@@ -148,12 +181,13 @@ function SectionTab({ label, href, active }: { label: string; href: string; acti
   );
 }
 
-function buildHref(params: { q?: string; sort?: MarketSortKey | null; order?: MarketSortOrder; section?: string }): string {
+function buildHref(params: { q?: string; sort?: MarketSortKey | null; order?: MarketSortOrder; section?: string; page?: number }): string {
   const p = new URLSearchParams();
   if (params.q)               p.set('q',       params.q);
   if (params.sort)            p.set('sort',    params.sort);
   if (params.order === 'asc') p.set('order',   'asc');
   if (params.section)         p.set('section', params.section);
+  if (params.page && params.page > 1) p.set('page', String(params.page));
   const qs = p.toString();
   return qs ? `/marketboard?${qs}` : '/marketboard';
 }

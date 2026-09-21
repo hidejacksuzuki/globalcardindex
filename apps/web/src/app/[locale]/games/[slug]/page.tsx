@@ -42,8 +42,11 @@ const getGameHubData = unstable_cache(
       .filter((r) => r.changeRate! > 0);
     const losers  = [...withChange].sort((a, b) => (a.changeRate! - b.changeRate!)).slice(0, 5)
       .filter((r) => r.changeRate! < 0);
-    const thumbs  = await getCardThumbnails(rows.slice(0, 120).map((r) => r.cardId)).catch(() => ({}));
-    return { stats, gameIndex, rows, gainers, losers, thumbs };
+    // 全行をクライアントに渡すとHTMLが1MB超になるため、ボードは取引データの
+    // 多い順に上位150行のみ表示（全カードはセット一覧 / セット絞り込みで到達可能）
+    const boardRows = [...rows].sort((a, b) => b.dataPoints - a.dataPoints).slice(0, 150);
+    const thumbs  = await getCardThumbnails(boardRows.map((r) => r.cardId)).catch(() => ({}));
+    return { stats, gameIndex, totalRows: rows.length, boardRows, gainers, losers, thumbs };
   },
   ["game-hub-data"],
   { revalidate: 600 },
@@ -115,7 +118,7 @@ export default async function GamePage({
   const isEn = params.locale === "en";
   const gameName = isEn ? game.name : game.nameJa;
 
-  const { stats, gameIndex, rows, gainers, losers, thumbs } = await getGameHubData(params.slug);
+  const { stats, gameIndex, totalRows, boardRows, gainers, losers, thumbs } = await getGameHubData(params.slug);
 
   // X シェア（intent リンク。クライアントJS不要）
   const pageUrl   = `${SITE_ORIGIN}${isEn ? "/en" : ""}/games/${game.slug}`;
@@ -220,7 +223,7 @@ export default async function GamePage({
       ) : null}
 
       {/* ゲーム別マーケットボード */}
-      {rows.length > 0 && (
+      {boardRows.length > 0 && (
         <section>
           <div className="mb-4 flex items-end justify-between flex-wrap gap-2">
             <div>
@@ -231,7 +234,14 @@ export default async function GamePage({
               {h.viewAllBoard}
             </Link>
           </div>
-          <MarketTable rows={rows} locale={params.locale} labels={t.marketboard} thumbs={thumbs} />
+          <MarketTable rows={boardRows} locale={params.locale} labels={t.marketboard} thumbs={thumbs} />
+          {totalRows > boardRows.length && (
+            <p className="mt-2 text-[11px] text-navy/40">
+              {isEn
+                ? `Showing top ${boardRows.length} of ${totalRows} cards by trading activity. See the sets table below for full coverage.`
+                : `取引データの多い上位${boardRows.length}件を表示中（全${totalRows}件）。全カードは下のセット一覧から辿れます。`}
+            </p>
+          )}
         </section>
       )}
 
