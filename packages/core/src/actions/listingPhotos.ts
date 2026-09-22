@@ -130,25 +130,35 @@ export async function getCardThumbnails(
   const ids = Array.from(new Set(cardIds)).filter(Boolean);
   if (ids.length === 0) return {};
 
+  // Prisma の distinct は findMany 取得後にメモリ側で重複排除するため、
+  // 出品の多いカードでは対象全行（数千行）を転送してしまい実測3秒級だった
+  // （2026-09 性能改善）。DISTINCT ON を DB 側で実行する生SQLに変更。
+  // 注意: このプロジェクトの生SQLはパラメータ渡し禁止（Prisma.join の
+  // バンドル問題）。id は cuid のみ許可して文字列で組み立てる。
+  const safeIds = ids.filter((id) => /^[a-z0-9]+$/i.test(id));
+  if (safeIds.length === 0) return {};
+  const idList = safeIds.map((id) => `'${id}'`).join(",");
+  type Row = { cardId: string; imageUrl: string };
+
   const [market, listings, ebay] = await Promise.all([
-    prisma.rawMarketListing.findMany({
-      where:    { cardId: { in: ids }, status: { in: APPROVED }, imageUrl: { not: null }, matchScore: { gte: MIN_MATCH_SCORE } },
-      orderBy:  [{ cardId: "asc" }, { capturedAt: "desc" }],
-      distinct: ["cardId"],
-      select:   { cardId: true, imageUrl: true },
-    }),
-    prisma.rawListing.findMany({
-      where:    { cardId: { in: ids }, status: { in: APPROVED }, imageUrl: { not: null }, matchScore: { gte: MIN_MATCH_SCORE } },
-      orderBy:  [{ cardId: "asc" }, { capturedAt: "desc" }],
-      distinct: ["cardId"],
-      select:   { cardId: true, imageUrl: true },
-    }),
-    prisma.ebayListing.findMany({
-      where:    { cardId: { in: ids }, status: { in: [...APPROVED, "imported"] }, imageUrl: { not: null }, matchScore: { gte: MIN_MATCH_SCORE } },
-      orderBy:  [{ cardId: "asc" }, { createdAt: "desc" }],
-      distinct: ["cardId"],
-      select:   { cardId: true, imageUrl: true },
-    }),
+    prisma.$queryRawUnsafe<Row[]>(
+      `SELECT DISTINCT ON ("cardId") "cardId", "imageUrl" FROM "RawMarketListing"
+       WHERE "cardId" IN (${idList}) AND "status" IN ('approved','auto_approved')
+         AND "imageUrl" IS NOT NULL AND "matchScore" >= ${MIN_MATCH_SCORE}
+       ORDER BY "cardId", "capturedAt" DESC`,
+    ),
+    prisma.$queryRawUnsafe<Row[]>(
+      `SELECT DISTINCT ON ("cardId") "cardId", "imageUrl" FROM "RawListing"
+       WHERE "cardId" IN (${idList}) AND "status" IN ('approved','auto_approved')
+         AND "imageUrl" IS NOT NULL AND "matchScore" >= ${MIN_MATCH_SCORE}
+       ORDER BY "cardId", "capturedAt" DESC`,
+    ),
+    prisma.$queryRawUnsafe<Row[]>(
+      `SELECT DISTINCT ON ("cardId") "cardId", "imageUrl" FROM "EbayListing"
+       WHERE "cardId" IN (${idList}) AND "status" IN ('approved','auto_approved','imported')
+         AND "imageUrl" IS NOT NULL AND "matchScore" >= ${MIN_MATCH_SCORE}
+       ORDER BY "cardId", "createdAt" DESC`,
+    ),
   ]);
 
   // 優先度: Mercari(手動選択) > eBay > 旧 RawListing。先に入れた方を優先。
