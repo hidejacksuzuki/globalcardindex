@@ -10,6 +10,7 @@ import { ImageResponse } from 'next/og';
 import { auth } from '@/auth';
 import { getSetDisplayName, getGame, getGameIndex, getMarketboard, formatPrice, type MarketboardRow } from '@gci/core';
 import { loadNotoSansJP } from '@/lib/og/fonts';
+import { pickNewSetCards } from '@/lib/dailyPost';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -53,11 +54,15 @@ export async function GET(req: Request) {
     getMarketboard({ game: slug }).catch(() => [] as MarketboardRow[]),
     loadNotoSansJP(),
   ]);
-  // 発信用: データ点数の少ないカードは価格が乱高下しやすいので除外（ページ側と同条件）
-  const gainers = rows
+  // 新弾ピックアップを主役に。無い場合のみ急騰(30日)にフォールバック
+  const newSetCards = pickNewSetCards(rows, slug, 3);
+  const gainers = newSetCards.length > 0 ? newSetCards : rows
     .filter((r) => r.changeRate !== null && r.changeRate > 0 && r.latestPrice !== null && r.dataPoints >= 3)
     .sort((a, b) => b.changeRate! - a.changeRate!)
     .slice(0, 3);
+  const sectionTitle = newSetCards.length > 0
+    ? `🆕 新弾の実売相場（${getSetDisplayName(newSetCards[0].setName)}）`
+    : '📈 急騰カード（30日）';
 
   const theme = THEME[slug] ?? THEME.pokemon;
   const dateLabel = new Intl.DateTimeFormat('ja-JP', {
@@ -123,7 +128,7 @@ export async function GET(req: Request) {
 
         {/* 急騰 Top3 */}
         <div style={{ display: 'flex', flexDirection: 'column', marginTop: 34, borderTop: `1px solid ${BORDER}`, paddingTop: 22, gap: 12 }}>
-          <span style={{ fontSize: 18, letterSpacing: 2, color: MUTED }}>📈 急騰カード（30日）</span>
+          <span style={{ fontSize: 18, letterSpacing: 2, color: MUTED }}>{sectionTitle}</span>
           {gainers.map((g, i) => (
             <div key={g.cardId} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <span style={{ fontSize: 24, color: MUTED, width: 30, display: 'flex' }}>{i + 1}</span>
@@ -145,7 +150,7 @@ export async function GET(req: Request) {
                 {getSetDisplayName(g.setName)}
               </span>
               <span style={{ fontSize: 28, fontWeight: 700, color: GREEN, marginLeft: 'auto', display: 'flex' }}>
-                {pct(g.changeRate)}
+                {g.changeRate !== null ? pct(g.changeRate) : g.rarity}
               </span>
               <span style={{ fontSize: 24, color: GOLD, width: 190, justifyContent: 'flex-end', display: 'flex' }}>
                 {g.latestPrice !== null && g.currency ? formatPrice(g.latestPrice, g.currency) : '—'}

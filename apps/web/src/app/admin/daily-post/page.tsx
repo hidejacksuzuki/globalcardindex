@@ -2,6 +2,8 @@ import { redirect, notFound } from 'next/navigation';
 import { auth } from '@/auth';
 import { GAMES, getGameIndex, getMarketboard, type GameIndexResult, type MarketboardRow } from '@gci/core';
 import { CopyButton } from '@/components/admin/CopyButton';
+import { FEATURED_SETS, pickNewSetCards } from '@/lib/dailyPost';
+import { getSetDisplayName } from '@gci/core';
 
 /**
  * /admin/daily-post — X 毎日投稿の運用支援ページ（管理用）
@@ -30,11 +32,15 @@ const X_META: Record<string, { label: string; tags: string }> = {
 const fmtPct = (v: number | null): string =>
   v === null ? '—' : `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
 
+const fmtYen = (v: number | null): string =>
+  v === null ? '—' : `¥${v.toLocaleString()}`;
+
 function buildPostText(
   slug: string,
   gameLabel: string,
   tags: string,
   idx: GameIndexResult | null,
+  newSetCards: MarketboardRow[],
   gainers: MarketboardRow[],
   dateLabel: string,
 ): string {
@@ -43,7 +49,15 @@ function buildPostText(
   if (idx && idx.value !== null) {
     lines.push(`GCI${gameLabel}指数 ${idx.value.toFixed(1)}（前日${fmtPct(idx.change24h)} / 30日${fmtPct(idx.change30d)}）`);
   }
-  if (gainers.length > 0) {
+  if (newSetCards.length > 0) {
+    // 新弾ピックアップが本命コンテンツ（発売直後は変動より実売価格を見せる）
+    lines.push('');
+    lines.push('🆕新弾の実売相場');
+    for (const c of newSetCards) {
+      const chg = c.changeRate !== null ? ` (${fmtPct(c.changeRate)})` : '';
+      lines.push(`${c.name} ${c.rarity} ${fmtYen(c.latestPrice)}${chg}`);
+    }
+  } else if (gainers.length > 0) {
     lines.push('');
     lines.push('📈急騰(30日)');
     for (const g of gainers) {
@@ -54,7 +68,8 @@ function buildPostText(
   lines.push('全カードの相場・推移👇');
   lines.push(`${SITE_ORIGIN}/games/${slug}`);
   lines.push('');
-  lines.push(tags);
+  const setTag = FEATURED_SETS[slug]?.hashtag;
+  lines.push(setTag ? `${tags} ${setTag}` : tags);
   return lines.join('\n');
 }
 
@@ -90,9 +105,11 @@ export default async function DailyPostAdminPage() {
         .filter((r) => r.changeRate !== null && r.changeRate > 0 && r.latestPrice !== null && r.dataPoints >= 3)
         .sort((a, b) => b.changeRate! - a.changeRate!)
         .slice(0, 3);
+      const newSetCards = pickNewSetCards(rows, game.slug, 3);
       const meta = X_META[game.slug] ?? { label: game.nameJa, tags: '' };
-      const text = buildPostText(game.slug, meta.label, meta.tags, idx, gainers, dateLabel);
-      return { game, idx, gainers, text };
+      const text = buildPostText(game.slug, meta.label, meta.tags, idx, newSetCards, gainers, dateLabel);
+      const featuredSetLabel = newSetCards.length > 0 ? getSetDisplayName(newSetCards[0].setName) : null;
+      return { game, idx, gainers, text, featuredSetLabel };
     }),
   );
 
@@ -107,13 +124,16 @@ export default async function DailyPostAdminPage() {
       </header>
 
       <main className="mx-auto max-w-4xl space-y-10 px-6 py-8">
-        {sections.map(({ game, idx, text }) => (
+        {sections.map(({ game, idx, text, featuredSetLabel }) => (
           <section key={game.slug} className="border border-navy/10 bg-white">
             <div className="flex items-center justify-between border-b border-navy/5 px-5 py-3">
               <p className="text-sm font-semibold text-navy">
                 {game.emoji} {game.nameJa}
                 {idx && idx.value !== null && (
                   <span className={`ml-3 tabular-nums ${game.color}`}>{idx.value.toFixed(1)}</span>
+                )}
+                {featuredSetLabel && (
+                  <span className="ml-3 text-[10px] text-navy/40">🆕 {featuredSetLabel}</span>
                 )}
               </p>
               <a
