@@ -283,7 +283,7 @@ export const en = {
 
   gameHub: {
     indexTitle:      'Index',
-    indexTooltip:    'A relative price index calculated from real sales data for this game. The 30-day average at the start of collection is set to 1000.',
+    indexTooltip:    'An index based on the median price change of each tracked card since collection began (baseline = 1000). Robust to cards being added or removed.',
     indexPreparing:  'The index will appear once the baseline period has enough data',
     avgPrice:        'Avg price (30d window)',
     change24h:       '24h',
