@@ -310,6 +310,7 @@ export const en = {
   },
 
   cardDetail: {
+    officialDbLink:  'View on the official card database ↗',
     // Metadata
     metaPriceLabel:   'Latest price',
     metaTitleSuffix:  'Price Guide',

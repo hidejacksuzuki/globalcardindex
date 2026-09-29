@@ -310,6 +310,7 @@ export const ja = {
   },
 
   cardDetail: {
+    officialDbLink:  '公式カードデータベースで見る ↗',
     // メタデータ
     metaPriceLabel:   '最新価格',
     metaTitleSuffix:  '相場',

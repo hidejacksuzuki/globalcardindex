@@ -22,6 +22,10 @@ model Card {
   game      String?            // ゲームキー e.g. "pokemon", "onepiece"
   slug      String?  @unique   // SEO用スラッグ e.g. "charizard-ex-sv4a-psr-nm"
 
+  // 公式カード番号（2026-09 追加）。ポケカ "113/076"、ワンピ "OP17-118"
+  // （SP等の再録は再録元の番号）、遊戯王 "BETB-JP036"。表示と出品タイトル照合に使う
+  cardNumber String?
+
   prices             Price[]
   watchlistItems     WatchlistItem[]
   userWatchlistItems UserWatchlistItem[]
@@ -46,6 +50,7 @@ model Card {
   updatedAt DateTime @updatedAt
 
   @@unique([name, setName, rarity, condition])
+  @@index([cardNumber])
   @@index([name])
   @@index([setName])
   @@index([game])

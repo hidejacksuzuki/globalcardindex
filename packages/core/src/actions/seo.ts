@@ -192,6 +192,8 @@ export type CardSeoDetail = {
   game:        string | null;
   rarity:      string;
   condition:   string;
+  /** 公式カード番号（未登録は null） */
+  cardNumber:  string | null;
   latestPrice: number | null;
   currency:    string | null;
   change7d:    number | null;
@@ -265,6 +267,7 @@ export async function getCardBySlug(rawSlug: string): Promise<CardSeoDetail | nu
     game:        card.game,
     rarity:      card.rarity,
     condition:   card.condition,
+    cardNumber:  card.cardNumber ?? null,
     latestPrice: latest?.price ?? null,
     currency:    latest?.currency ?? null,
     change7d,

@@ -1,7 +1,7 @@
 import type { Metadata }        from "next";
 import { notFound }              from "next/navigation";
 import Link                      from "next/link";
-import { getSetDisplayName, getCardBySlug, getCardPriceHistory, getCardEngagement } from "@gci/core";
+import { getSetDisplayName, getOfficialSearchUrl, getCardBySlug, getCardPriceHistory, getCardEngagement } from "@gci/core";
 import { getGame }               from "@gci/core";
 import { WatchButton }           from "@/components/watchlist/WatchButton";
 import { isWatching, isUserWatching } from "@gci/core";
@@ -157,7 +157,23 @@ export default async function CardSlugPage({
         <h1 className="mt-2 text-3xl font-semibold text-navy">{card.name}</h1>
         <p className="mt-1 text-sm text-navy/60">
           {card.rarity} · {card.condition}
+          {card.cardNumber && (
+            <span className="ml-2 tabular-nums text-navy/50">No. {card.cardNumber}</span>
+          )}
         </p>
+        {(() => {
+          const officialUrl = getOfficialSearchUrl(card.game, card.name, card.cardNumber);
+          return officialUrl ? (
+            <a
+              href={officialUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-block text-xs text-navy/50 underline underline-offset-2 hover:text-navy transition"
+            >
+              {t.officialDbLink}
+            </a>
+          ) : null;
+        })()}
 
         <div className="mt-4 flex items-center gap-2 flex-wrap">
           <WatchButton cardId={card.id} slug={card.slug ?? card.id} isWatched={watchedById} userId={userId ?? undefined} />

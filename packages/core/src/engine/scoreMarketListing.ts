@@ -23,11 +23,55 @@ export type ScoreInput = {
 };
 
 export type CardMeta = {
-  name:       string;
-  rarity:     string;
-  setName:    string;
-  condition?: string;
+  name:        string;
+  rarity:      string;
+  setName:     string;
+  condition?:  string;
+  /** 公式カード番号（"113/076" / "OP17-118" / "BETB-JP036"）。無いカードは照合に使わない */
+  cardNumber?: string | null;
 };
+
+type NumberKind = "slash" | "op" | "ygo";
+
+/**
+ * 出品タイトル中のカード番号を種類ごとに抽出して正規化する。
+ *   slash: ポケカ系 "113/076" → "113/76"（先頭ゼロを除去して比較）
+ *   op:    ワンピ系 "OP17-118" / "EB04-061" / "ST31-004" / "P-084"
+ *   ygo:   遊戯王系 "BETB-JP036" / "BETB-JPS15"
+ */
+function extractCardNumbers(title: string): { kind: NumberKind; value: string }[] {
+  const t = title.normalize("NFKC").toUpperCase();
+  const out: { kind: NumberKind; value: string }[] = [];
+  const stripZeros = (x: string) => x.replace(/^0+(?=\d)/, "");
+  for (const m of t.matchAll(/(?<![A-Z0-9])(\d{1,3})\s*\/\s*(\d{2,3})(?!\d)/g)) {
+    out.push({ kind: "slash", value: `${stripZeros(m[1])}/${stripZeros(m[2])}` });
+  }
+  for (const m of t.matchAll(/(?<![A-Z0-9])(OP|EB|ST|PRB)\s*-?\s*(\d{2})\s*-\s*(\d{3})(?!\d)/g)) {
+    out.push({ kind: "op", value: `${m[1]}${m[2]}-${m[3]}` });
+  }
+  for (const m of t.matchAll(/(?<![A-Z0-9])P\s*-\s*(\d{3})(?!\d)/g)) {
+    out.push({ kind: "op", value: `P-${m[1]}` });
+  }
+  for (const m of t.matchAll(/(?<![A-Z0-9])([A-Z0-9]{4})\s*-\s*(JPS?\d{3})(?!\d)/g)) {
+    out.push({ kind: "ygo", value: `${m[1]}-${m[2]}` });
+  }
+  return out;
+}
+
+/**
+ * カード番号の照合（+20 / -30 / 0）。
+ * タイトルに同じ番号があれば加点、同じ種類の「別の番号」だけがあれば別カードとみなして減点
+ * （例: メガレックウザex SAR 110/076 と MUR 113/076 の取り違え防止）。
+ * タイトルに番号が無い出品は判定しない（0）。
+ */
+function cardNumberScore(title: string, cardNumber: string | null | undefined): number {
+  if (!cardNumber) return 0;
+  const target = extractCardNumbers(cardNumber)[0];
+  if (!target) return 0;
+  const found = extractCardNumbers(title).filter((n) => n.kind === target.kind);
+  if (found.length === 0) return 0;
+  return found.some((n) => n.value === target.value) ? 20 : -30;
+}
 
 export type ScoreResult = {
   matchScore: number;
@@ -97,6 +141,7 @@ export function scoreMarketListing(
   if (nameInTitle(t, card.name.toLowerCase()))           match += 40;
   if (card.rarity && rarityInTitle(t, card.rarity.toLowerCase()))  match += 25;
   if (card.setName && t.includes(card.setName.toLowerCase())) match += 20;
+  match += cardNumberScore(input.title, card.cardNumber);
 
   // グレーディング条件チェック
   const cardIsGraded    = /^(PSA|BGS|ARS)\d/i.test(card.condition ?? "");

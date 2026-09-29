@@ -74,7 +74,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // 全可視カード（照合候補）を1回だけロード
   const cards = await prisma.card.findMany({
     where:  { deletedAt: null, isVisible: true },
-    select: { id: true, name: true, rarity: true, setName: true, condition: true },
+    select: { id: true, name: true, rarity: true, setName: true, condition: true, cardNumber: true },
   });
   const cardsNorm = cards.map((c) => ({ card: c, normName: looseNorm(c.name) }))
     .filter((c) => c.normName.length >= 2);
@@ -124,7 +124,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     for (const c of candidates) {
       const { matchScore } = scoreMarketListing(
         { title: item.title, price: item.price, source, url: item.url },
-        { name: c.card.name, rarity: c.card.rarity, setName: c.card.setName, condition: c.card.condition },
+        { name: c.card.name, rarity: c.card.rarity, setName: c.card.setName, condition: c.card.condition, cardNumber: c.card.cardNumber },
         null,
       );
       if (!best || matchScore > best.matchScore) best = { card: c.card, matchScore };
@@ -135,7 +135,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const median = await medianFor(best.card.id);
     const { matchScore, trustScore, status } = scoreMarketListing(
       { title: item.title, price: item.price, source, url: item.url },
-      { name: best.card.name, rarity: best.card.rarity, setName: best.card.setName, condition: best.card.condition },
+      { name: best.card.name, rarity: best.card.rarity, setName: best.card.setName, condition: best.card.condition, cardNumber: best.card.cardNumber },
       median,
     );
     if (status !== "auto_approved" && status !== "pending") {
