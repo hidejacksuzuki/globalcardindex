@@ -17,6 +17,8 @@
  */
 
 import { prisma } from "@gci/db";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 type Entry = { setName: string; name: string; rarity: string | null; cardNumber: string };
 const ENTRIES: Entry[] = [];
@@ -295,7 +297,57 @@ raw("LOCH LIMIT OVER COLLECTION", [
   ["星読みの魔術師－ホロスコープ・マジシャン",null,"LOCH-JP014"],["星霜の魔術師－アストログラフ・マジシャン",null,"LOCH-JP015"],
 ]);
 
+// ═══ 2026-09-20 以前からあるカード（調査で2つ以上の情報源が一致したもののみ） ═══
+// scripts/data/card-numbers-researched.json: 公式サイト・遊々亭等で番号を照合した384件。
+// setName / name / rarity は DB の値そのまま（照合キー）。
+{
+  const researched = JSON.parse(
+    readFileSync(join(__dirname, "data", "card-numbers-researched.json"), "utf8"),
+  ) as { setName: string; name: string; rarity: string; cardNumber: string }[];
+  for (const r of researched) ENTRIES.push({ setName: r.setName, name: r.name, rarity: r.rarity, cardNumber: r.cardNumber });
+}
+
 const APPLY = process.argv.includes("--apply");
+
+/**
+ * セット名に番号がそのまま入っているカードは調査せずに番号を決める。
+ *   ポケカのプロモ: setName "227/S-P プロモ" → "227/S-P"、setName "S-P" + rarity "プロモ 001" → "001/S-P"
+ *   遊戯王: setName "IGAS-JP020 IGNITION ASSAULT" → "IGAS-JP020"。
+ *     略号だけのセット名（"IGAS" 等）の同名カードは、同じ略号で始まる番号付きセット名の
+ *     カードがあればその番号を使う（例: "PAC1" の灰流うらら → "PAC1-JP016"）
+ */
+async function deriveFromSetName(): Promise<{ id: string; label: string; cardNumber: string }[]> {
+  const cards = await prisma.card.findMany({
+    where:  { deletedAt: null, cardNumber: null, game: { in: ["pokemon", "yugioh"] } },
+    select: { id: true, game: true, name: true, setName: true, rarity: true },
+  });
+  const out: { id: string; label: string; cardNumber: string }[] = [];
+  const ygoByName = new Map<string, { code: string; number: string }[]>();
+  for (const c of cards) {
+    if (c.game !== "yugioh") continue;
+    const m = c.setName.match(/^([A-Z0-9]{4})-(JP[CS]?\d{3})/);
+    if (!m) continue;
+    const arr = ygoByName.get(c.name) ?? [];
+    arr.push({ code: m[1], number: `${m[1]}-${m[2]}` });
+    ygoByName.set(c.name, arr);
+  }
+  for (const c of cards) {
+    const label = `[${c.setName}] ${c.name} ${c.rarity}`;
+    if (c.game === "pokemon") {
+      const m = c.setName.match(/^(\d{3}\/[A-Z-]+)/);
+      if (m) { out.push({ id: c.id, label, cardNumber: m[1] }); continue; }
+      const p = c.rarity.match(/^プロモ\s*(\d{3})$/);
+      if (c.setName === "S-P" && p) out.push({ id: c.id, label, cardNumber: `${p[1]}/S-P` });
+      continue;
+    }
+    const m = c.setName.match(/^([A-Z0-9]{4})-(JP[CS]?\d{3})/);
+    if (m) { out.push({ id: c.id, label, cardNumber: `${m[1]}-${m[2]}` }); continue; }
+    const siblings = (ygoByName.get(c.name) ?? []).filter((x) => x.code.toUpperCase() === c.setName.toUpperCase());
+    const uniq = [...new Set(siblings.map((x) => x.number))];
+    if (uniq.length === 1) out.push({ id: c.id, label, cardNumber: uniq[0] });
+  }
+  return out;
+}
 
 async function main() {
   console.log(`mode: ${APPLY ? "APPLY（本番更新）" : "DRY-RUN（書き込みなし）"}  対象エントリ ${ENTRIES.length}件\n`);
@@ -320,6 +372,19 @@ async function main() {
       });
     }
     updatedRows += targets.length;
+  }
+
+  const derived = await deriveFromSetName();
+  if (APPLY) {
+    for (const d of derived) {
+      await prisma.card.update({ where: { id: d.id }, data: { cardNumber: d.cardNumber } });
+    }
+  }
+  updatedRows += derived.length;
+  if (derived.length > 0) {
+    console.log(`--- セット名から自動で決めた番号 ${derived.length}行 ---`);
+    for (const d of derived) console.log(`  ${d.label} → ${d.cardNumber}`);
+    console.log("");
   }
 
   console.log(`結果: 更新${APPLY ? "" : "予定"} ${updatedRows}行 / 設定済みスキップ ${alreadySet}行 / DB未登録のエントリ ${unmatched.length}件`);
