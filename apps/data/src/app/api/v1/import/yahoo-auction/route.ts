@@ -81,7 +81,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const card = await prisma.card.findUnique({
     where:  { id: body.cardId },
     select: {
-      id: true, name: true, rarity: true, setName: true,
+      id: true, name: true, rarity: true, setName: true, cardNumber: true,
       aliases: { where: { locale: "ja" }, select: { name: true } },
     },
   });
@@ -89,6 +89,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "card not found" }, { status: 404 });
   }
   const jaAliases = card.aliases.map((a) => a.name);
+  const siblingRarities = [...new Set((await prisma.card.findMany({
+    where:  { name: card.name, setName: card.setName, deletedAt: null, NOT: { rarity: card.rarity } },
+    select: { rarity: true },
+  })).map((s) => s.rarity))];
 
   const isClosed = (body.mode ?? "closed") === "closed";
   const source   = isClosed ? "yahoo_auction_closed" : "yahoo_auction_active";
@@ -100,7 +104,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const { matchScore, trustScore } = calcAuctionScore(
       item.title,
-      { name: card.name, rarity: card.rarity, setName: card.setName, aliases: jaAliases },
+      { name: card.name, rarity: card.rarity, setName: card.setName, aliases: jaAliases, cardNumber: card.cardNumber, siblingRarities },
       isClosed,
       item.bidCount,
     );

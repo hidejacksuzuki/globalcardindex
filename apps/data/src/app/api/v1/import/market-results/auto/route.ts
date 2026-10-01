@@ -78,6 +78,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   });
   const cardsNorm = cards.map((c) => ({ card: c, normName: looseNorm(c.name) }))
     .filter((c) => c.normName.length >= 2);
+  // 同じセット・同じ名前の別レアリティ（HR と SA など）。採点で混入防止に使う
+  const raritiesByNameSet = new Map<string, Set<string>>();
+  for (const c of cards) {
+    const k = `${c.name}\u0000${c.setName}`;
+    const set = raritiesByNameSet.get(k) ?? new Set<string>();
+    set.add(c.rarity);
+    raritiesByNameSet.set(k, set);
+  }
+  const siblingsOf = (c: { name: string; setName: string; rarity: string }) =>
+    [...(raritiesByNameSet.get(`${c.name}\u0000${c.setName}`) ?? [])].filter((r) => r !== c.rarity);
 
   // カードごとの中央値キャッシュ（trustScore 用）
   const medianCache = new Map<string, number | null>();
@@ -124,7 +134,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     for (const c of candidates) {
       const { matchScore } = scoreMarketListing(
         { title: item.title, price: item.price, source, url: item.url },
-        { name: c.card.name, rarity: c.card.rarity, setName: c.card.setName, condition: c.card.condition, cardNumber: c.card.cardNumber },
+        { name: c.card.name, rarity: c.card.rarity, setName: c.card.setName, condition: c.card.condition, cardNumber: c.card.cardNumber, siblingRarities: siblingsOf(c.card) },
         null,
       );
       if (!best || matchScore > best.matchScore) best = { card: c.card, matchScore };
@@ -135,7 +145,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const median = await medianFor(best.card.id);
     const { matchScore, trustScore, status } = scoreMarketListing(
       { title: item.title, price: item.price, source, url: item.url },
-      { name: best.card.name, rarity: best.card.rarity, setName: best.card.setName, condition: best.card.condition, cardNumber: best.card.cardNumber },
+      { name: best.card.name, rarity: best.card.rarity, setName: best.card.setName, condition: best.card.condition, cardNumber: best.card.cardNumber, siblingRarities: siblingsOf(best.card) },
       median,
     );
     if (status !== "auto_approved" && status !== "pending") {

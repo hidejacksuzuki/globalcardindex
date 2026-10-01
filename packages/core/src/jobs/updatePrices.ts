@@ -46,15 +46,29 @@ export async function updatePrices(options?: {
     orderBy: { updatedAt: "asc" },
     take:    batchSize,
     select:  {
-      id: true, name: true, rarity: true, setName: true, condition: true,
+      id: true, name: true, rarity: true, setName: true, condition: true, cardNumber: true,
       // 日本語エイリアス（英語名カードの検索・照合用）
       aliases: { where: { locale: "ja" }, select: { name: true } },
     },
   });
 
+  // 同じセット・同じ名前の別レアリティ（HR と SA など）を引いておく（混入防止用）
+  const siblingRows = await prisma.card.findMany({
+    where:  {
+      deletedAt: null,
+      OR: cards.map((c) => ({ name: c.name, setName: c.setName })),
+    },
+    select: { name: true, setName: true, rarity: true },
+  });
+
   for (const card of cards) {
     result.processed++;
     const jaAliases = card.aliases.map((a) => a.name);
+    const siblingRarities = [...new Set(
+      siblingRows
+        .filter((s) => s.name === card.name && s.setName === card.setName && s.rarity !== card.rarity)
+        .map((s) => s.rarity),
+    )];
 
     try {
       const { keyword } = buildYahooAuctionUrls(
@@ -72,7 +86,7 @@ export async function updatePrices(options?: {
       for (const item of items) {
         const { matchScore, trustScore } = calcAuctionScore(
           item.title,
-          { name: card.name, rarity: card.rarity, setName: card.setName, condition: card.condition, aliases: jaAliases },
+          { name: card.name, rarity: card.rarity, setName: card.setName, condition: card.condition, aliases: jaAliases, cardNumber: card.cardNumber, siblingRarities },
           true,
           item.bidCount,
         );

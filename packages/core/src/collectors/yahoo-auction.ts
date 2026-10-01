@@ -6,6 +6,8 @@
  *   yahoo_auction_closed  — sold results  (落札価格、指数の主力)
  */
 
+import { cardNumberScore, siblingRarityPenalty } from "../engine/scoreMarketListing";
+
 const YAHUOKU_SEARCH_BASE = "https://auctions.yahoo.co.jp/search/search";
 const YAHUOKU_CLOSED_BASE = "https://auctions.yahoo.co.jp/closedsearch/closedsearch";
 
@@ -165,6 +167,10 @@ export type AuctionScoringTarget = {
   condition?: string;
   /** CardAlias(locale:"ja") の日本語名。英語名カードの照合に使う */
   aliases?:   string[];
+  /** 公式カード番号。タイトルの番号が一致で+20、同種の別番号のみなら-30 */
+  cardNumber?: string | null;
+  /** 同じセット・同じ名前の別レアリティ（例: HR に対する SA）。混入防止に使う */
+  siblingRarities?: string[];
 };
 
 export type AuctionScoringResult = {
@@ -237,6 +243,12 @@ export function calcAuctionScore(
 
   // -80: 偽物
   if (title.includes("偽物") || title.includes("レプリカ")) { score -= 80; reasons.push("偽物 -80"); }
+
+  // カード番号の照合と、兄弟カード（同名の別レアリティ）の混入防止
+  const numScore = cardNumberScore(title, target.cardNumber);
+  if (numScore !== 0) { score += numScore; reasons.push(`カード番号${numScore > 0 ? "一致" : "不一致"} ${numScore > 0 ? "+" : ""}${numScore}`); }
+  const sibScore = siblingRarityPenalty(title, target.rarity, target.siblingRarities);
+  if (sibScore !== 0) { score += sibScore; reasons.push(`別レアリティ版の出品 ${sibScore}`); }
 
   let matchScore = Math.max(0, Math.min(100, score));
 

@@ -29,6 +29,8 @@ export type CardMeta = {
   condition?:  string;
   /** 公式カード番号（"113/076" / "OP17-118" / "BETB-JP036"）。無いカードは照合に使わない */
   cardNumber?: string | null;
+  /** 同じセット・同じ名前の別レアリティ（例: HR に対する SA）。タイトルにこれだけがあれば減点 */
+  siblingRarities?: string[];
 };
 
 type NumberKind = "slash" | "op" | "ygo";
@@ -64,7 +66,7 @@ function extractCardNumbers(title: string): { kind: NumberKind; value: string }[
  * （例: メガレックウザex SAR 110/076 と MUR 113/076 の取り違え防止）。
  * タイトルに番号が無い出品は判定しない（0）。
  */
-function cardNumberScore(title: string, cardNumber: string | null | undefined): number {
+export function cardNumberScore(title: string, cardNumber: string | null | undefined): number {
   if (!cardNumber) return 0;
   const target = extractCardNumbers(cardNumber)[0];
   if (!target) return 0;
@@ -128,6 +130,33 @@ function rarityInTitle(t: string, rarityLower: string): boolean {
   return re.test(t);
 }
 
+/** 「特別版」を表すレアリティ表記。タイトルに通常版の表記と並んで書かれたら特別版側を優先する */
+const SPECIAL_RARITY_MARKERS = new Set(["sa", "sar", "ssr", "csr", "chr", "mur", "bwr", "fur"]);
+
+/**
+ * 兄弟カードのレアリティ照合（0 / -40）。
+ * 同じセット・同じ名前で別レアリティのカードがある場合（例: ブラッキーVMAX の HR と SA）、
+ *   - タイトルに兄弟側のレアリティだけが書かれていれば、このカードの出品ではない
+ *   - 両方書かれていれば（例: "HR SA"）、特別版の表記（SA 等）を持つ側のカードの出品とみなす
+ */
+export function siblingRarityPenalty(
+  title: string,
+  ownRarity: string,
+  siblingRarities: string[] | null | undefined,
+): number {
+  if (!siblingRarities || siblingRarities.length === 0) return 0;
+  const t = title.toLowerCase();
+  const own = ownRarity.toLowerCase();
+  const ownInTitle = rarityInTitle(t, own);
+  for (const r of siblingRarities) {
+    const rl = r.toLowerCase();
+    if (!rl || rl === own || !rarityInTitle(t, rl)) continue;
+    if (!ownInTitle) return -40;
+    if (SPECIAL_RARITY_MARKERS.has(rl) && !SPECIAL_RARITY_MARKERS.has(own)) return -40;
+  }
+  return 0;
+}
+
 export function scoreMarketListing(
   input:        ScoreInput,
   card:         CardMeta,
@@ -142,6 +171,7 @@ export function scoreMarketListing(
   if (card.rarity && rarityInTitle(t, card.rarity.toLowerCase()))  match += 25;
   if (card.setName && t.includes(card.setName.toLowerCase())) match += 20;
   match += cardNumberScore(input.title, card.cardNumber);
+  match += siblingRarityPenalty(input.title, card.rarity, card.siblingRarities);
 
   // グレーディング条件チェック
   const cardIsGraded    = /^(PSA|BGS|ARS)\d/i.test(card.condition ?? "");
