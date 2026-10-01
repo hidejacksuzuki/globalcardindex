@@ -1,0 +1,6 @@
+[
+ {"from": {"setName": "sv7a", "name": "ラティアス", "rarity": "AR"}, "to": {"setName": "sv7a", "name": "ラティアスex", "rarity": "SAR"}, "cardNumber": "087/064"},
+ {"from": {"setName": "OP03 強大な敵", "name": "ニコ・ロビン", "rarity": "パラレル"}, "to": {"setName": "OP09 新たなる皇帝", "name": "ニコ・ロビン", "rarity": "リーダーパラレル"}, "cardNumber": "OP09-062"},
+ {"from": {"setName": "OP07 500年後の未来", "name": "ポートガス・D・エース", "rarity": "リーダーパラレル"}, "to": {"setName": "OP03 強大な敵", "name": "ポートガス・D・エース", "rarity": "リーダーパラレル"}, "cardNumber": "OP03-001"},
+ {"from": {"setName": "OP-08 Two Legends", "name": "Gol D. Roger", "rarity": "SEC"}, "to": {"setName": "OP09 新たなる皇帝", "name": "ゴール・D・ロジャー", "rarity": "SEC"}, "cardNumber": "OP09-118"}
+]

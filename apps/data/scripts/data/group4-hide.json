@@ -1,0 +1,222 @@
+[
+ {
+  "setName": "sv1a",
+  "name": "ピカチュウ",
+  "rarity": "AR"
+ },
+ {
+  "setName": "sv1a トリプレットビート",
+  "name": "ピカチュウ",
+  "rarity": "AR"
+ },
+ {
+  "setName": "SV2 クレイバースト",
+  "name": "Iono",
+  "rarity": "SAR"
+ },
+ {
+  "setName": "SV2a 151",
+  "name": "Pikachu ex",
+  "rarity": "SAR"
+ },
+ {
+  "setName": "SV2a 151",
+  "name": "Gengar ex",
+  "rarity": "SAR"
+ },
+ {
+  "setName": "SV2a 151",
+  "name": "Mewtwo ex",
+  "rarity": "SAR"
+ },
+ {
+  "setName": "SV3 黒炎の支配者",
+  "name": "Charizard ex",
+  "rarity": "SR"
+ },
+ {
+  "setName": "SV4a シャイニートレジャーex",
+  "name": "Glaceon ex",
+  "rarity": "SSR"
+ },
+ {
+  "setName": "SV4a シャイニートレジャーex",
+  "name": "Umbreon ex",
+  "rarity": "SSR"
+ },
+ {
+  "setName": "SV4a シャイニートレジャーex",
+  "name": "Sylveon ex",
+  "rarity": "SSR"
+ },
+ {
+  "setName": "SV4a シャイニートレジャーex",
+  "name": "Vaporeon ex",
+  "rarity": "SSR"
+ },
+ {
+  "setName": "SV4a シャイニートレジャーex",
+  "name": "Flareon ex",
+  "rarity": "SSR"
+ },
+ {
+  "setName": "SV4a シャイニートレジャーex",
+  "name": "Jolteon ex",
+  "rarity": "SSR"
+ },
+ {
+  "setName": "SV4a シャイニートレジャーex",
+  "name": "Pikachu ex",
+  "rarity": "SSR"
+ },
+ {
+  "setName": "SV4a シャイニートレジャーex",
+  "name": "Leafeon ex",
+  "rarity": "SSR"
+ },
+ {
+  "setName": "sv8a",
+  "name": "イーブイ",
+  "rarity": "AR"
+ },
+ {
+  "setName": "s4a シャイニースターV",
+  "name": "ルリナ",
+  "rarity": "SR"
+ },
+ {
+  "setName": "SWSH11 Lost Origin",
+  "name": "Lugia VSTAR",
+  "rarity": "SAR"
+ },
+ {
+  "setName": "OP-01 Romance Dawn",
+  "name": "Kaido",
+  "rarity": "SEC"
+ },
+ {
+  "setName": "OP-02",
+  "name": "ロー",
+  "rarity": "リーダーパラレル"
+ },
+ {
+  "setName": "OP-02",
+  "name": "キッド",
+  "rarity": "リーダーパラレル"
+ },
+ {
+  "setName": "OP-02 Paramount War",
+  "name": "Yamato",
+  "rarity": "SEC"
+ },
+ {
+  "setName": "OP-02 Paramount War",
+  "name": "Sabo",
+  "rarity": "SR"
+ },
+ {
+  "setName": "OP-02 Paramount War",
+  "name": "Portgas D. Ace",
+  "rarity": "SEC"
+ },
+ {
+  "setName": "OP-03",
+  "name": "ロビン",
+  "rarity": "パラレル"
+ },
+ {
+  "setName": "OP-03 Pillars of Strength",
+  "name": "Trafalgar Law",
+  "rarity": "SR"
+ },
+ {
+  "setName": "OP-03 Pillars of Strength",
+  "name": "Charlotte Linlin",
+  "rarity": "SEC"
+ },
+ {
+  "setName": "OP-04 Kingdoms of Intrigue",
+  "name": "Monkey D. Luffy",
+  "rarity": "SEC"
+ },
+ {
+  "setName": "OP-05 Awakening of the New Era",
+  "name": "Vinsmoke Sanji",
+  "rarity": "SEC"
+ },
+ {
+  "setName": "OP-06 Wings of the Captain",
+  "name": "Shanks",
+  "rarity": "SEC"
+ },
+ {
+  "setName": "OP-08 Two Legends",
+  "name": "Whitebeard",
+  "rarity": "SEC"
+ },
+ {
+  "setName": "OP01 ROMANCE DAWN",
+  "name": "ユースタス・キッド",
+  "rarity": "リーダーパラレル"
+ },
+ {
+  "setName": "OP04 謀略の王国",
+  "name": "ロビン",
+  "rarity": "R パラレル"
+ },
+ {
+  "setName": "OP05 新時代の主役",
+  "name": "トラファルガー・ロー",
+  "rarity": "SP"
+ },
+ {
+  "setName": "OP06 双璧の覇者",
+  "name": "ナミ",
+  "rarity": "SP"
+ },
+ {
+  "setName": "OP06 双璧の覇者",
+  "name": "ロロノア・ゾロ",
+  "rarity": "SP"
+ },
+ {
+  "setName": "OP07 500年後の未来",
+  "name": "ジュエリー・ボニー",
+  "rarity": "SP"
+ },
+ {
+  "setName": "OP09 新たなる皇帝",
+  "name": "トニートニー・チョッパー",
+  "rarity": "手配書SP"
+ },
+ {
+  "setName": "OP09 新たなる皇帝",
+  "name": "ナミ",
+  "rarity": "手配書SP"
+ },
+ {
+  "setName": "GENF",
+  "name": "No.39 希望皇ホープ",
+  "rarity": "ホログラフィック"
+ },
+ {
+  "setName": "MVPC",
+  "name": "青眼の亜白龍",
+  "rarity": "シークレット"
+ },
+ {
+  "setName": "QCDB",
+  "name": "エフェクト・ヴェーラー",
+  "rarity": "25thシークレット"
+ },
+ {
+  "setName": "s12a VSTARユニバース",
+  "name": "グラードン",
+  "rarity": "AR"
+ },
+ {
+  "setName": "s12a VSTARユニバース",
+  "name": "カイオーガ",
+  "rarity": "AR"
+ }
+]

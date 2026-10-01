@@ -42,7 +42,9 @@ export async function updatePrices(options?: {
   };
 
   // 最も古く収集されたカードから処理
+  // 非表示（統合済み・実在しない等）や削除済みのカードは収集しない
   const cards = await prisma.card.findMany({
+    where:   { isVisible: true, deletedAt: null },
     orderBy: { updatedAt: "asc" },
     take:    batchSize,
     select:  {
@@ -56,6 +58,7 @@ export async function updatePrices(options?: {
   const siblingRows = await prisma.card.findMany({
     where:  {
       deletedAt: null,
+      isVisible: true,
       OR: cards.map((c) => ({ name: c.name, setName: c.setName })),
     },
     select: { name: true, setName: true, rarity: true },

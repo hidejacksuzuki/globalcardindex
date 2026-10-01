@@ -90,7 +90,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
   const jaAliases = card.aliases.map((a) => a.name);
   const siblingRarities = [...new Set((await prisma.card.findMany({
-    where:  { name: card.name, setName: card.setName, deletedAt: null, NOT: { rarity: card.rarity } },
+    where:  { name: card.name, setName: card.setName, deletedAt: null, isVisible: true, NOT: { rarity: card.rarity } },
     select: { rarity: true },
   })).map((s) => s.rarity))];
 
