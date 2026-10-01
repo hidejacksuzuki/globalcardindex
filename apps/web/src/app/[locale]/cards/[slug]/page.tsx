@@ -27,6 +27,17 @@ const SITE_ORIGIN = "https://www.gci-index.com";
 // ----------------------------------------------------------------
 // Metadata
 // ----------------------------------------------------------------
+/**
+ * ページタイトル・構造化データ用のカード表記。同じカードでもレアリティ（HR / SA 等）と
+ * 状態（PSA10 等）でページが分かれるため、それらを含めて見分けられるようにする。
+ * 状態は NM（素の状態）が標準なので、それ以外のときだけ付ける。
+ */
+function cardLabel(card: { name: string; rarity: string; condition: string }): string {
+  return [card.name, card.rarity, card.condition !== "NM" ? card.condition : null]
+    .filter(Boolean)
+    .join(" ");
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -42,7 +53,7 @@ export async function generateMetadata({
     ? ` — ${t.metaPriceLabel} ${formatPrice(card.latestPrice, card.currency)}`
     : "";
 
-  const title       = `${card.name} (${getSetDisplayName(card.setName)}) ${t.metaTitleSuffix}${priceStr} | Global Card Index`;
+  const title       = `${cardLabel(card)} (${getSetDisplayName(card.setName)}) ${t.metaTitleSuffix}${priceStr} | Global Card Index`;
   const description = `${card.name} ${card.rarity} · ${card.condition}${t.metaDescription
     .replace("{set}", getSetDisplayName(card.setName))
     .replace("{count}", String(card.priceCount))}`;
@@ -462,7 +473,7 @@ export default async function CardSlugPage({
           __html: safeJsonLd({
             "@context": "https://schema.org",
             "@type":    "Product",
-            name:       card.name,
+            name:       cardLabel(card),
             description: `${card.name} ${card.rarity} · ${card.condition} — ${getSetDisplayName(card.setName)}`,
             url:        canonicalUrl,
             ...(card.minPrice !== null && card.maxPrice !== null && card.currency
