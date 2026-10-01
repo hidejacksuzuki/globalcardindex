@@ -4,6 +4,7 @@
  * 使い方（apps/data から実行）:
  *   node --env-file=.env.local --import tsx scripts/merge-duplicate-cards.ts                  # DRY-RUN
  *   BACKUP=<保存先.json> node --env-file=.env.local --import tsx scripts/merge-duplicate-cards.ts --apply
+ *   PAIRS_FILE=scripts/data/registration-fixes.json ...  # 別の対応表で実行（登録ミスの書き換え）
  *
  * 背景（2026-10-01）: カード番号の調査で、英語名で二重登録された日本版カード
  * （"SV2a 151 / Charizard ex" と "sv2a ポケモンカード151 / リザードンex" 等）や、
@@ -21,10 +22,11 @@
  */
 
 import { prisma } from "@gci/db";
-import { writeFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 
 type Key = { setName: string; name: string; rarity: string };
-const PAIRS: { from: Key; to: Key }[] = [
+type Pair = { from: Key; to: Key; cardNumber?: string };
+const DEFAULT_PAIRS: Pair[] = [
   { from: { setName: "SV1 スカーレット", name: "Miraidon ex", rarity: "SAR" }, to: { setName: "sv1V バイオレットex", name: "ミライドンex", rarity: "SAR" } },
   { from: { setName: "SV1S バイオレット", name: "Gardevoir ex", rarity: "SAR" }, to: { setName: "sv1S スカーレットex", name: "サーナイトex", rarity: "SAR" } },
   { from: { setName: "sv2a", name: "ゲッコウガ ex", rarity: "SAR" }, to: { setName: "sv5a クリムゾンヘイズ", name: "ゲッコウガex", rarity: "SAR" } },
@@ -36,6 +38,11 @@ const PAIRS: { from: Key; to: Key }[] = [
   { from: { setName: "s8 フュージョンアーツ", name: "ゲンガーVMAX", rarity: "SA" }, to: { setName: "sGG", name: "ゲンガーVMAX", rarity: "SA" } },
 ];
 
+// PAIRS_FILE を指定すると、その JSON（Pair[]）を使う（登録ミスの書き換え等）。cardNumber は書き換え・統合先に設定する番号
+const PAIRS: Pair[] = process.env.PAIRS_FILE
+  ? JSON.parse(readFileSync(process.env.PAIRS_FILE, "utf8"))
+  : DEFAULT_PAIRS;
+
 const APPLY = process.argv.includes("--apply");
 type Log = { action: string; table?: string; id: string; from?: string; to?: string; before?: Key };
 
@@ -43,11 +50,14 @@ async function main() {
   console.log(`mode: ${APPLY ? "APPLY（本番更新）" : "DRY-RUN（書き込みなし）"}\n`);
   const log: Log[] = [];
 
-  for (const { from, to } of PAIRS) {
+  for (const { from, to, cardNumber } of PAIRS) {
     const sources = await prisma.card.findMany({ where: { ...from, deletedAt: null }, select: { id: true, condition: true } });
     const targets = await prisma.card.findMany({ where: { ...to, deletedAt: null }, select: { id: true, condition: true, cardNumber: true } });
     console.log(`■ ${from.setName} / ${from.name} / ${from.rarity}  →  ${to.setName} / ${to.name} / ${to.rarity}`);
-    const toNumber = targets.find((t) => t.cardNumber)?.cardNumber ?? null;
+    const toNumber = cardNumber ?? targets.find((t) => t.cardNumber)?.cardNumber ?? null;
+    if (APPLY && cardNumber) {
+      for (const t of targets) if (t.cardNumber !== cardNumber) await prisma.card.update({ where: { id: t.id }, data: { cardNumber } });
+    }
 
     for (const s of sources) {
       const t = targets.find((x) => x.condition === s.condition);

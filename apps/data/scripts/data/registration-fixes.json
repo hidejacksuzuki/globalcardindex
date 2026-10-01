@@ -1,0 +1,21 @@
+[
+ {"from": {"setName": "s12 パラダイムトリガー", "name": "ホウオウV", "rarity": "SR"}, "to": {"setName": "s11a 白熱のアルカナ", "name": "ホウオウV", "rarity": "SR"}, "cardNumber": "080/068"},
+ {"from": {"setName": "s6a イーブイヒーローズ", "name": "エーフィVMAX", "rarity": "SA"}, "to": {"setName": "プロモ", "name": "エーフィVMAX", "rarity": "SA"}, "cardNumber": "189/S-P"},
+ {"from": {"setName": "sm11b ドリームリーグ", "name": "リーリエ", "rarity": "TR"}, "to": {"setName": "sm10b スカイレジェンド", "name": "リーリエ", "rarity": "TR"}, "cardNumber": "053/054"},
+ {"from": {"setName": "sv6a ナイトワンダラー", "name": "アンズの秘技", "rarity": "SAR"}, "to": {"setName": "sv6a ナイトワンダラー", "name": "アンズの秘技", "rarity": "SR"}, "cardNumber": "084/064"},
+ {"from": {"setName": "sv6a ナイトワンダラー", "name": "アクロマの執念", "rarity": "SAR"}, "to": {"setName": "sv6a ナイトワンダラー", "name": "アクロマの執念", "rarity": "SR"}, "cardNumber": "083/064"},
+ {"from": {"setName": "sv7 ステラミラクル", "name": "アカマツ", "rarity": "SAR"}, "to": {"setName": "sv7 ステラミラクル", "name": "アカマツ", "rarity": "SR"}, "cardNumber": "123/102"},
+ {"from": {"setName": "s5a 双璧のファイター", "name": "ファイヤーV", "rarity": "SA"}, "to": {"setName": "s5a 双璧のファイター", "name": "ガラルファイヤーV", "rarity": "SA"}, "cardNumber": "078/070"},
+ {"from": {"setName": "s5a 双璧のファイター", "name": "フリーザーV", "rarity": "SA"}, "to": {"setName": "s5a 双璧のファイター", "name": "ガラルフリーザーV", "rarity": "SA"}, "cardNumber": "074/070"},
+ {"from": {"setName": "s5a 双璧のファイター", "name": "サンダーV", "rarity": "SA"}, "to": {"setName": "s5a 双璧のファイター", "name": "ガラルサンダーV", "rarity": "SA"}, "cardNumber": "076/070"},
+ {"from": {"setName": "OP02 頂上決戦", "name": "たしぎ", "rarity": "R パラレル"}, "to": {"setName": "OP02 頂上決戦", "name": "たしぎ", "rarity": "C パラレル"}, "cardNumber": "OP02-105"},
+ {"from": {"setName": "OP04 謀略の王国", "name": "サボ", "rarity": "SEC パラレル"}, "to": {"setName": "OP04 謀略の王国", "name": "サボ", "rarity": "SR パラレル"}, "cardNumber": "OP04-083"},
+ {"from": {"setName": "LN-53 Labyrinth of Nightmare", "name": "ブラック・マジシャン", "rarity": "初期ウルトラ"}, "to": {"setName": "LN-53 Labyrinth of Nightmare", "name": "ブラック・マジシャン", "rarity": "レリーフ"}, "cardNumber": "LN-53"},
+ {"from": {"setName": "25DB PRISMATIC SUMMON", "name": "水晶機巧－ハリファイバー", "rarity": "PSE"}, "to": {"setName": "25DB PRISMATIC SUMMON", "name": "水晶機巧－ハリファイバーP", "rarity": "PSE"}, "cardNumber": "25DB-JP006"},
+ {"from": {"setName": "20TH-JPC84 20th", "name": "屋敷わらし", "rarity": "20thシークレット"}, "to": {"setName": "20CP", "name": "屋敷わらし", "rarity": "20thシークレット"}, "cardNumber": "20CP-JPS09"},
+ {"from": {"setName": "FLOD", "name": "屋敷わらし", "rarity": "20thシークレット"}, "to": {"setName": "20CP", "name": "屋敷わらし", "rarity": "20thシークレット"}, "cardNumber": "20CP-JPS09"},
+ {"from": {"setName": "20TH", "name": "幽鬼うさぎ", "rarity": "20thシークレット"}, "to": {"setName": "20CP", "name": "幽鬼うさぎ", "rarity": "20thシークレット"}, "cardNumber": "20CP-JPS08"},
+ {"from": {"setName": "s10P スペースジャグラー", "name": "カイ", "rarity": "SAR"}, "to": {"setName": "s12a VSTARユニバース", "name": "カイ", "rarity": "SAR"}, "cardNumber": "236/172"},
+ {"from": {"setName": "s10P", "name": "カイ", "rarity": "SAR"}, "to": {"setName": "s12a VSTARユニバース", "name": "カイ", "rarity": "SAR"}, "cardNumber": "236/172"},
+ {"from": {"setName": "sv7a", "name": "ブライア", "rarity": "SR"}, "to": {"setName": "sv7 ステラミラクル", "name": "ブライア", "rarity": "SR"}, "cardNumber": "126/102"}
+]
