@@ -1,7 +1,7 @@
 import type { Metadata }        from "next";
 import { notFound }              from "next/navigation";
 import Link                      from "next/link";
-import { getSetDisplayName, getOfficialSearchUrl, getCardBySlug, getCardPriceHistory, getCardEngagement } from "@gci/core";
+import { getSetDisplayName, getOfficialSearchUrl, getCardBySlug, getCardPriceHistory, getCardEngagement, getRelatedCards } from "@gci/core";
 import { getGame }               from "@gci/core";
 import { WatchButton }           from "@/components/watchlist/WatchButton";
 import { isWatching, isUserWatching } from "@gci/core";
@@ -114,8 +114,8 @@ export default async function CardSlugPage({
     ? await isInPortfolio(userId, card.id).catch(() => ({ inPortfolio: false as const }))
     : { inPortfolio: false as const };
 
-  // 価格推移・熱量・per-card index value・出品写真（並列取得）
-  const [priceHistory, engagement, listingPhotos, cardIndex] = await Promise.all([
+  // 価格推移・熱量・per-card index value・出品写真・関連カード（並列取得）
+  const [priceHistory, engagement, listingPhotos, cardIndex, related] = await Promise.all([
     getCardPriceHistory(card.id, 90).catch(() => []),
     getCardEngagement(card.id).catch(() => ({ watchers: 0, holders: 0, recentSales: [] })),
     getCardListingPhotos(card.id).catch(() => []),
@@ -131,6 +131,7 @@ export default async function CardSlugPage({
         calculatedAt: true,
       },
     }).catch(() => null),
+    getRelatedCards(card).catch(() => ({ variants: [], setCards: [] })),
   ]);
 
   // Show index only when we have sufficient data
@@ -441,6 +442,30 @@ export default async function CardSlugPage({
         </section>
       )}
 
+      {/* 関連カード — 同じカードの別バージョンと、同じセットの他のカード */}
+      {(related.variants.length > 0 || related.setCards.length > 0) && (
+        <section className="border border-navy/10 bg-white p-6 space-y-5">
+          {related.variants.length > 0 && (
+            <div>
+              <h2 className="text-xs uppercase tracking-widest text-navy/50 mb-3">{t.relatedVariantsTitle}</h2>
+              <RelatedLinks cards={related.variants} />
+            </div>
+          )}
+          {related.setCards.length > 0 && (
+            <div>
+              <h2 className="text-xs uppercase tracking-widest text-navy/50 mb-3">{t.relatedSetTitle}</h2>
+              <RelatedLinks cards={related.setCards} />
+              <Link
+                href={`/sets/${encodeURIComponent(card.setName)}`}
+                className="mt-3 inline-block text-[11px] text-navy/40 hover:text-navy transition underline underline-offset-2"
+              >
+                {t.relatedSetAll}
+              </Link>
+            </div>
+          )}
+        </section>
+      )}
+
       {/* Retention CTA — Newsletter はβ期間は非表示。カードリクエストのみ表示 */}
       <div>
         {/* Card request */}
@@ -510,6 +535,23 @@ function relativeTime(iso: string, t: CardDetailT): string {
   const days = Math.floor(hours / 24);
   if (days < 30)     return `${days}${t.timeDaysAgo}`;
   return `${Math.floor(days / 30)}${t.timeMonthsAgo}`;
+}
+
+function RelatedLinks({ cards }: { cards: { slug: string; name: string; rarity: string; condition: string }[] }) {
+  return (
+    <ul className="flex flex-wrap gap-2">
+      {cards.map((c) => (
+        <li key={c.slug}>
+          <Link
+            href={`/cards/${c.slug}`}
+            className="inline-block border border-navy/15 px-3 py-1.5 text-xs text-navy/70 hover:border-navy hover:text-navy transition"
+          >
+            {cardLabel(c)}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 function Stat({

@@ -340,6 +340,10 @@ export const ja = {
     estCountUnit:     '件',
     estUpdated:       '更新',
     estMethodNote:    '※ 実際の落札・売却データ直近60件の信頼スコア上位から算出。外れ値・古いデータは除外済み。',
+    // 関連カード
+    relatedVariantsTitle: 'このカードの別バージョン',
+    relatedSetTitle:      '同じセットのカード',
+    relatedSetAll:        'このセットの全カードを見る →',
     // 直近の価格データ
     recentTitle:      '直近の価格データ',
     recentSold:       '落札',

@@ -340,6 +340,10 @@ export const en = {
     estCountUnit:     '',
     estUpdated:       'Updated',
     estMethodNote:    '* Calculated from the top trust-scored entries of the latest 60 sold records. Outliers and stale data excluded.',
+    // Related cards
+    relatedVariantsTitle: 'Other versions of this card',
+    relatedSetTitle:      'More cards from this set',
+    relatedSetAll:        'See all cards in this set →',
     // Recent price data
     recentTitle:      'Recent Price Data',
     recentSold:       'Sold',

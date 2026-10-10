@@ -498,3 +498,39 @@ export async function getSitemapCards(): Promise<SitemapCard[]> {
     return { slug: c.slug!, setName: c.setName, lastModified: new Date(t) };
   });
 }
+
+// ----------------------------------------------------------------
+// getRelatedCards — カードページ下部の関連カードリンク用
+// ----------------------------------------------------------------
+//
+// variants: 同じセット・同じ名前の別レアリティ／別状態（NM ⇔ PSA10 など）
+// setCards: 同じセットの他のカード（採用価格の件数が多い＝取引が多い順）
+// 検索エンジンが1ページから同じセットのカードへたどれるようにする目的もある。
+
+export type RelatedCard = { slug: string; name: string; rarity: string; condition: string };
+
+export async function getRelatedCards(
+  card: { id: string; name: string; setName: string },
+  limit = 12,
+): Promise<{ variants: RelatedCard[]; setCards: RelatedCard[] }> {
+  const rows = await prisma.card.findMany({
+    where:  { setName: card.setName, isVisible: true, deletedAt: null, slug: { not: null }, NOT: { id: card.id } },
+    select: { id: true, slug: true, name: true, rarity: true, condition: true },
+  });
+  const counts = await prisma.price.groupBy({
+    by:     ["cardId"],
+    where:  { cardId: { in: rows.map((r) => r.id) }, isOutlier: false, trustScore: { gte: TRUST_THRESHOLD } },
+    _count: { _all: true },
+  });
+  const countByCard = new Map(counts.map((c) => [c.cardId, c._count._all]));
+  const toRelated = (r: (typeof rows)[number]): RelatedCard =>
+    ({ slug: r.slug!, name: r.name, rarity: r.rarity, condition: r.condition });
+
+  const variants = rows.filter((r) => r.name === card.name).map(toRelated);
+  const setCards = rows
+    .filter((r) => r.name !== card.name)
+    .sort((a, b) => (countByCard.get(b.id) ?? 0) - (countByCard.get(a.id) ?? 0))
+    .slice(0, limit)
+    .map(toRelated);
+  return { variants, setCards };
+}
