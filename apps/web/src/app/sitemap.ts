@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { getGameSlugs, getAllSetNames, getAllCardSlugs, getRecentRecapDates } from '@gci/core';
+import { getGameSlugs, getSitemapCards, getRecentRecapDates } from '@gci/core';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.gci-index.com';
 const LOCALES  = ['ja', 'en'] as const;
@@ -10,14 +10,24 @@ function url(path: string, locale: string): string {
   return `${BASE_URL}${prefix}${path === '/' ? '' : path}` || `${BASE_URL}/`;
 }
 
+// ビルド時に1回だけ作ると lastmod がデプロイ日で止まるため、6時間ごとに作り直す
+export const revalidate = 21600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [setNames, cardSlugs, recapDates] = await Promise.all([
-    getAllSetNames().catch(() => [] as string[]),
-    getAllCardSlugs().catch(() => [] as string[]),
+  const [cards, recapDates] = await Promise.all([
+    getSitemapCards().catch(() => []),
     getRecentRecapDates(90).catch(() => [] as string[]),
   ]);
 
   const now = new Date();
+
+  // セットの lastmod = 収録カードのうち最も新しい lastmod
+  const setLastModified = new Map<string, Date>();
+  for (const c of cards) {
+    const prev = setLastModified.get(c.setName);
+    if (!prev || c.lastModified > prev) setLastModified.set(c.setName, c.lastModified);
+  }
+  const setNames = [...setLastModified.keys()].sort();
 
   const staticPaths: Array<{ path: string; freq: MetadataRoute.Sitemap[0]['changeFrequency']; pri: number }> = [
     { path: '/',              freq: 'daily',   pri: 1.0 },
@@ -53,12 +63,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // Sets
     for (const name of setNames) {
-      entries.push({ url: url(`/sets/${encodeURIComponent(name)}`, locale), lastModified: now, changeFrequency: 'daily', priority: 0.7 });
+      entries.push({ url: url(`/sets/${encodeURIComponent(name)}`, locale), lastModified: setLastModified.get(name), changeFrequency: 'daily', priority: 0.7 });
     }
 
     // Cards (JA priority higher — primary data source is Japanese market)
-    for (const slug of cardSlugs) {
-      entries.push({ url: url(`/cards/${slug}`, locale), lastModified: now, changeFrequency: 'daily', priority: locale === 'ja' ? 0.7 : 0.5 });
+    for (const { slug, lastModified } of cards) {
+      entries.push({ url: url(`/cards/${slug}`, locale), lastModified, changeFrequency: 'daily', priority: locale === 'ja' ? 0.7 : 0.5 });
     }
 
     // Daily archive

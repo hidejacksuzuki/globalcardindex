@@ -468,27 +468,33 @@ function isSoldSource(sourceType: string | null): boolean {
 }
 
 // ----------------------------------------------------------------
-// getAllSetNames — sitemap 用
+// getSitemapCards — sitemap 用（表示中のカードと、ページ内容が最後に変わった日時）
 // ----------------------------------------------------------------
+//
+// lastModified は最新の採用価格の観測日時（価格が無いカードは登録日時）。
+// 以前は全ページに生成時刻を入れていたため、Google が lastmod を信用しなくなっていた。
+// Card.updatedAt は updatePrices が毎回の巡回で更新するため、ページ内容の変化を表さず使わない。
+// 非表示（統合元・実在未確認）と削除済みのカードは載せない（ページ自体は残す）。
 
-export async function getAllSetNames(): Promise<string[]> {
-  const rows = await prisma.card.findMany({
-    select:  { setName: true },
-    distinct: ["setName"],
-    orderBy: { setName: "asc" },
+export type SitemapCard = { slug: string; setName: string; lastModified: Date };
+
+export async function getSitemapCards(): Promise<SitemapCard[]> {
+  const cards = await prisma.card.findMany({
+    where:   { slug: { not: null }, isVisible: true, deletedAt: null },
+    select:  { id: true, slug: true, setName: true, createdAt: true },
+    orderBy: { createdAt: "desc" },
   });
-  return rows.map((r) => r.setName);
-}
-
-// ----------------------------------------------------------------
-// getAllCardSlugs — sitemap 用
-// ----------------------------------------------------------------
-
-export async function getAllCardSlugs(): Promise<string[]> {
-  const rows = await prisma.card.findMany({
-    where:   { slug: { not: null } },
-    select:  { slug: true },
-    orderBy: { updatedAt: "desc" },
+  const latest = await prisma.price.groupBy({
+    by:    ["cardId"],
+    where: { isOutlier: false, trustScore: { gte: TRUST_THRESHOLD }, card: { isVisible: true, deletedAt: null } },
+    _max:  { observedAt: true },
   });
-  return rows.map((r) => r.slug!);
+  const latestByCard = new Map(latest.map((r) => [r.cardId, r._max.observedAt]));
+  const now = Date.now();
+  return cards.map((c) => {
+    const observed = latestByCard.get(c.id)?.getTime() ?? c.createdAt.getTime();
+    // 出品日時が未来になっている価格があっても lastmod は現在時刻を超えない
+    const t = Math.min(observed, now);
+    return { slug: c.slug!, setName: c.setName, lastModified: new Date(t) };
+  });
 }
