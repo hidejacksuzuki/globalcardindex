@@ -83,7 +83,7 @@ export default async function MarketboardPage({ params, searchParams }: Props) {
           {m.description}
           {updatedAt && (
             <span className="ml-2 text-navy/40">
-              {m.lastUpdated}: {new Date(updatedAt).toLocaleDateString(params.locale === 'en' ? 'en-US' : 'ja-JP')}
+              {m.lastUpdated}: {new Date(updatedAt).toLocaleDateString(params.locale === 'en' ? 'en-US' : 'ja-JP', { timeZone: 'Asia/Tokyo' })}
             </span>
           )}
         </p>
