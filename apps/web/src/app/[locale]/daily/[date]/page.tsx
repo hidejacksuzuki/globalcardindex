@@ -34,7 +34,7 @@ export async function generateMetadata({
 
   const displayDate = new Date(params.date + 'T00:00:00+09:00').toLocaleDateString(
     isEn ? 'en-US' : 'ja-JP',
-    { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' },
+    { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short', timeZone: 'Asia/Tokyo' },
   );
   const title       = `Daily Recap ${displayDate} | Global Card Index`;
   const description = snap.editorNote.slice(0, 120);

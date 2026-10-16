@@ -17,8 +17,9 @@ type Props = {
 };
 
 export function RecapView({ recap, isLive = false, archiveDates = [] }: Props) {
+  // timeZone を明示しないと Vercel(UTC)では +09:00 の日付が1日戻って表示される
   const displayDate = new Date(recap.date + "T00:00:00+09:00").toLocaleDateString("ja-JP", {
-    year: "numeric", month: "long", day: "numeric", weekday: "short",
+    year: "numeric", month: "long", day: "numeric", weekday: "short", timeZone: "Asia/Tokyo",
   });
 
   return (
