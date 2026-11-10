@@ -17,7 +17,7 @@ if [ "$MODE" = "local" ]; then
   BASE_URL="${BASE_URL:-http://localhost:3000}"
   DATA_URL="${DATA_URL:-http://localhost:3001}"
 else
-  BASE_URL="${BASE_URL:-https://gci-index.com}"
+  BASE_URL="${BASE_URL:-https://www.gci-index.com}"  # 正規ホストは www（apex は 307 で www へ）
   DATA_URL="${DATA_URL:-https://www.gci-data.com}"
 fi
 CRON_SECRET="${CRON_SECRET:-}"
