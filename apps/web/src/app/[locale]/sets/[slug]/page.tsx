@@ -7,8 +7,24 @@ import { formatPrice }     from "@gci/core";
 import { getSetDisplayName, getCardThumbnails } from "@gci/core";
 import { CardThumb }       from "@/components/cards/CardThumb";
 import { safeJsonLd }            from "@/lib/jsonLd";
+import { unstable_cache }  from "next/cache";
 
 export const revalidate = 3600; // ISR: 1時間キャッシュ
+
+// layout が headers() を使うためこのページは実際には毎回動的に描画される
+// （上の revalidate は効かない）。2026-11-10 にボットの集中アクセスで
+// DB 接続上限に達したため、セット集計とサムネイルは1時間使い回す。
+// 戻り値は JSON で保存されるため Date を含めないこと。
+const getCachedSetPageData = unstable_cache(
+  async (setName: string) => {
+    const stats = await getSetStats(setName);
+    if (!stats) return null;
+    const thumbs = await getCardThumbnails(stats.cards.map((c) => c.id)).catch(() => ({} as Record<string, string>));
+    return { stats, thumbs };
+  },
+  ["set-page-data-v1"],
+  { revalidate: 3600 },
+);
 
 // ----------------------------------------------------------------
 // Metadata
@@ -19,7 +35,7 @@ export async function generateMetadata({
   params: { slug: string };
 }): Promise<Metadata> {
   const setName = decodeURIComponent(params.slug);
-  const stats   = await getSetStats(setName);
+  const stats   = (await getCachedSetPageData(setName))?.stats ?? null;
   if (!stats) return {};
 
   const title       = `${getSetDisplayName(stats.setName)} 相場・価格一覧 | Global Card Index`;
@@ -54,11 +70,11 @@ export default async function SetPage({
   params: { slug: string };
 }) {
   const setName = decodeURIComponent(params.slug);
-  const stats   = await getSetStats(setName);
-  if (!stats) notFound();
+  const data    = await getCachedSetPageData(setName);
+  if (!data) notFound();
+  const { stats, thumbs } = data;
 
   const game   = stats.game ? getGame(stats.game) : null;
-  const thumbs = await getCardThumbnails(stats.cards.map((c) => c.id)).catch(() => ({} as Record<string, string>));
 
   return (
     <div className="space-y-8">

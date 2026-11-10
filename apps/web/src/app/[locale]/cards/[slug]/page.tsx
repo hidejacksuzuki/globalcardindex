@@ -1,6 +1,7 @@
 import type { Metadata }        from "next";
 import { notFound }              from "next/navigation";
 import Link                      from "next/link";
+import { unstable_cache }        from "next/cache";
 import { getSetDisplayName, getOfficialSearchUrl, getCardBySlug, getCardPriceHistory, getCardEngagement, getRelatedCards } from "@gci/core";
 import { getGame }               from "@gci/core";
 import { WatchButton }           from "@/components/watchlist/WatchButton";
@@ -25,6 +26,52 @@ export const dynamic = "force-dynamic";
 const SITE_ORIGIN = "https://www.gci-index.com";
 
 // ----------------------------------------------------------------
+// Data cache
+// ----------------------------------------------------------------
+// 2026-11-10 02:38 JST、ボットの集中アクセス（約1,000件/分）でアクセスのたびに
+// DB を読んだ結果、Supabase の接続上限（200）に達してカードページが 500 になった。
+// 誰が見ても同じデータ（カード・価格推移・指数・出品写真・関連カード）は
+// 5分使い回す（収集10分毎・指数毎時のため十分新鮮。marketboard と同じ間隔）。
+// ウォッチ数・保有数はユーザー操作で変わるため1分にする。
+// ログイン状態に依存するもの（ウォッチ済みか・ポートフォリオ登録済みか）はキャッシュしない。
+// 戻り値は JSON で保存されるため Date を含めないこと（日付は ISO 文字列で返す）。
+const getCachedCardBySlug = unstable_cache(
+  (slug: string) => getCardBySlug(slug),
+  ["card-page-card-by-slug-v1"],
+  { revalidate: 300 },
+);
+
+const getCachedCardPageData = unstable_cache(
+  async (cardId: string, name: string, setName: string) => {
+    const [priceHistory, listingPhotos, cardIndex, related] = await Promise.all([
+      getCardPriceHistory(cardId, 90).catch(() => []),
+      getCardListingPhotos(cardId).catch(() => []),
+      prisma.indexValue.findFirst({
+        where:   { cardId },
+        orderBy: { calculatedAt: "desc" },
+        select: {
+          value:        true,
+          changeRate:   true,
+          sampleCount:  true,
+          outlierCount: true,
+          confidence:   true,
+        },
+      }).catch(() => null),
+      getRelatedCards({ id: cardId, name, setName }).catch(() => ({ variants: [], setCards: [] })),
+    ]);
+    return { priceHistory, listingPhotos, cardIndex, related };
+  },
+  ["card-page-data-v1"],
+  { revalidate: 300 },
+);
+
+const getCachedCardEngagement = unstable_cache(
+  (cardId: string) => getCardEngagement(cardId),
+  ["card-page-engagement-v1"],
+  { revalidate: 60 },
+);
+
+// ----------------------------------------------------------------
 // Metadata
 // ----------------------------------------------------------------
 /**
@@ -43,7 +90,7 @@ export async function generateMetadata({
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const card = await getCardBySlug(params.slug);
+  const card = await getCachedCardBySlug(params.slug);
   if (!card) return {};
 
   const locale = getLocale();
@@ -92,7 +139,7 @@ export default async function CardSlugPage({
 }: {
   params: { slug: string };
 }) {
-  const card = await getCardBySlug(params.slug);
+  const card = await getCachedCardBySlug(params.slug);
   if (!card) notFound();
 
   const t    = getServerTranslations().cardDetail;
@@ -115,23 +162,9 @@ export default async function CardSlugPage({
     : { inPortfolio: false as const };
 
   // 価格推移・熱量・per-card index value・出品写真・関連カード（並列取得）
-  const [priceHistory, engagement, listingPhotos, cardIndex, related] = await Promise.all([
-    getCardPriceHistory(card.id, 90).catch(() => []),
-    getCardEngagement(card.id).catch(() => ({ watchers: 0, holders: 0, recentSales: [] })),
-    getCardListingPhotos(card.id).catch(() => []),
-    prisma.indexValue.findFirst({
-      where:   { cardId: card.id },
-      orderBy: { calculatedAt: "desc" },
-      select: {
-        value:        true,
-        changeRate:   true,
-        sampleCount:  true,
-        outlierCount: true,
-        confidence:   true,
-        calculatedAt: true,
-      },
-    }).catch(() => null),
-    getRelatedCards(card).catch(() => ({ variants: [], setCards: [] })),
+  const [{ priceHistory, listingPhotos, cardIndex, related }, engagement] = await Promise.all([
+    getCachedCardPageData(card.id, card.name, card.setName),
+    getCachedCardEngagement(card.id).catch(() => ({ watchers: 0, holders: 0, recentSales: [] })),
   ]);
 
   // Show index only when we have sufficient data
