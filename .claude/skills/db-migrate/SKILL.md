@@ -19,7 +19,7 @@ description: GCI の DB スキーマ変更手順。schema.prisma を変更する
    - anon / authenticated には **GRANT もポリシーも付けない**。アプリは Prisma で
      postgres（全テーブルの所有者）として直結し、Supabase Data API・supabase-js・
      Supabase Auth は使っていないため、Prisma 用の GRANT も不要
-     （2026-10-25 に 20261025092418_revoke_data_api_grants で既存分も撤去済み。
+     （20261025092418_revoke_data_api_grants で既存分も撤去済み・本番適用は 2026-11-10。
      Supabase の 2026-10-30 仕様変更で新規テーブルは自動 GRANT されない）
 3. Prisma Client を再生成する:
    ```bash
